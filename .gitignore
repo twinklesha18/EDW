@@ -1,0 +1,10 @@
+client/node_modules/
+client/dist/
+client/.env
+server/node_modules/
+server/.env
+server/uploads/*
+!server/uploads/.gitkeep
+*.log
+.agents/
+.codex-browser-*/

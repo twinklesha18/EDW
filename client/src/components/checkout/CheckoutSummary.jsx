@@ -1,0 +1,7 @@
+import { formatCurrency } from '../../utils/formatCurrency.js'
+
+function CheckoutSummary({ quote }) {
+  if (!quote) return null
+  return <aside className="min-w-0 rounded-[1.25rem] border border-gold/20 bg-white p-4 shadow-luxury sm:rounded-[1.75rem] sm:p-6"><h2 className="font-serif text-2xl font-semibold">Payment Summary</h2><dl className="mt-5 space-y-3 text-sm"><div className="flex flex-wrap justify-between gap-2"><dt className="text-muted">Subtotal</dt><dd>{formatCurrency(quote.subtotal)}</dd></div><div className="flex flex-wrap justify-between gap-2"><dt className="text-muted">{quote.shippingLabel || 'Shipping'}</dt><dd>{quote.shippingFee ? formatCurrency(quote.shippingFee) : 'Free'}</dd></div><div className="flex flex-wrap justify-between gap-2"><dt className="text-muted">Discount{quote.coupon?.code ? ` (${quote.coupon.code})` : ''}</dt><dd className="text-[#39704f]">-{formatCurrency(quote.discount)}</dd></div><div className="flex flex-wrap items-end justify-between gap-2 border-t border-gold/15 pt-4 font-semibold"><dt>Grand Total</dt><dd className="font-serif text-2xl text-rosewood">{formatCurrency(quote.total)}</dd></div></dl>{quote.estimatedDelivery && <p className="mt-5 rounded-xl bg-pink-light/50 p-3 text-xs leading-5 text-muted">Estimated delivery: <strong className="text-ink">{new Date(quote.estimatedDelivery).toLocaleDateString()}</strong></p>}</aside>
+}
+export default CheckoutSummary

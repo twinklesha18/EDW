@@ -1,0 +1,5 @@
+import { FiArrowLeft, FiShield } from 'react-icons/fi'
+import { Link, Outlet } from 'react-router-dom'
+import Logo from '../components/layout/Logo.jsx'
+function AuthLayout() { return <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#fce7f0_0,transparent_45%),radial-gradient(circle_at_bottom_right,#d8eef8_0,transparent_40%)] px-4 py-6 sm:px-5 sm:py-12"><div className="mx-auto max-w-lg"><div className="mb-5 flex min-w-0 items-center justify-between gap-3 sm:mb-6"><Logo /><Link to="/" className="inline-flex min-h-11 shrink-0 items-center gap-2 text-xs font-semibold text-muted hover:text-rosewood"><FiArrowLeft /> Home</Link></div><div className="min-w-0 overflow-hidden rounded-[1.5rem] border border-gold/20 bg-white/95 p-5 shadow-luxury sm:rounded-[2rem] sm:p-9"><Outlet /></div><p className="mt-5 flex items-start justify-center gap-2 text-center text-[.7rem] leading-5 text-muted"><FiShield className="mt-0.5 shrink-0" /> Your account is protected with secure HTTP-only authentication.</p></div></div> }
+export default AuthLayout

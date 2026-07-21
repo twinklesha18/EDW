@@ -1,0 +1,4 @@
+import { FiLock } from 'react-icons/fi'
+import { Link } from 'react-router-dom'
+function UnauthorizedPage() { return <main className="grid min-h-screen place-items-center bg-pink-light/35 p-5"><div className="max-w-lg rounded-[2rem] border border-gold/20 bg-white p-9 text-center shadow-luxury"><span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-red-50 text-2xl text-red-600"><FiLock /></span><p className="mt-5 text-xs font-bold uppercase tracking-[.2em] text-gold">403 Unauthorized</p><h1 className="mt-2 font-serif text-4xl font-semibold">Admin access required</h1><p className="mt-3 text-sm leading-6 text-muted">Your account does not have permission to access the Eshaz Dream World administration panel.</p><Link to="/" className="primary-button mt-7">Return to Store</Link></div></main> }
+export default UnauthorizedPage
