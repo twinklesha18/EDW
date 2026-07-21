@@ -4,7 +4,9 @@ import express from 'express'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+
 import { corsOptions } from './config/cors.js'
+import { connectDatabase } from './config/db.js'
 import { errorHandler, notFound } from './middleware/errorMiddleware.js'
 
 import apiRoutes from './routes/apiRoutes.js'
@@ -46,6 +48,30 @@ app.post(
 app.use(express.json({ limit: '10kb' }))
 app.use(express.urlencoded({ extended: true, limit: '10kb' }))
 app.use(cookieParser())
+
+// Root route does not need MongoDB
+app.get('/', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'EDW Backend is running successfully 🚀'
+  })
+})
+
+// Connect MongoDB before API routes
+app.use(async (req, res, next) => {
+  try {
+    await connectDatabase()
+    next()
+  } catch (error) {
+    console.error('Database connection failed:', error.message)
+
+    res.status(500).json({
+      success: false,
+      message: 'Database connection failed',
+      errors: []
+    })
+  }
+})
 
 app.use(
   '/uploads',
