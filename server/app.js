@@ -50,5 +50,14 @@ app.use('/api/admin', adminRoutes)
 
 app.use(notFound)
 app.use(errorHandler)
+app.use('/api/admin', adminRoutes)
+app.get('/', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'EDW Backend is running successfully 🚀'
+  })
+})
+app.use(notFound)
+app.use(errorHandler)
 
 export default app
