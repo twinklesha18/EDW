@@ -13,6 +13,7 @@ assert.match(html, /<html lang="en-LK">/)
 assert.ok(html.includes('<title>Custom Gifts &amp; Bouquets in Sri Lanka | Eshaz Dream World</title>'))
 assert.match(html, /name="description"/)
 assert.match(html, /name="robots" content="index, follow/)
+assert.match(html, /name="google-site-verification" content="jPWEIY76vvhyNphtVBY_g4rh5J0ctrJ9HytwmvmgbnY"/)
 assert.match(html, /property="og:title"/)
 assert.match(html, /name="twitter:card"/)
 const socialImage = html.match(/property="og:image" content="https:\/\/eshazdreamworld\.vercel\.app(\/assets\/[^"?]+)"/)?.[1]
