@@ -34,6 +34,8 @@ const configuredClientOrigins = String(process.env.CLIENT_URL || '')
   .map((origin) => origin.trim().replace(/\/$/, ''))
   .filter(Boolean)
 const isProduction = process.env.NODE_ENV === 'production' || Boolean(process.env.VERCEL) || process.env.VERCEL_ENV === 'production'
+const port = parsePort(process.env.PORT || '5000')
+const serverUrl = (process.env.SERVER_URL?.trim() || (isProduction ? 'https://edw-jvpw.vercel.app' : `http://localhost:${port}`)).replace(/\/$/, '')
 
 const isLocalMongoUri = (value) => /^mongodb:\/\/(?:[^@/]+@)?(?:localhost|127\.0\.0\.1|\[::1\])(?::\d+)?\//i.test(value)
 const isAtlasMongoUri = (value) => /^mongodb\+srv:\/\//i.test(value)
@@ -60,7 +62,8 @@ const resolveMongoUri = () => {
 export const env = Object.freeze({
   nodeEnv: process.env.NODE_ENV?.trim() || 'development',
   isProduction,
-  port: parsePort(process.env.PORT || '5000'),
+  port,
+  serverUrl,
   mongoUri: resolveMongoUri(),
   jwtSecret: required('JWT_SECRET'),
   session: Object.freeze({

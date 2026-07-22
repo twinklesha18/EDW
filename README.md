@@ -38,6 +38,7 @@ The backend Vercel project uses `server` as its root directory. Configure the fo
 
 ```env
 NODE_ENV=production
+SERVER_URL=https://edw-jvpw.vercel.app
 MONGODB_URI_PRODUCTION=your_production_mongodb_uri
 JWT_SECRET=your_long_random_production_secret
 CLIENT_URL=https://edw-phi.vercel.app
@@ -96,5 +97,7 @@ No administrator or fake user is created automatically.
 Administrators can manage business and contact details, social links, bank-transfer information, delivery fees, users, homepage images, products, categories, orders, custom orders, reviews, notifications, and deletion logs from the admin dashboard.
 
 Product, category, banner, settings, custom-order, and payment-slip images are compressed to WebP. Production image uploads require the Cloudinary environment variables; local development can use the server's local uploads directory.
+
+Legacy public catalog images created before Cloudinary was enabled are served read-only from the backend deployment. API responses replace old localhost upload URLs with `SERVER_URL`. All new production uploads still require Cloudinary because Vercel's filesystem is not persistent.
 
 Customers can use Cash on Delivery or upload a bank-transfer payment slip. Administrators approve or reject payment slips before paid orders progress. Customer invoices become available only after delivery, and canceled orders do not expose invoices.
