@@ -1,12 +1,9 @@
 import PageBanner from '../components/common/PageBanner.jsx'
 import PageTransition from '../components/common/PageTransition.jsx'
 import { policies } from '../data/policies.js'
-import { useDocumentTitle } from '../hooks/useDocumentTitle.js'
 
 function PolicyPage({ policyKey }) {
   const policy = policies[policyKey]
-  useDocumentTitle(`${policy.title} | Eshaz Dream World`)
-
   return (
     <PageTransition>
       <PageBanner eyebrow={policy.eyebrow} title={policy.title} description={policy.description} />

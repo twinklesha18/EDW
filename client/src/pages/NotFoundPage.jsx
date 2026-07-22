@@ -2,11 +2,8 @@ import { FiArrowLeft } from 'react-icons/fi'
 import { Link } from 'react-router-dom'
 import { brandLogo } from '../assets/images/index.js'
 import PageTransition from '../components/common/PageTransition.jsx'
-import { useDocumentTitle } from '../hooks/useDocumentTitle.js'
 
 function NotFoundPage() {
-  useDocumentTitle('Page Not Found | Eshaz Dream World')
-
   return (
     <PageTransition>
       <section className="section-shell grid min-h-[70vh] place-items-center py-20 text-center">

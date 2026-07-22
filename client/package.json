@@ -12,6 +12,7 @@
     "lint": "oxlint",
     "test:phase3": "node scripts/phase3-state-smoke.js",
     "test:responsive": "node scripts/responsive-browser-smoke.js",
+    "test:seo": "node scripts/seo-smoke.js",
     "preview": "vite preview"
   },
   "dependencies": {

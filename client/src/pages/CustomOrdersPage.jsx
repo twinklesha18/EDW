@@ -7,14 +7,12 @@ import FormField from '../components/common/FormField.jsx'
 import LoadingButton from '../components/common/LoadingButton.jsx'
 import PageBanner from '../components/common/PageBanner.jsx'
 import PageTransition from '../components/common/PageTransition.jsx'
-import { useDocumentTitle } from '../hooks/useDocumentTitle.js'
 import api, { getApiError } from '../services/api.js'
 
 const today = new Date().toLocaleDateString('en-CA')
 const budgetRanges = ['Below LKR 5,000', 'LKR 5,000 - 10,000', 'LKR 10,000 - 15,000', 'Above LKR 15,000', 'Discuss with me']
 
 function CustomOrdersPage() {
-  useDocumentTitle('Custom Orders | Eshaz Dream World')
   const user = useSelector((state) => state.auth.user)
   const [preview, setPreview] = useState('')
   const [submitting, setSubmitting] = useState(false)

@@ -7,7 +7,7 @@ import EmptyState from '../components/common/EmptyState.jsx'
 import PageTransition from '../components/common/PageTransition.jsx'
 import RatingStars from '../components/common/RatingStars.jsx'
 import ProductCard from '../components/product/ProductCard.jsx'
-import { useDocumentTitle } from '../hooks/useDocumentTitle.js'
+import { useSeo } from '../hooks/useSeo.js'
 import { formatCurrency } from '../utils/formatCurrency.js'
 import { addToCart } from '../redux/slices/cartSlice.js'
 import { toggleWishlist } from '../redux/slices/wishlistSlice.js'
@@ -16,6 +16,8 @@ import api, { getApiError } from '../services/api.js'
 import { normalizeCatalogProduct } from '../utils/catalogAdapters.js'
 import LoadingSkeleton from '../components/common/LoadingSkeleton.jsx'
 import ProductReviews from '../components/product/ProductReviews.jsx'
+import { brandLogo } from '../assets/images/index.js'
+import { INDEX_ROBOTS, NO_INDEX_ROBOTS, SITE_URL, absoluteUrl } from '../utils/seo.js'
 
 function ProductDetailsPage() {
   const { slug } = useParams()
@@ -34,7 +36,69 @@ function ProductDetailsPage() {
   const wishlisted = useSelector((state) => product ? state.wishlist.items.some((item) => item.productId === product.id) : false)
   const cartPending = useSelector((state) => product ? state.cart.pendingProductIds.includes(product.id) : false)
   const wishlistPending = useSelector((state) => product ? state.wishlist.pendingProductIds.includes(product.id) : false)
-  useDocumentTitle(product ? `${product.name} | Eshaz Dream World` : 'Product Not Found | Eshaz Dream World')
+  const productSeo = useMemo(() => {
+    if (!product) return {
+      title: loading ? 'Gift Creation | Eshaz Dream World' : 'Product Not Found | Eshaz Dream World',
+      description: loading ? 'Loading a custom gift creation from Eshaz Dream World.' : 'This Eshaz Dream World product could not be found.',
+      canonicalPath: loading ? `/product/${slug}` : undefined,
+      image: brandLogo,
+      imageAlt: 'Eshaz Dream World logo',
+      type: 'product',
+      robots: loading ? INDEX_ROBOTS : NO_INDEX_ROBOTS,
+    }
+
+    const canonicalPath = `/product/${product.slug}`
+    const reviewCount = reviews.length
+    const ratingValue = reviewCount ? reviews.reduce((total, review) => total + Number(review.rating || 0), 0) / reviewCount : 0
+    const offers = Object.entries(product.prices).map(([size, price]) => ({
+      '@type': 'Offer',
+      name: `Size ${size}`,
+      url: absoluteUrl(canonicalPath),
+      priceCurrency: 'LKR',
+      price: Number(price).toFixed(2),
+      availability: 'https://schema.org/InStock',
+      itemCondition: 'https://schema.org/NewCondition',
+    }))
+    const productData = {
+      '@type': 'Product',
+      '@id': `${absoluteUrl(canonicalPath)}#product`,
+      name: product.name,
+      description: product.description,
+      image: product.images.map(absoluteUrl),
+      sku: product.id,
+      category: product.categoryLabel,
+      brand: { '@type': 'Brand', name: 'Eshaz Dream World' },
+      offers,
+      ...(reviewCount > 0 && {
+        aggregateRating: {
+          '@type': 'AggregateRating',
+          ratingValue: Number(ratingValue.toFixed(1)),
+          reviewCount,
+        },
+      }),
+    }
+    const breadcrumbData = {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
+        { '@type': 'ListItem', position: 2, name: 'Shop', item: `${SITE_URL}/shop` },
+        { '@type': 'ListItem', position: 3, name: product.name, item: absoluteUrl(canonicalPath) },
+      ],
+    }
+
+    const seoProductName = product.name.length > 42 ? `${product.name.slice(0, 39).trim()}...` : product.name
+    return {
+      title: `${seoProductName} | Eshaz Dream World`,
+      description: product.description.length > 155 ? `${product.description.slice(0, 152).trim()}...` : product.description,
+      canonicalPath,
+      image: product.image,
+      imageAlt: product.name,
+      type: 'product',
+      robots: INDEX_ROBOTS,
+      structuredData: { '@context': 'https://schema.org', '@graph': [productData, breadcrumbData] },
+    }
+  }, [loading, product, reviews, slug])
+  useSeo(productSeo)
 
   const loadProduct = useCallback(async () => { try { const response = await api.get(`/products/${slug}`); const normalized = normalizeCatalogProduct(response.data.data.product); setProduct(normalized); setReviews(response.data.data.reviews || []); setProductError('') } catch (error) { setProduct(null); setProductError(getApiError(error).message) } finally { setLoading(false) } }, [slug])
 

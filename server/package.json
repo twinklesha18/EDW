@@ -19,7 +19,8 @@
     "test:reviews": "node scripts/review-workflow-smoke.js",
     "test:validation": "node scripts/session-validation-smoke.js",
     "test:notifications": "node scripts/notification-smoke.js",
-    "test:user-deletion": "node scripts/user-cascade-deletion-smoke.js"
+    "test:user-deletion": "node scripts/user-cascade-deletion-smoke.js",
+    "test:seo": "node scripts/seo-smoke.js"
   },
   "keywords": [],
   "author": "Eshaz Dream World",

@@ -2,12 +2,9 @@ import { useSelector } from 'react-redux'
 import PageBanner from '../components/common/PageBanner.jsx'
 import PageTransition from '../components/common/PageTransition.jsx'
 import CategoryCard from '../components/home/CategoryCard.jsx'
-import { useDocumentTitle } from '../hooks/useDocumentTitle.js'
 
 function CategoriesPage() {
   const categories = useSelector((state) => state.catalog.categories)
-  useDocumentTitle('Categories | Eshaz Dream World')
-
   return (
     <PageTransition>
       <PageBanner eyebrow="Collections" title="Explore Every Category" description="From sweet surprises to personalized keepsakes, discover the style that speaks to your occasion." />

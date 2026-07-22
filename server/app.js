@@ -21,6 +21,7 @@ import reviewRoutes from './routes/reviewRoutes.js'
 import siteSettingsRoutes from './routes/siteSettingsRoutes.js'
 import userRoutes from './routes/userRoutes.js'
 import wishlistRoutes from './routes/wishlistRoutes.js'
+import { getSitemap } from './controllers/seoController.js'
 
 const app = express()
 const uploadsDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), 'uploads')
@@ -60,6 +61,8 @@ app.use('/uploads', express.static(uploadsDirectory, {
   maxAge: '7d',
   immutable: true,
 }))
+
+app.get('/sitemap.xml', getSitemap)
 
 app.use('/api/v1', apiRoutes)
 app.use('/api/auth', authRoutes)

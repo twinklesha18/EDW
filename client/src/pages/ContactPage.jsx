@@ -6,11 +6,9 @@ import FormField from '../components/common/FormField.jsx'
 import PageBanner from '../components/common/PageBanner.jsx'
 import PageTransition from '../components/common/PageTransition.jsx'
 import { useBrand } from '../hooks/useBrand.js'
-import { useDocumentTitle } from '../hooks/useDocumentTitle.js'
 import { EMAIL_ERROR, PHONE_ERROR, emailPattern, normalizeEmailInput, normalizePhoneInput, phonePattern } from '../utils/inputValidation.js'
 
 function ContactPage() {
-  useDocumentTitle('Contact | Eshaz Dream World')
   const { contact } = useBrand()
   const { register, handleSubmit, reset, formState: { errors } } = useForm()
   const socialLinks = [

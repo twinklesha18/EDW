@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { FiGrid, FiList, FiSliders, FiX } from 'react-icons/fi'
 import { useSelector } from 'react-redux'
-import { useDocumentTitle } from '../hooks/useDocumentTitle.js'
 import { useSearchParams } from 'react-router-dom'
 import EmptyState from '../components/common/EmptyState.jsx'
 import PageBanner from '../components/common/PageBanner.jsx'
@@ -12,7 +11,6 @@ import ProductGrid from '../components/product/ProductGrid.jsx'
 const pageSize = 6
 
 function ShopPage() {
-  useDocumentTitle('Shop | Eshaz Dream World')
   const [searchParams, setSearchParams] = useSearchParams()
   const [searchInput, setSearchInput] = useState(searchParams.get('search') || '')
   const [view, setView] = useState('grid')
