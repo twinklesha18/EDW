@@ -7,6 +7,7 @@ import { corsOptions } from './config/cors.js'
 import { connectDatabase } from './config/db.js'
 import { errorHandler, notFound } from './middleware/errorMiddleware.js'
 import adminRoutes from './routes/adminRoutes.js'
+import analyticsRoutes from './routes/analyticsRoutes.js'
 import apiRoutes from './routes/apiRoutes.js'
 import authRoutes from './routes/authRoutes.js'
 import bannerRoutes from './routes/bannerRoutes.js'
@@ -65,6 +66,7 @@ app.use('/uploads', express.static(uploadsDirectory, {
 app.get('/sitemap.xml', getSitemap)
 
 app.use('/api/v1', apiRoutes)
+app.use('/api/analytics', analyticsRoutes)
 app.use('/api/auth', authRoutes)
 app.use('/api/users', userRoutes)
 app.use('/api/cart', cartRoutes)
