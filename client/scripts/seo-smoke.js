@@ -15,10 +15,11 @@ assert.match(html, /name="description"/)
 assert.match(html, /name="robots" content="index, follow/)
 assert.match(html, /property="og:title"/)
 assert.match(html, /name="twitter:card"/)
-const socialImage = html.match(/property="og:image" content="https:\/\/edw-phi\.vercel\.app(\/assets\/[^"?]+)"/)?.[1]
+const socialImage = html.match(/property="og:image" content="https:\/\/eshazdreamworld\.vercel\.app(\/assets\/[^"?]+)"/)?.[1]
 assert.ok(socialImage, 'The Open Graph image must use an absolute production URL')
 assert.ok(existsSync(path.join(root, 'dist', socialImage)), 'The Open Graph image must exist in the production build')
-assert.match(robots, /Sitemap: https:\/\/edw-phi\.vercel\.app\/sitemap\.xml/)
+assert.match(html, /<link rel="canonical" href="https:\/\/eshazdreamworld\.vercel\.app\/"/)
+assert.match(robots, /Sitemap: https:\/\/eshazdreamworld\.vercel\.app\/sitemap\.xml/)
 assert.doesNotMatch(robots, /Disallow: \/admin/)
 assert.ok(vercel.rewrites.some((rewrite) => rewrite.source === '/sitemap.xml' && rewrite.destination.endsWith('/sitemap.xml')))
 assert.ok(vercel.headers.some((rule) => rule.headers?.some((header) => header.key === 'X-Robots-Tag' && header.value === 'noindex, nofollow')))

@@ -17,10 +17,10 @@ try {
   assert.equal(response.status, 200)
   assert.match(response.headers.get('content-type'), /application\/xml/)
   assert.match(sitemap, /<urlset[^>]+xmlns:image=/)
-  assert.match(sitemap, /<loc>https:\/\/edw-phi\.vercel\.app\/<\/loc>/)
-  assert.match(sitemap, /<loc>https:\/\/edw-phi\.vercel\.app\/shop<\/loc>/)
+  assert.match(sitemap, /<loc>https:\/\/eshazdreamworld\.vercel\.app\/<\/loc>/)
+  assert.match(sitemap, /<loc>https:\/\/eshazdreamworld\.vercel\.app\/shop<\/loc>/)
   if (product) {
-    assert.ok(sitemap.includes(`<loc>https://edw-phi.vercel.app/product/${product.slug}</loc>`))
+    assert.ok(sitemap.includes(`<loc>https://eshazdreamworld.vercel.app/product/${product.slug}</loc>`))
     if (product.image?.url) assert.ok(sitemap.includes('<image:image>'))
   }
   console.log('SEO sitemap smoke test passed: public pages and live catalog products are exposed as valid XML.')

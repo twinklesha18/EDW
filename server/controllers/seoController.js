@@ -1,6 +1,6 @@
 import Product from '../models/Product.js'
 
-const storefrontUrl = 'https://edw-phi.vercel.app'
+const storefrontUrl = 'https://eshazdreamworld.vercel.app'
 const staticPages = ['/', '/shop', '/categories', '/contact']
 
 const escapeXml = (value) => String(value)

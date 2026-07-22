@@ -29,7 +29,7 @@ The client runs at `http://localhost:5173`. The API runs at `http://localhost:50
 
 ## Vercel production deployment
 
-- Frontend: `https://edw-phi.vercel.app`
+- Frontend: `https://eshazdreamworld.vercel.app`
 - Backend: `https://edw-jvpw.vercel.app`
 
 The frontend Vercel project uses `client` as its root directory, `npm run build` as its build command, and `dist` as its output directory. `client/vercel.json` provides React Router fallback rewrites and proxies `/api/*` to the production backend. Local browsers continue to use `VITE_API_URL` from `client/.env`.
@@ -41,7 +41,7 @@ NODE_ENV=production
 SERVER_URL=https://edw-jvpw.vercel.app
 MONGODB_URI_PRODUCTION=your_production_mongodb_uri
 JWT_SECRET=your_long_random_production_secret
-CLIENT_URL=https://edw-phi.vercel.app
+CLIENT_URL=https://eshazdreamworld.vercel.app
 SESSION_IDLE_TIMEOUT_MINUTES=10
 SESSION_ABSOLUTE_TIMEOUT_HOURS=8
 SESSION_REMEMBER_TIMEOUT_DAYS=7

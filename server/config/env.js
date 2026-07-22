@@ -28,7 +28,7 @@ const required = (key) => {
   return value
 }
 
-const defaultClientOrigins = ['http://localhost:5173', 'http://localhost:3000', 'https://edw-phi.vercel.app']
+const defaultClientOrigins = ['http://localhost:5173', 'http://localhost:3000', 'https://eshazdreamworld.vercel.app']
 const configuredClientOrigins = String(process.env.CLIENT_URL || '')
   .split(',')
   .map((origin) => origin.trim().replace(/\/$/, ''))
@@ -37,7 +37,7 @@ const isProduction = process.env.NODE_ENV === 'production' || Boolean(process.en
 const isLocalOrigin = (origin) => /^https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?$/i.test(origin)
 const allClientOrigins = [...new Set([...defaultClientOrigins, ...configuredClientOrigins])]
 const clientUrl = isProduction
-  ? allClientOrigins.find((origin) => !isLocalOrigin(origin)) || 'https://edw-phi.vercel.app'
+  ? allClientOrigins.find((origin) => !isLocalOrigin(origin)) || 'https://eshazdreamworld.vercel.app'
   : allClientOrigins.find(isLocalOrigin) || 'http://localhost:5173'
 const port = parsePort(process.env.PORT || '5000')
 const serverUrl = (process.env.SERVER_URL?.trim() || (isProduction ? 'https://edw-jvpw.vercel.app' : `http://localhost:${port}`)).replace(/\/$/, '')

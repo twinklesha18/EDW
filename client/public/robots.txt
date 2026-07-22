@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /api/
 
-Sitemap: https://edw-phi.vercel.app/sitemap.xml
+Sitemap: https://eshazdreamworld.vercel.app/sitemap.xml

@@ -1,4 +1,4 @@
-export const SITE_URL = String(import.meta.env.VITE_SITE_URL || 'https://edw-phi.vercel.app').replace(/\/$/, '')
+export const SITE_URL = String(import.meta.env.VITE_SITE_URL || 'https://eshazdreamworld.vercel.app').replace(/\/$/, '')
 export const INDEX_ROBOTS = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'
 export const NO_INDEX_ROBOTS = 'noindex, nofollow'
 
