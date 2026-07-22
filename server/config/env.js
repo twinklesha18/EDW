@@ -34,6 +34,11 @@ const configuredClientOrigins = String(process.env.CLIENT_URL || '')
   .map((origin) => origin.trim().replace(/\/$/, ''))
   .filter(Boolean)
 const isProduction = process.env.NODE_ENV === 'production' || Boolean(process.env.VERCEL) || process.env.VERCEL_ENV === 'production'
+const isLocalOrigin = (origin) => /^https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?$/i.test(origin)
+const allClientOrigins = [...new Set([...defaultClientOrigins, ...configuredClientOrigins])]
+const clientUrl = isProduction
+  ? allClientOrigins.find((origin) => !isLocalOrigin(origin)) || 'https://edw-phi.vercel.app'
+  : allClientOrigins.find(isLocalOrigin) || 'http://localhost:5173'
 const port = parsePort(process.env.PORT || '5000')
 const serverUrl = (process.env.SERVER_URL?.trim() || (isProduction ? 'https://edw-jvpw.vercel.app' : `http://localhost:${port}`)).replace(/\/$/, '')
 
@@ -71,7 +76,8 @@ export const env = Object.freeze({
     absoluteHours: positiveInteger(process.env.SESSION_ABSOLUTE_TIMEOUT_HOURS, 8, 'SESSION_ABSOLUTE_TIMEOUT_HOURS'),
     rememberDays: positiveInteger(process.env.SESSION_REMEMBER_TIMEOUT_DAYS, 7, 'SESSION_REMEMBER_TIMEOUT_DAYS'),
   }),
-  clientOrigins: [...new Set([...defaultClientOrigins, ...configuredClientOrigins])],
+  clientUrl,
+  clientOrigins: allClientOrigins,
   cloudinary: Object.freeze({
     cloudName: process.env.CLOUDINARY_CLOUD_NAME?.trim() || '',
     apiKey: process.env.CLOUDINARY_API_KEY?.trim() || '',

@@ -8,6 +8,9 @@ const transporter = isEmailConfigured ? nodemailer.createTransport({
   secure: env.email.port === 465,
   auth: { user: env.email.user, pass: env.email.pass },
   pool: true,
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 20000,
 }) : null
 
 export async function sendEmail({ to, subject, html }) {
@@ -22,4 +25,10 @@ export function sendEmailSafely(message) {
     console.error(`Email delivery failed: ${error.message}`)
     return { failed: true }
   })
+}
+
+export async function verifyEmailConnection() {
+  if (!isEmailConfigured) return { configured: false, verified: false }
+  await transporter.verify()
+  return { configured: true, verified: true }
 }

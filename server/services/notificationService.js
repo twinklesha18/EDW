@@ -4,7 +4,7 @@ import User from '../models/User.js'
 import { notificationEmail } from './emailTemplates.js'
 import { sendEmailSafely } from './emailService.js'
 
-const absoluteLink = (link) => link ? `${env.clientOrigins[0]}${link.startsWith('/') ? link : `/${link}`}` : env.clientOrigins[0]
+const absoluteLink = (link) => link ? `${env.clientUrl}${link.startsWith('/') ? link : `/${link}`}` : env.clientUrl
 
 export async function notifyUser({ user, type, title, message, link = '', order = null, customOrder = null, email = true }) {
   const userId = user?._id || user
@@ -18,10 +18,12 @@ export async function notifyUser({ user, type, title, message, link = '', order 
     order: order?._id || order || null,
     customOrder: customOrder?._id || customOrder || null,
   })
-  if (email && recipient.email) void sendEmailSafely({
-    to: recipient.email,
-    ...notificationEmail(recipient, title, message, absoluteLink(link)),
-  })
+  if (email && recipient.email) {
+    await sendEmailSafely({
+      to: recipient.email,
+      ...notificationEmail(recipient, title, message, absoluteLink(link)),
+    })
+  }
   return notification
 }
 

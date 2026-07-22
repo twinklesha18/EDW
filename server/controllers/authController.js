@@ -5,6 +5,7 @@ import { createPasswordResetToken, hashResetToken } from '../utils/passwordUtils
 import { AppError, sendSuccess } from '../utils/responseUtils.js'
 import { passwordResetEmail, welcomeEmail } from '../services/emailTemplates.js'
 import { sendEmailSafely } from '../services/emailService.js'
+import { notifyAdmins, notifySafely } from '../services/notificationService.js'
 
 export async function register(request, response) {
   const existingUser = await User.exists({ email: request.validatedBody.email })
@@ -12,7 +13,15 @@ export async function register(request, response) {
 
   const user = await User.create(request.validatedBody)
   setAuthCookie(response, user._id, false, Date.now(), user.sessionVersion)
-  void sendEmailSafely({ to: user.email, ...welcomeEmail(user, env.clientOrigins[0]) })
+  await Promise.all([
+    sendEmailSafely({ to: user.email, ...welcomeEmail(user, env.clientUrl) }),
+    notifySafely(() => notifyAdmins({
+      type: 'new_user',
+      title: 'New customer registration',
+      message: `${user.firstName} ${user.lastName} registered with ${user.email}.`,
+      link: `/admin/users?search=${encodeURIComponent(user.email)}`,
+    })),
+  ])
   return sendSuccess(response, { statusCode: 201, message: 'Welcome to Eshaz Dream World!', data: { user: user.toJSON() } })
 }
 
@@ -44,8 +53,8 @@ export async function forgotPassword(request, response) {
     user.resetPasswordToken = hashedToken
     user.resetPasswordExpire = new Date(Date.now() + 30 * 60 * 1000)
     await user.save({ validateModifiedOnly: true })
-    const resetUrl = `${env.clientOrigins[0]}/reset-password/${token}`
-    void sendEmailSafely({ to: user.email, ...passwordResetEmail(user, resetUrl) })
+    const resetUrl = `${env.clientUrl}/reset-password/${token}`
+    await sendEmailSafely({ to: user.email, ...passwordResetEmail(user, resetUrl) })
     if (env.nodeEnv === 'development') developmentResetUrl = resetUrl
   }
 

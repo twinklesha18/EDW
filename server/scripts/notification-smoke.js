@@ -6,8 +6,7 @@ import app from '../app.js'
 import { env } from '../config/env.js'
 import Notification from '../models/Notification.js'
 import User from '../models/User.js'
-import { notifyNormalOrderStatus } from '../services/orderNotificationService.js'
-import { notifyUser } from '../services/notificationService.js'
+import { notifyNormalOrderAdminEvent, notifyNormalOrderPlaced, notifyNormalOrderStatus, notifyNormalOrderTracking } from '../services/orderNotificationService.js'
 
 const port = 5112
 const base = `http://127.0.0.1:${port}/api`
@@ -44,15 +43,12 @@ try {
   testOrderId = new mongoose.Types.ObjectId()
   const order = { _id: testOrderId, orderNumber: `EDW-${new Date().getFullYear()}-${String(suffix).slice(-6)}`, orderStatus: 'Pending', paymentStatus: 'Pending', paymentMethod: 'COD', total: 2500 }
 
-  await Promise.all([
-    notifyUser({ user: customer, type: 'order_placed', title: `Order ${order.orderNumber} placed`, message: 'Customer order notification test.', link: `/orders/${order.orderNumber}`, order }),
-    notifyUser({ user: admin, type: 'new_order', title: `New order ${order.orderNumber}`, message: 'Administrator order notification test.', link: `/admin/orders/${order._id}`, order }),
-  ])
+  await notifyNormalOrderPlaced(order, customer)
   let result = await request('/notifications', { cookie: adminCookie })
   assert.equal(result.status, 200)
-  assert.equal(result.body.data.unreadCount, 1, 'Administrator receives an unread new-order notification')
-  assert.match(result.body.data.notifications[0].title, /New order/)
-  const adminNotificationId = result.body.data.notifications[0].id
+  const adminOrderNotification = result.body.data.notifications.find((entry) => entry.title === `New order ${order.orderNumber}`)
+  assert.ok(adminOrderNotification, 'Administrator receives an unread new-order notification')
+  const adminNotificationId = adminOrderNotification.id
 
   result = await request('/notifications', { cookie: customerCookie })
   assert.equal(result.status, 200)
@@ -77,7 +73,22 @@ try {
   result = await request('/notifications', { cookie: customerCookie })
   assert.equal(result.body.data.unreadCount, 0)
 
-  console.log('Notification smoke test passed: admin/customer delivery, isolation, unread counts, individual reads, delivery updates, and mark-all.')
+  order.trackingNumber = `TRACK-${String(suffix).slice(-6)}`
+  await notifyNormalOrderTracking(order, customer)
+  result = await request('/notifications', { cookie: customerCookie })
+  assert.match(result.body.data.notifications[0].title, /Tracking updated/)
+
+  order.orderStatus = 'Cancelled'
+  await Promise.all([
+    notifyNormalOrderStatus(order, customer),
+    notifyNormalOrderAdminEvent(order, `Order ${order.orderNumber} cancelled`, `${customer.firstName} cancelled the order during notification testing.`),
+  ])
+  result = await request('/notifications', { cookie: customerCookie })
+  assert.match(result.body.data.notifications[0].title, /Cancelled/)
+  result = await request('/notifications', { cookie: adminCookie })
+  assert.ok(result.body.data.notifications.some((entry) => entry.title === `Order ${order.orderNumber} cancelled`))
+
+  console.log('Notification smoke test passed: placement, delivery, tracking, cancellation, admin/customer delivery, isolation, and read state.')
 } finally {
   if (server) await new Promise((resolve) => server.close(resolve))
   if (admin || customer || testOrderId) await Notification.deleteMany({ $or: [{ recipient: { $in: [admin?._id, customer?._id].filter(Boolean) } }, ...(testOrderId ? [{ order: testOrderId }] : [])] })

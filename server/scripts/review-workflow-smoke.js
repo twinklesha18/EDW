@@ -9,6 +9,7 @@ import Order from '../models/Order.js'
 import Product from '../models/Product.js'
 import Review from '../models/Review.js'
 import User from '../models/User.js'
+import Notification from '../models/Notification.js'
 
 const port = 5109
 const base = `http://127.0.0.1:${port}/api`
@@ -57,8 +58,9 @@ try {
   customer = await User.create({ firstName: 'Review', lastName: 'Customer', email: customerEmail, phone: '0754445566', password, role: 'user' })
   category = await Category.create({ name: `Review ${suffix}`, slug: `review-${suffix}`, description: 'Review verification category' })
   product = await Product.create({ name: 'Delivered Review Product', slug: `delivered-review-${suffix}`, category: category._id, description: 'Product used to verify delivered-order reviews.', prices: { S: 2000, M: 2500, L: 3000 }, image: { url: 'https://example.com/review-product.webp', alt: 'Review product' } })
-  pendingOrder = await Order.create(orderValues('EDW-2099-900001', 'Confirmed'))
-  deliveredOrder = await Order.create(orderValues('EDW-2099-900002', 'Delivered'))
+  const orderSequence = Number(String(suffix).slice(-6))
+  pendingOrder = await Order.create(orderValues(`EDW-2099-${String(orderSequence).padStart(6, '0')}`, 'Confirmed'))
+  deliveredOrder = await Order.create(orderValues(`EDW-2099-${String((orderSequence + 1) % 1000000).padStart(6, '0')}`, 'Delivered'))
   server = app.listen(port)
   await new Promise((resolve) => server.once('listening', resolve))
   const customerCookie = await login(customerEmail)
@@ -71,6 +73,7 @@ try {
   assert.equal(result.status, 201)
   review = result.body.data.review
   assert.equal(review.isApproved, false, 'New reviews must wait for administrator approval')
+  assert.ok(await Notification.exists({ recipient: admin._id, type: 'new_review' }), 'Administrators must be notified about new reviews')
 
   result = await request('/reviews/homepage')
   assert.equal(result.status, 200)
@@ -82,6 +85,7 @@ try {
   result = await request(`/admin/reviews/${review.id}/moderate`, { method: 'PATCH', cookie: adminCookie, body: { isApproved: true } })
   assert.equal(result.status, 200)
   assert.equal(result.body.data.review.isApproved, true)
+  assert.ok(await Notification.exists({ recipient: customer._id, type: 'review_moderated' }), 'Customers must be notified when review moderation changes')
 
   result = await request('/reviews/homepage')
   assert.ok(result.body.data.reviews.some((entry) => entry.id === review.id), 'Approved review must appear in the homepage feed')
@@ -93,6 +97,7 @@ try {
   console.log('Review workflow smoke test passed: delivered-only submission, pending moderation, admin approval, dashboard status, and homepage publication.')
 } finally {
   if (server) await new Promise((resolve) => server.close(resolve))
+  await Notification.deleteMany({ recipient: { $in: [admin?._id, customer?._id].filter(Boolean) } })
   if (review?._id || review?.id) await Review.deleteOne({ _id: review._id || review.id })
   if (pendingOrder?._id) await Order.deleteOne({ _id: pendingOrder._id })
   if (deliveredOrder?._id) await Order.deleteOne({ _id: deliveredOrder._id })

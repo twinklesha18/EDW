@@ -8,7 +8,7 @@ import Notification from '../models/Notification.js'
 import SiteSetting from '../models/SiteSetting.js'
 import UserDeletionLog from '../models/UserDeletionLog.js'
 import { env } from '../config/env.js'
-import { passwordResetEmail } from '../services/emailTemplates.js'
+import { passwordResetEmail, welcomeEmail } from '../services/emailTemplates.js'
 import { sendEmailSafely } from '../services/emailService.js'
 import { createPasswordResetToken } from '../utils/passwordUtils.js'
 import { escapeRegex, paginationData, paginationFromQuery } from '../utils/queryUtils.js'
@@ -52,6 +52,7 @@ export async function createUser(request, response) {
   const existing = await User.findOne({ email: request.validatedBody.email }).select('_id')
   if (existing) throw new AppError('An account with this email already exists', 409, [{ field: 'email', message: 'Email is already in use' }])
   const user = await User.create(request.validatedBody)
+  await sendEmailSafely({ to: user.email, ...welcomeEmail(user, env.clientUrl) })
   return sendSuccess(response, { statusCode: 201, message: 'User created successfully', data: { user } })
 }
 
@@ -175,7 +176,7 @@ export async function createUserPasswordReset(request, response) {
   user.resetPasswordExpire = new Date(Date.now() + 30 * 60 * 1000)
   await user.save({ validateModifiedOnly: true })
 
-  const resetUrl = `${env.clientOrigins[0]}/reset-password/${token}`
+  const resetUrl = `${env.clientUrl}/reset-password/${token}`
   const delivery = await sendEmailSafely({ to: user.email, ...passwordResetEmail(user, resetUrl) })
   const exposeResetUrl = env.nodeEnv === 'development' || delivery?.skipped || delivery?.failed
 
