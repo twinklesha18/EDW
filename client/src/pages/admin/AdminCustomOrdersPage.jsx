@@ -32,6 +32,7 @@ function AdminCustomOrdersPage() {
     { key: 'requiredDate', label: 'Required Date', render: (row) => new Date(row.requiredDate).toLocaleDateString() },
     { key: 'budgetRange', label: 'Budget' },
     { key: 'status', label: 'Status', render: (row) => <StatusBadge>{row.status}</StatusBadge> },
+    { key: 'paymentStatus', label: 'Payment', render: (row) => <StatusBadge>{row.paymentStatus || 'Not Selected'}</StatusBadge> },
     {
       key: 'view',
       label: '',

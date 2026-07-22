@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { FiBell, FiMenu, FiUser } from 'react-icons/fi'
+import { FiMenu, FiUser } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import { useDispatch, useSelector } from 'react-redux'
 import { Outlet, useNavigate } from 'react-router-dom'
 import AdminGlobalSearch from '../components/admin/AdminGlobalSearch.jsx'
 import AdminSidebar from '../components/admin/AdminSidebar.jsx'
+import NotificationBell from '../components/common/NotificationBell.jsx'
 import { logoutUser } from '../redux/slices/authSlice.js'
 
 function AdminLayout() {
@@ -54,10 +55,7 @@ function AdminLayout() {
           </button>
           <AdminGlobalSearch />
           <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
-            <button type="button" className="icon-button" aria-label="Notifications">
-              <FiBell />
-              <span className="count-badge">0</span>
-            </button>
+            <NotificationBell />
             <div className="hidden items-center gap-2 rounded-full border border-gold/20 px-3 py-2 sm:flex">
               <FiUser className="text-rosewood" />
               <span className="text-xs font-semibold">{user?.firstName} · Admin</span>

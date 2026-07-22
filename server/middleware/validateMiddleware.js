@@ -1,7 +1,7 @@
 import { AppError } from '../utils/responseUtils.js'
 import { isStrongPassword } from '../utils/passwordUtils.js'
+import { EMAIL_VALIDATION_MESSAGE, PHONE_VALIDATION_MESSAGE, isValidEmail, isValidPhone, normalizeEmail, normalizePhone } from '../utils/inputValidation.js'
 
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const objectIdPattern = /^[a-f\d]{24}$/i
 
 const sanitizeText = (value, maxLength = 250) =>
@@ -22,8 +22,14 @@ const requiredText = (body, field, label, { min = 1, max = 120 } = {}) => {
 const optionalText = (body, field, max = 250) => sanitizeText(body[field], max)
 
 const readEmail = (body) => {
-  const value = sanitizeText(body.email, 160).toLowerCase()
-  if (!value || !emailPattern.test(value)) return { value, error: error('email', 'Enter a valid email address') }
+  const value = normalizeEmail(sanitizeText(body.email, 160))
+  if (!isValidEmail(value)) return { value, error: error('email', EMAIL_VALIDATION_MESSAGE) }
+  return { value }
+}
+
+const readPhone = (body, field = 'phone') => {
+  const value = normalizePhone(sanitizeText(body[field], 24))
+  if (!isValidPhone(value)) return { value, error: error(field, PHONE_VALIDATION_MESSAGE) }
   return { value }
 }
 
@@ -46,7 +52,7 @@ export const registrationValidator = (body) => {
   const firstName = requiredText(body, 'firstName', 'First name', { min: 2, max: 60 })
   const lastName = requiredText(body, 'lastName', 'Last name', { min: 2, max: 60 })
   const email = readEmail(body)
-  const phone = requiredText(body, 'phone', 'Phone number', { min: 7, max: 20 })
+  const phone = readPhone(body)
   const password = readPassword(body, 'password', 'Password')
   const confirmPassword = typeof body.confirmPassword === 'string' ? body.confirmPassword : ''
   return validateFields(
@@ -81,7 +87,7 @@ export const resetPasswordValidator = (body) => {
 export const profileValidator = (body) => {
   const firstName = requiredText(body, 'firstName', 'First name', { min: 2, max: 60 })
   const lastName = requiredText(body, 'lastName', 'Last name', { min: 2, max: 60 })
-  const phone = requiredText(body, 'phone', 'Phone number', { min: 7, max: 20 })
+  const phone = readPhone(body)
   const avatar = optionalText(body, 'avatar', 500)
   return validateFields(
     { firstName: firstName.value, lastName: lastName.value, phone: phone.value, avatar },
@@ -101,7 +107,7 @@ export const changePasswordValidator = (body) => {
 
 export const addressValidator = (body) => {
   const fields = [
-    ['label', 'Label', 2, 40], ['fullName', 'Full name', 2, 120], ['phone', 'Phone number', 7, 20],
+    ['label', 'Label', 2, 40], ['fullName', 'Full name', 2, 120],
     ['addressLine1', 'Address line 1', 3, 150], ['city', 'City', 2, 80], ['district', 'District', 2, 80],
     ['province', 'Province', 2, 80],
   ]
@@ -112,6 +118,9 @@ export const addressValidator = (body) => {
     values[field] = result.value
     if (result.error) errors.push(result.error)
   }
+  const phone = readPhone(body)
+  values.phone = phone.value
+  if (phone.error) errors.push(phone.error)
   values.addressLine2 = optionalText(body, 'addressLine2', 150)
   values.postalCode = optionalText(body, 'postalCode', 20)
   values.country = optionalText(body, 'country', 80) || 'Sri Lanka'

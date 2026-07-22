@@ -3,7 +3,7 @@ import { useCallback, useEffect } from 'react'
 import { FiShoppingBag, FiX } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import { useDispatch, useSelector } from 'react-redux'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { removeCartItem, toggleCartDrawer, updateCartQuantity } from '../../redux/slices/cartSlice.js'
 import { formatCurrency } from '../../utils/formatCurrency.js'
 import CartItem from './CartItem.jsx'
@@ -11,8 +11,15 @@ import CartItem from './CartItem.jsx'
 function CartDrawer() {
   const dispatch = useDispatch()
   const location = useLocation()
+  const navigate = useNavigate()
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated)
   const { isCartOpen, items, itemCount, subtotal, isLoading } = useSelector((state) => state.cart)
   const close = useCallback(() => dispatch(toggleCartDrawer(false)), [dispatch])
+  const checkout = () => {
+    close()
+    if (isAuthenticated) navigate('/checkout')
+    else navigate('/login', { state: { from: '/checkout' } })
+  }
 
   useEffect(() => { close() }, [close, location.pathname])
   useEffect(() => {
@@ -67,7 +74,7 @@ function CartDrawer() {
                   <strong className="break-words font-serif text-2xl text-rosewood">{formatCurrency(subtotal)}</strong>
                 </div>
                 <Link to="/cart" onClick={close} className="primary-button mt-4 w-full">View Cart</Link>
-                <button type="button" onClick={() => toast('Checkout will be connected in Phase 5.')} className="secondary-button mt-2 w-full">Proceed to Checkout</button>
+                <button type="button" onClick={checkout} className="secondary-button mt-2 w-full">Proceed to Checkout</button>
               </footer>
             )}
           </motion.aside>

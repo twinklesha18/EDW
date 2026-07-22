@@ -11,6 +11,8 @@ const transporter = isEmailConfigured ? nodemailer.createTransport({
 }) : null
 
 export async function sendEmail({ to, subject, html }) {
+  if (process.env.EDW_DISABLE_EMAIL === 'true') return { skipped: true, reason: 'disabled' }
+  if (String(to || '').trim().toLowerCase().endsWith('@edw.test')) return { skipped: true, reason: 'test-recipient' }
   if (!isEmailConfigured) return { skipped: true }
   return transporter.sendMail({ from: env.email.from, to, subject, html })
 }

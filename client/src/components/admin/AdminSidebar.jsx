@@ -6,12 +6,13 @@ import {
   FiImage,
   FiLayers,
   FiLogOut,
-  FiPercent,
   FiSettings,
+  FiFileText,
   FiShoppingBag,
   FiStar,
   FiUsers,
   FiX,
+  FiXCircle,
 } from 'react-icons/fi'
 import { NavLink } from 'react-router-dom'
 import Logo from '../layout/Logo.jsx'
@@ -21,11 +22,12 @@ const links = [
   { to: '/admin/products', label: 'Products', icon: FiBox },
   { to: '/admin/categories', label: 'Categories', icon: FiLayers },
   { to: '/admin/orders', label: 'Orders', icon: FiShoppingBag },
+  { to: '/admin/cancellations', label: 'Cancellations', icon: FiXCircle },
   { to: '/admin/custom-orders', label: 'Custom Orders', icon: FiClipboard },
   { to: '/admin/users', label: 'Users', icon: FiUsers },
+  { to: '/admin/user-deletion-logs', label: 'Deletion Logs', icon: FiFileText },
   { to: '/admin/reviews', label: 'Reviews', icon: FiStar },
-  { to: '/admin/coupons', label: 'Coupons', icon: FiPercent },
-  { to: '/admin/banners', label: 'Banners', icon: FiImage },
+  { to: '/admin/banners', label: 'Homepage Images', icon: FiImage },
   { to: '/admin/settings', label: 'Settings', icon: FiSettings },
 ]
 

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { FiChevronRight, FiHeart, FiMinus, FiPackage, FiPlus, FiShare2, FiShoppingBag, FiTruck } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import { useDispatch, useSelector } from 'react-redux'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import EmptyState from '../components/common/EmptyState.jsx'
 import PageTransition from '../components/common/PageTransition.jsx'
 import RatingStars from '../components/common/RatingStars.jsx'
@@ -28,6 +28,8 @@ function ProductDetailsPage() {
   const [quantity, setQuantity] = useState(1)
   const [selectedSize, setSelectedSize] = useState('S')
   const dispatch = useDispatch()
+  const navigate = useNavigate()
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated)
   const [customization, setCustomization] = useState({ message: '', preferredColor: '', notes: '' })
   const wishlisted = useSelector((state) => product ? state.wishlist.items.some((item) => item.productId === product.id) : false)
   const cartPending = useSelector((state) => product ? state.cart.pendingProductIds.includes(product.id) : false)
@@ -65,6 +67,13 @@ function ProductDetailsPage() {
     }
   }
   const addProduct = async () => { try { await dispatch(addToCart(productToCartPayload(product, selectedSize, quantity, customization))).unwrap(); toast.success(`Size ${selectedSize} added to your cart.`) } catch (error) { toast.error(error?.message || 'Unable to add this item.') } }
+  const buyNow = async () => {
+    try {
+      await dispatch(addToCart(productToCartPayload(product, selectedSize, quantity, customization))).unwrap()
+      if (isAuthenticated) navigate('/checkout')
+      else navigate('/login', { state: { from: '/checkout' } })
+    } catch (error) { toast.error(error?.message || 'Unable to start checkout.') }
+  }
   const toggleSaved = async () => { try { await dispatch(toggleWishlist(productToWishlistPayload(product))).unwrap(); toast.success(wishlisted ? 'Removed from your wishlist.' : 'Added to your wishlist.') } catch (error) { toast.error(error?.message || 'Unable to update your wishlist.') } }
 
   return (
@@ -119,7 +128,7 @@ function ProductDetailsPage() {
               <button type="button" onClick={addProduct} disabled={cartPending} className="primary-button flex-1"><FiShoppingBag aria-hidden="true" /> {cartPending ? 'Adding…' : 'Add to Cart'}</button>
               <button type="button" onClick={toggleSaved} disabled={wishlistPending} className={`icon-button h-12 w-12 border border-gold/25 ${wishlisted ? 'text-[#c94d7c]' : ''}`} aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'} aria-pressed={wishlisted}><FiHeart className={wishlisted ? 'fill-current' : ''} aria-hidden="true" /></button>
             </div>
-            <button type="button" onClick={() => toast('Checkout will be available in a later phase.')} className="secondary-button mt-3 w-full">Buy Now</button>
+            <button type="button" onClick={buyNow} disabled={cartPending} className="secondary-button mt-3 w-full">{cartPending ? 'Preparing Checkout…' : 'Buy Now'}</button>
 
             <div className="mt-7 grid gap-3 sm:grid-cols-2">
               <div className="flex gap-3 rounded-2xl bg-blue-light/45 p-4"><FiTruck className="mt-1 shrink-0 text-rosewood" aria-hidden="true" /><div><p className="text-sm font-semibold text-ink">Delivery information</p><p className="mt-1 text-xs leading-5 text-muted">Timing and charges will be confirmed with your order.</p></div></div>

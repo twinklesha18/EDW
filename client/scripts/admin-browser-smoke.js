@@ -15,7 +15,7 @@ await send('Page.navigate', { url: 'http://localhost:5173' })
 await wait(1000)
 const login = await send('Runtime.evaluate', { expression: `fetch('http://localhost:5000/api/auth/login',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:'phase4-browser-admin@example.com',password:'BrowserSecure1',rememberMe:false})}).then(r=>r.json())`, awaitPromise: true, returnByValue: true })
 assert.equal(login.result.value.success, true, 'Browser admin login failed')
-const routes = ['dashboard', 'products', 'products/new', 'categories', 'orders', 'users', 'reviews', 'coupons', 'banners', 'settings']
+const routes = ['dashboard', 'products', 'products/new', 'categories', 'orders', 'users', 'reviews', 'banners', 'settings']
 for (const route of routes) {
   currentRoute = route
   await send('Page.navigate', { url: `http://localhost:5173/admin/${route}` })

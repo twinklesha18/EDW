@@ -10,7 +10,7 @@ import { AppError } from './responseUtils.js'
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url))
 const uploadsRoot = path.resolve(currentDirectory, '..', 'uploads')
-const allowedFolders = new Set(['products', 'categories', 'banners', 'custom-orders'])
+const allowedFolders = new Set(['products', 'categories', 'banners', 'settings', 'custom-orders', 'payment-slips'])
 const heicTypes = new Set(['image/heic', 'image/heif', 'image/heic-sequence', 'image/heif-sequence', 'image/x-heic', 'image/x-heif'])
 
 const uploadFolder = (folder) => {
@@ -63,7 +63,7 @@ async function uploadLocally(file, folder) {
 
 export async function uploadImage(file, folder = 'eshaz-dream-world/products') {
   if (!isCloudinaryConfigured) {
-    if (env.nodeEnv === 'production') throw new AppError('Cloudinary must be configured for production image uploads', 503)
+    if (env.isProduction) throw new AppError('Cloudinary must be configured for production image uploads', 503)
     return uploadLocally(file, folder)
   }
 
@@ -79,7 +79,7 @@ export async function uploadImage(file, folder = 'eshaz-dream-world/products') {
 
 async function deleteLocalImage(publicId) {
   const relativePath = publicId.slice('local:'.length).replaceAll('\\', '/')
-  if (!/^(products|categories|banners|custom-orders)\/[a-zA-Z0-9-]+\.webp$/.test(relativePath)) throw new AppError('Invalid local image identifier', 400)
+  if (!/^(products|categories|banners|settings|custom-orders|payment-slips)\/[a-zA-Z0-9-]+\.webp$/.test(relativePath)) throw new AppError('Invalid local image identifier', 400)
   const target = path.resolve(uploadsRoot, ...relativePath.split('/'))
   if (!target.startsWith(`${uploadsRoot}${path.sep}`)) throw new AppError('Invalid local image identifier', 400)
   try { await unlink(target) } catch (error) { if (error.code !== 'ENOENT') throw error }

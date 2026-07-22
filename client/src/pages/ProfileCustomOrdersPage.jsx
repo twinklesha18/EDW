@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { FiCalendar, FiClipboard, FiPlus } from 'react-icons/fi'
+import { FiCalendar, FiClipboard, FiEye, FiPlus } from 'react-icons/fi'
 import { Link } from 'react-router-dom'
 import AdminPagination from '../components/admin/AdminPagination.jsx'
 import StatusBadge from '../components/admin/StatusBadge.jsx'
@@ -56,6 +56,7 @@ function ProfileCustomOrdersPage() {
                 <div><dt className="text-xs text-muted">Required date</dt><dd className="mt-1 flex items-center gap-2 font-medium"><FiCalendar className="text-rosewood" />{new Date(order.requiredDate).toLocaleDateString()}</dd></div>
                 <div><dt className="text-xs text-muted">Quote</dt><dd className="mt-1 font-medium text-rosewood">{order.quotedPrice === null ? 'Awaiting quote' : formatCurrency(order.quotedPrice)}</dd></div>
               </dl>
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-2 text-xs text-muted"><span>Payment:</span><StatusBadge>{order.paymentStatus || 'Not Selected'}</StatusBadge></div><Link to={`/profile/custom-orders/${order.id || order._id}`} className="secondary-button min-h-10"><FiEye /> View & Track</Link></div>
               {order.adminNote && <div className="mt-4 rounded-xl bg-pink-light/40 p-3 text-sm"><span className="font-semibold">Update from Eshaz:</span> <span className="text-muted">{order.adminNote}</span></div>}
             </article>
           ))}

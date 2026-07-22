@@ -1,7 +1,12 @@
 import axios from 'axios'
 
+const configuredApiUrl = String(import.meta.env?.VITE_API_URL || '').trim().replace(/\/$/, '')
+const browserHostname = typeof window === 'undefined' ? '' : window.location?.hostname || ''
+const isLocalBrowser = !browserHostname || ['localhost', '127.0.0.1'].includes(browserHostname)
+const apiBaseUrl = isLocalBrowser ? (configuredApiUrl || 'http://localhost:5000/api') : '/api'
+
 const api = axios.create({
-  baseURL: import.meta.env?.VITE_API_URL ?? 'http://localhost:5000/api',
+  baseURL: apiBaseUrl,
   headers: { 'Content-Type': 'application/json' },
   timeout: 12000,
   withCredentials: true,

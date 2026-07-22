@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { FiArrowLeft, FiCalendar, FiExternalLink, FiGift, FiMail, FiMessageSquare, FiPhone, FiUser } from 'react-icons/fi'
+import { FiArrowLeft, FiCalendar, FiCheckCircle, FiCreditCard, FiExternalLink, FiGift, FiMail, FiMapPin, FiMessageSquare, FiPhone, FiUser, FiXCircle } from 'react-icons/fi'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { Link, useParams } from 'react-router-dom'
@@ -17,6 +17,8 @@ function AdminCustomOrderDetailsPage() {
   const [customOrder, setCustomOrder] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [paymentSaving, setPaymentSaving] = useState(false)
+  const [paymentNote, setPaymentNote] = useState('')
   const [error, setError] = useState('')
   const { register, reset, handleSubmit } = useForm()
 
@@ -24,7 +26,7 @@ function AdminCustomOrderDetailsPage() {
     adminApi.get('custom-orders', id)
       .then(({ customOrder: value }) => {
         setCustomOrder(value)
-        reset({ status: value.status, quotedPrice: value.quotedPrice ?? '', adminNote: value.adminNote || '' })
+        reset({ status: value.status, quotedPrice: value.quotedPrice ?? '', adminNote: value.adminNote || '', trackingNumber: value.trackingNumber || '', estimatedDelivery: value.estimatedDelivery?.slice(0, 10) || '' })
       })
       .catch((requestError) => setError(requestError.response?.data?.message || 'Unable to load custom order.'))
       .finally(() => setLoading(false))
@@ -36,13 +38,26 @@ function AdminCustomOrderDetailsPage() {
       const response = await adminApi.update('custom-orders', id, values)
       const updated = response.data.customOrder
       setCustomOrder(updated)
-      reset({ status: updated.status, quotedPrice: updated.quotedPrice ?? '', adminNote: updated.adminNote || '' })
+      reset({ status: updated.status, quotedPrice: updated.quotedPrice ?? '', adminNote: updated.adminNote || '', trackingNumber: updated.trackingNumber || '', estimatedDelivery: updated.estimatedDelivery?.slice(0, 10) || '' })
       toast.success('Custom order updated successfully.')
     } catch (requestError) {
       toast.error(requestError.response?.data?.message || 'Unable to update custom order.')
     } finally {
       setSaving(false)
     }
+  }
+
+  const reviewPayment = async (action) => {
+    if (action === 'reject' && paymentNote.trim().length < 5) { toast.error('Enter a clear rejection reason first.'); return }
+    setPaymentSaving(true)
+    try {
+      const response = await adminApi.update('custom-orders', `${id}/payment`, { action, note: paymentNote })
+      setCustomOrder(response.data.customOrder)
+      setPaymentNote('')
+      toast.success('Payment status updated successfully.')
+    } catch (requestError) {
+      toast.error(requestError.response?.data?.message || 'Unable to update payment status.')
+    } finally { setPaymentSaving(false) }
   }
 
   if (loading) return <LoadingSkeleton />
@@ -95,6 +110,16 @@ function AdminCustomOrderDetailsPage() {
             </section>
           )}
 
+          {customOrder.paymentSlip?.url && (
+            <section className="form-section">
+              <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-serif text-2xl font-semibold">Bank Payment Slip</h2><p className="mt-1 text-sm text-muted">Review the uploaded transfer proof before approving payment.</p></div><StatusBadge>{customOrder.paymentStatus}</StatusBadge></div>
+              <a href={customOrder.paymentSlip.url} target="_blank" rel="noreferrer"><img src={customOrder.paymentSlip.url} alt={`Payment slip for ${customOrder.requestNumber}`} className="mt-5 max-h-[680px] w-full rounded-2xl bg-cream object-contain" /></a>
+              <div className="mt-4 flex flex-wrap gap-3"><a href={customOrder.paymentSlip.url} target="_blank" rel="noreferrer" className="secondary-button"><FiExternalLink /> Open Full Slip</a></div>
+            </section>
+          )}
+
+          {customOrder.deliveryAddress?.addressLine1 && <section className="form-section"><h2 className="form-section-title"><span><FiMapPin /></span> Delivery Address</h2><p className="mt-4 text-sm leading-7 text-muted"><strong className="text-ink">{customOrder.deliveryAddress.fullName}</strong><br />{customOrder.deliveryAddress.addressLine1}{customOrder.deliveryAddress.addressLine2 && `, ${customOrder.deliveryAddress.addressLine2}`}<br />{customOrder.deliveryAddress.city}, {customOrder.deliveryAddress.district}, {customOrder.deliveryAddress.province}<br />{customOrder.deliveryAddress.country} · {customOrder.deliveryAddress.phone}</p></section>}
+
           <section className="form-section">
             <h2 className="font-serif text-2xl font-semibold">Status History</h2>
             <ol className="mt-5 space-y-4">
@@ -106,6 +131,8 @@ function AdminCustomOrderDetailsPage() {
               ))}
             </ol>
           </section>
+
+          {customOrder.paymentHistory?.length > 0 && <section className="form-section"><h2 className="font-serif text-2xl font-semibold">Payment History</h2><ol className="mt-5 space-y-4">{customOrder.paymentHistory.map((entry) => <li key={entry.id || entry._id} className="flex gap-3 border-b border-gold/10 pb-4 last:border-0"><span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-gold" /><div><div className="flex flex-wrap items-center gap-2"><StatusBadge>{entry.status}</StatusBadge><span className="text-xs text-muted">{new Date(entry.timestamp).toLocaleString()}</span></div>{entry.note && <p className="mt-2 text-sm text-muted">{entry.note}</p>}</div></li>)}</ol></section>}
         </div>
 
         <aside className="space-y-6">
@@ -120,12 +147,20 @@ function AdminCustomOrderDetailsPage() {
             ) : <p className="mt-4 text-sm text-muted">Customer account is unavailable.</p>}
           </section>
 
+          <section className="form-section">
+            <h2 className="form-section-title"><span><FiCreditCard /></span> Payment</h2>
+            <dl className="mt-5 space-y-3 text-sm"><div className="flex justify-between gap-3"><dt className="text-muted">Method</dt><dd className="text-right font-semibold">{customOrder.paymentMethod || 'Not selected'}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted">Status</dt><dd><StatusBadge>{customOrder.paymentStatus || 'Not Selected'}</StatusBadge></dd></div>{customOrder.paymentReference && <div className="flex justify-between gap-3"><dt className="text-muted">Reference</dt><dd className="break-all text-right font-semibold">{customOrder.paymentReference}</dd></div>}{customOrder.paymentSubmittedAt && <div className="flex justify-between gap-3"><dt className="text-muted">Submitted</dt><dd className="text-right">{new Date(customOrder.paymentSubmittedAt).toLocaleString()}</dd></div>}</dl>
+            {['Slip Submitted', 'COD Pending'].includes(customOrder.paymentStatus) && <div className="mt-5 space-y-3"><label><span className="form-label">Payment review note</span><textarea className="input-field min-h-24" maxLength="1000" value={paymentNote} onChange={(event) => setPaymentNote(event.target.value)} placeholder={customOrder.paymentStatus === 'Slip Submitted' ? 'Approval note or required rejection reason' : 'Optional collection note'} /></label>{customOrder.paymentStatus === 'Slip Submitted' ? <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1"><button type="button" disabled={paymentSaving} className="primary-button" onClick={() => reviewPayment('approve')}><FiCheckCircle /> Approve Slip</button><button type="button" disabled={paymentSaving} className="secondary-button text-red-600" onClick={() => reviewPayment('reject')}><FiXCircle /> Reject Slip</button></div> : <button type="button" disabled={paymentSaving} className="primary-button w-full" onClick={() => reviewPayment('collect-cod')}><FiCheckCircle /> Mark COD Collected</button>}</div>}
+          </section>
+
           <form onSubmit={handleSubmit(save)} className="form-section">
             <h2 className="font-serif text-2xl font-semibold">Manage Request</h2>
             <div className="mt-5 space-y-4">
               <label><span className="form-label">Status</span><select className="input-field" {...register('status')}>{statuses.map((status) => <option key={status}>{status}</option>)}</select></label>
               <label><span className="form-label">Quoted Price (LKR)</span><input type="number" min="0" step="0.01" className="input-field" placeholder="Enter confirmed price" {...register('quotedPrice')} /></label>
               <label><span className="form-label">Admin Note</span><textarea className="input-field min-h-32" maxLength="1000" placeholder="Pricing, availability, or consultation notes" {...register('adminNote')} /></label>
+              <label><span className="form-label">Tracking Number</span><input className="input-field" maxLength="120" placeholder="Courier tracking reference" {...register('trackingNumber')} /></label>
+              <label><span className="form-label">Estimated Delivery</span><input type="date" className="input-field" {...register('estimatedDelivery')} /></label>
               <LoadingButton type="submit" loading={saving} className="primary-button w-full">Save Custom Order</LoadingButton>
             </div>
           </form>

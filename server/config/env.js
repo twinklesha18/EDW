@@ -12,6 +12,12 @@ const parsePort = (value) => {
   return port
 }
 
+const positiveInteger = (value, fallback, key) => {
+  const parsed = Number.parseInt(value ?? fallback, 10)
+  if (!Number.isInteger(parsed) || parsed < 1) throw new Error(`${key} must be a positive integer`)
+  return parsed
+}
+
 const required = (key) => {
   const value = process.env[key]?.trim()
 
@@ -22,26 +28,29 @@ const required = (key) => {
   return value
 }
 
+const defaultClientOrigins = ['http://localhost:5173', 'http://localhost:3000', 'https://edw-phi.vercel.app']
+const configuredClientOrigins = String(process.env.CLIENT_URL || '')
+  .split(',')
+  .map((origin) => origin.trim().replace(/\/$/, ''))
+  .filter(Boolean)
+const isProduction = process.env.NODE_ENV === 'production' || Boolean(process.env.VERCEL) || process.env.VERCEL_ENV === 'production'
+
 export const env = Object.freeze({
   nodeEnv: process.env.NODE_ENV?.trim() || 'development',
+  isProduction,
   port: parsePort(process.env.PORT || '5000'),
   mongoUri: process.env.MONGO_URI?.trim() || required('MONGODB_URI'),
   jwtSecret: required('JWT_SECRET'),
-  jwtExpiresIn: process.env.JWT_EXPIRES_IN?.trim() || '7d',
-  jwtRememberExpiresIn: process.env.JWT_REMEMBER_EXPIRES_IN?.trim() || '30d',
-  clientOrigins: required('CLIENT_URL')
-    .split(',')
-    .map((origin) => origin.trim().replace(/\/$/, ''))
-    .filter(Boolean),
+  session: Object.freeze({
+    idleMinutes: positiveInteger(process.env.SESSION_IDLE_TIMEOUT_MINUTES, 10, 'SESSION_IDLE_TIMEOUT_MINUTES'),
+    absoluteHours: positiveInteger(process.env.SESSION_ABSOLUTE_TIMEOUT_HOURS, 8, 'SESSION_ABSOLUTE_TIMEOUT_HOURS'),
+    rememberDays: positiveInteger(process.env.SESSION_REMEMBER_TIMEOUT_DAYS, 7, 'SESSION_REMEMBER_TIMEOUT_DAYS'),
+  }),
+  clientOrigins: [...new Set([...defaultClientOrigins, ...configuredClientOrigins])],
   cloudinary: Object.freeze({
     cloudName: process.env.CLOUDINARY_CLOUD_NAME?.trim() || '',
     apiKey: process.env.CLOUDINARY_API_KEY?.trim() || '',
     apiSecret: process.env.CLOUDINARY_API_SECRET?.trim() || '',
-  }),
-  stripe: Object.freeze({
-    secretKey: process.env.STRIPE_SECRET_KEY?.trim() || '',
-    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY?.trim() || '',
-    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET?.trim() || '',
   }),
   email: Object.freeze({
     host: process.env.EMAIL_HOST?.trim() || '',

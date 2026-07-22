@@ -4,13 +4,21 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import dotenv from 'dotenv'
 import mongoose from 'mongoose'
+
+process.env.EDW_DISABLE_EMAIL = 'true'
 import app from '../app.js'
 import Counter from '../models/Counter.js'
 import CustomOrder from '../models/CustomOrder.js'
+import Notification from '../models/Notification.js'
 import User from '../models/User.js'
 import { deleteImage } from '../utils/cloudinaryUtils.js'
 
 dotenv.config()
+process.env.BANK_NAME = 'EDW Verification Bank'
+process.env.BANK_ACCOUNT_NAME = 'Eshaz Dream World Test'
+process.env.BANK_ACCOUNT_NUMBER = '0000000000'
+process.env.BANK_BRANCH = 'Verification Branch'
+process.env.BANK_BRANCH_CODE = '000'
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url))
 const imagePath = path.resolve(currentDirectory, '..', '..', 'client', 'src', 'assets', 'images', 'products', 'chocolate-bouquet.jpg')
@@ -22,6 +30,7 @@ let server
 let customerId
 let adminId
 let customOrderId
+let codOrderId
 let uploadedPublicId
 const counterId = `custom-orders-${new Date().getFullYear()}`
 let originalCounterSequence = null
@@ -65,8 +74,9 @@ try {
   assert.ok(process.env.MONGODB_URI, 'MONGODB_URI is required for the custom-order smoke test')
   await mongoose.connect(process.env.MONGODB_URI)
   originalCounterSequence = (await Counter.findById(counterId).lean())?.sequence ?? null
-  const customer = await User.create({ firstName: 'Custom', lastName: 'Customer', email: customerEmail, phone: '0771234567', password, role: 'user' })
+  const customer = await User.create({ firstName: 'Custom', lastName: 'Customer', email: customerEmail, phone: '0771234567', password, role: 'user', addresses: [{ label: 'Home', fullName: 'Custom Customer', phone: '0771234567', addressLine1: '25 Verification Lane', city: 'Batticaloa', district: 'Batticaloa', province: 'Eastern', country: 'Sri Lanka', isDefault: true }] })
   customerId = customer._id
+  const addressId = String(customer.addresses[0]._id)
   const admin = await User.create({ firstName: 'Custom', lastName: 'Admin', email: adminEmail, phone: '0777654321', password, role: 'admin' })
   adminId = admin._id
 
@@ -120,20 +130,68 @@ try {
   assert.equal(result.body.data.customOrder.quotedPrice, 7500)
   assert.equal(result.body.data.customOrder.statusHistory.at(-1).status, 'Quoted')
 
+  result = await jsonRequest('/custom-orders/payment-config', { cookie: customerCookie })
+  assert.equal(result.status, 200)
+  assert.deepEqual(result.body.data.methods, ['COD', 'Bank Transfer'])
+  assert.ok(result.body.data.bankTransfer.accountNumber, 'The active owner bank account must be returned to the customer')
+
+  const paymentForm = new FormData()
+  paymentForm.set('paymentMethod', 'Bank Transfer')
+  paymentForm.set('addressId', addressId)
+  paymentForm.set('paymentReference', 'TEST-TRANSFER-001')
+  paymentForm.set('paymentSlip', new Blob([imageBuffer], { type: 'image/jpeg' }), 'payment-slip.jpg')
+  response = await fetch(`http://127.0.0.1:5105/api/custom-orders/${customOrderId}/payment`, { method: 'POST', headers: { Cookie: customerCookie }, body: paymentForm })
+  const paymentBody = await response.json()
+  assert.equal(response.status, 200, `Payment slip submission failed: ${JSON.stringify(paymentBody)}`)
+  assert.equal(paymentBody.data.customOrder.paymentStatus, 'Slip Submitted')
+  assert.equal(paymentBody.data.customOrder.deliveryAddress.addressLine1, '25 Verification Lane')
+  assert.ok(paymentBody.data.customOrder.paymentSlip.url)
+
+  result = await jsonRequest(`/admin/custom-orders/${customOrderId}`, { cookie: adminCookie })
+  assert.equal(result.body.data.customOrder.paymentStatus, 'Slip Submitted')
+  assert.ok(result.body.data.customOrder.paymentSlip.url, 'Admin must be able to view the payment slip')
+
+  result = await jsonRequest(`/admin/custom-orders/${customOrderId}/payment`, { method: 'PUT', cookie: adminCookie, body: { action: 'approve', note: 'Transfer verified by the automated smoke test.' } })
+  assert.equal(result.status, 200)
+  assert.equal(result.body.data.customOrder.paymentStatus, 'Paid')
+  assert.equal(result.body.data.customOrder.status, 'Approved')
+
+  result = await jsonRequest(`/custom-orders/${customOrderId}`, { cookie: customerCookie })
+  assert.equal(result.status, 200)
+  assert.equal(result.body.data.customOrder.paymentStatus, 'Paid', 'Customer tracking must show verified payment')
+
+  response = await fetch('http://127.0.0.1:5105/api/custom-orders', { method: 'POST', headers: { Cookie: customerCookie }, body: createForm() })
+  const codCreatedBody = await response.json()
+  assert.equal(response.status, 201)
+  codOrderId = codCreatedBody.data.customOrder._id
+  testCounterSequence = Number(codCreatedBody.data.customOrder.requestNumber.split('-').at(-1))
+  result = await jsonRequest(`/admin/custom-orders/${codOrderId}`, { method: 'PUT', cookie: adminCookie, body: { status: 'Quoted', quotedPrice: 6400, adminNote: 'COD verification quote.' } })
+  assert.equal(result.status, 200)
+  const codForm = new FormData()
+  codForm.set('paymentMethod', 'COD')
+  codForm.set('addressId', addressId)
+  response = await fetch(`http://127.0.0.1:5105/api/custom-orders/${codOrderId}/payment`, { method: 'POST', headers: { Cookie: customerCookie }, body: codForm })
+  const codBody = await response.json()
+  assert.equal(response.status, 200, `COD selection failed: ${JSON.stringify(codBody)}`)
+  assert.equal(codBody.data.customOrder.paymentStatus, 'COD Pending')
+  assert.equal(codBody.data.customOrder.status, 'Approved')
+  result = await jsonRequest(`/admin/custom-orders/${codOrderId}/payment`, { method: 'PUT', cookie: adminCookie, body: { action: 'collect-cod', note: 'COD collected by verification.' } })
+  assert.equal(result.status, 200)
+  assert.equal(result.body.data.customOrder.paymentStatus, 'COD Collected')
+
   result = await jsonRequest(`/admin/search?q=${encodeURIComponent(created.requestNumber)}`, { cookie: adminCookie })
   assert.equal(result.status, 200)
   assert.equal(result.body.data.customOrders[0].requestNumber, created.requestNumber, 'Admin global search must find custom orders')
 
-  console.log('Custom-order smoke test passed: guest blocking, submission, customer dashboard history, image upload, admin management, status history, and global search.')
+  console.log('Custom-order smoke test passed: quote tracking, saved delivery address, bank details, slip upload/admin approval, COD selection/collection, customer payment history, and admin management.')
 } finally {
   if (server) await new Promise((resolve) => server.close(resolve))
-  if (!customOrderId && customerId) {
-    const leftovers = await CustomOrder.find({ user: customerId }).select('inspiration.publicId')
-    await Promise.all(leftovers.map((order) => order.inspiration?.publicId ? deleteImage(order.inspiration.publicId).catch(() => {}) : Promise.resolve()))
+  if (customerId) {
+    const leftovers = await CustomOrder.find({ user: customerId }).select('inspiration.publicId paymentSlip.publicId')
+    await Promise.all(leftovers.flatMap((order) => [order.inspiration?.publicId, order.paymentSlip?.publicId].filter(Boolean).map((publicId) => deleteImage(publicId).catch(() => {}))))
+    await Notification.deleteMany({ $or: [{ recipient: { $in: [customerId, adminId].filter(Boolean) } }, { customOrder: { $in: leftovers.map((order) => order._id) } }] })
     await CustomOrder.deleteMany({ user: customerId })
   }
-  if (uploadedPublicId) await deleteImage(uploadedPublicId).catch(() => {})
-  if (customOrderId) await CustomOrder.deleteOne({ _id: customOrderId })
   if (customerId || adminId) await User.deleteMany({ _id: { $in: [customerId, adminId].filter(Boolean) } })
   const currentCounter = await Counter.findById(counterId).lean()
   if (testCounterSequence && currentCounter?.sequence === testCounterSequence) {

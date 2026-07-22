@@ -41,14 +41,14 @@ await send('Runtime.enable')
 await send('Page.enable')
 
 const publicRoutes = [
-  '/', '/shop', '/categories', '/about', '/contact', '/faq',
+  '/', '/shop', '/categories', '/contact', '/faq',
   '/shipping', '/returns', '/privacy', '/terms', '/cart', '/track-order', '/login',
   '/register', '/forgot-password', '/page-that-does-not-exist',
 ]
-const customerRoutes = ['/custom-orders', '/profile', '/profile/orders', '/profile/custom-orders', '/profile/addresses', '/profile/settings', '/wishlist', '/checkout']
+const customerRoutes = ['/custom-orders', '/profile', '/profile/orders', '/profile/custom-orders', '/profile/custom-orders/64ed00000000000000000001', '/profile/addresses', '/profile/settings', '/wishlist', '/checkout']
 const adminRoutes = [
   '/admin/dashboard', '/admin/products', '/admin/products/new', '/admin/categories',
-  '/admin/orders', '/admin/custom-orders', '/admin/users', '/admin/reviews', '/admin/coupons',
+  '/admin/orders', '/admin/cancellations', '/admin/custom-orders', '/admin/custom-orders/64ed00000000000000000001', '/admin/users', '/admin/reviews',
   '/admin/banners', '/admin/settings',
 ]
 

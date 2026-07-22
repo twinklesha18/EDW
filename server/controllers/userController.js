@@ -1,5 +1,6 @@
 import User from '../models/User.js'
 import { AppError, sendSuccess } from '../utils/responseUtils.js'
+import { setAuthCookie } from '../utils/generateToken.js'
 
 export function getProfile(request, response) {
   return sendSuccess(response, { message: 'Profile retrieved', data: { user: request.user.toJSON() } })
@@ -12,11 +13,13 @@ export async function updateProfile(request, response) {
 }
 
 export async function changePassword(request, response) {
-  const user = await User.findById(request.user._id).select('+password')
+  const user = await User.findById(request.user._id).select('+password +sessionVersion')
   if (!(await user.comparePassword(request.validatedBody.currentPassword))) throw new AppError('Current password is incorrect', 400, [{ field: 'currentPassword', message: 'Current password is incorrect' }])
 
   user.password = request.validatedBody.newPassword
+  user.sessionVersion = Number(user.sessionVersion || 0) + 1
   await user.save()
+  setAuthCookie(response, user._id, request.authSession?.rem === true, Date.now(), user.sessionVersion)
   return sendSuccess(response, { message: 'Password changed successfully' })
 }
 

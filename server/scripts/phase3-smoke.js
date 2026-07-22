@@ -8,9 +8,11 @@ import app from '../app.js'
 import Category from '../models/Category.js'
 import Product from '../models/Product.js'
 
+process.env.EDW_DISABLE_EMAIL = 'true'
+
 const testPort = 5099
 const apiUrl = `http://127.0.0.1:${testPort}/api`
-const email = `phase3-${Date.now()}@example.com`
+const email = `phase3-${Date.now()}@edw.test`
 let cookie = ''
 let userId
 let server
@@ -23,20 +25,28 @@ async function request(path, { method = 'GET', body, authenticated = true } = {}
     headers: { ...(body ? { 'Content-Type': 'application/json' } : {}), ...(authenticated && cookie ? { Cookie: cookie } : {}) },
     body: body ? JSON.stringify(body) : undefined,
   })
-  const setCookie = response.headers.get('set-cookie')
-  if (setCookie) cookie = setCookie.split(';')[0]
+  const setCookies = response.headers.getSetCookie?.() || [response.headers.get('set-cookie')].filter(Boolean)
+  if (setCookies.length) cookie = setCookies.at(-1).split(';')[0]
   const payload = await response.json()
   return { status: response.status, payload }
 }
 
 const address = (number) => ({ label: `Address ${number}`, fullName: 'Phase Three User', phone: '+94771234567', addressLine1: `${number} Dream Lane`, addressLine2: '', city: 'Colombo', district: 'Colombo', province: 'Western', postalCode: `1000${number}`, country: 'Sri Lanka', isDefault: false })
-const cartItem = (productId, message = '') => ({ productId, name: 'Smoke Test Gift', slug: `smoke-test-${productId}`, image: '/test-gift.jpg', price: 1000, quantity: 1, stock: 5, category: 'Test Gifts', customization: { message, preferredColor: 'Pink', notes: '' } })
-const wishItem = (productId) => ({ productId, name: 'Smoke Test Gift', slug: `smoke-test-${productId}`, image: '/test-gift.jpg', price: 1000, category: 'Test Gifts', stock: 5 })
+const productIdFor = (key) => String(testProducts.find((product) => product.slug === `smoke-test-${key}`)?._id || key)
+const cartItem = (key, message = '') => ({ productId: productIdFor(key), size: 'S', quantity: 1, customization: { message, preferredColor: 'Pink', notes: '' } })
+const wishItem = (key) => ({ productId: productIdFor(key) })
 
 try {
   await mongoose.connect(env.mongoUri)
   testCategory = await Category.create({ name: `Phase 3 Test ${Date.now()}`, slug: `phase3-test-${Date.now()}`, description: 'Temporary category for Phase 3 compatibility verification.' })
-  testProducts = await Product.create(['phase-product-1', 'guest-product', 'wish-1', 'guest-wish'].map((productId, index) => ({ name: 'Smoke Test Gift', slug: `smoke-test-${productId}`, description: 'A temporary product used for automated cart and wishlist compatibility verification.', shortDescription: 'Temporary automated verification product.', price: 1000, discountPrice: null, costPrice: 500, sku: `P3-${Date.now()}-${index}`, category: testCategory._id, thumbnail: { url: '/test-gift.jpg', alt: 'Test gift' }, stock: 5, isActive: true })))
+  testProducts = await Product.create(['phase-product-1', 'guest-product', 'wish-1', 'guest-wish'].map((productId) => ({
+    name: 'Smoke Test Gift',
+    slug: `smoke-test-${productId}`,
+    description: 'A temporary product used for automated cart and wishlist compatibility verification.',
+    category: testCategory._id,
+    prices: { S: 1000, M: 1200, L: 1400 },
+    image: { url: '/test-gift.jpg', alt: 'Test gift' },
+  })))
   server = app.listen(testPort)
   await new Promise((resolve) => server.once('listening', resolve))
 
@@ -91,8 +101,8 @@ try {
   result = await request('/cart/items', { method: 'POST', body: cartItem('phase-product-1', 'Different message') })
   assert.equal(result.payload.data.cart.items.length, 2, 'Different customization must create another row')
   assert.equal(result.payload.data.cart.subtotal, 4000, 'Backend must calculate subtotal')
-  result = await request('/cart/items', { method: 'POST', body: { ...cartItem('stock-test'), quantity: 6 } })
-  assert.equal(result.status, 422, 'Stock limits must be enforced')
+  result = await request('/cart/items', { method: 'POST', body: { ...cartItem('phase-product-1'), quantity: 100 } })
+  assert.equal(result.status, 422, 'Quantity limits must be enforced')
   result = await request('/cart/sync', { method: 'POST', body: { items: [cartItem('guest-product')] } })
   assert.equal(result.status, 200, 'Guest cart sync must succeed')
   const cartItemId = result.payload.data.cart.items[0]._id

@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { FiMail } from 'react-icons/fi'
 import toast from 'react-hot-toast'
-
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+import { isValidEmailAddress, normalizeEmailInput } from '../../utils/inputValidation.js'
 
 function Newsletter() {
   const [email, setEmail] = useState('')
@@ -10,9 +9,9 @@ function Newsletter() {
 
   const subscribe = (event) => {
     event.preventDefault()
-    const value = email.trim()
+    const value = normalizeEmailInput(email)
     if (!value) { setError('Please enter your email address.'); return }
-    if (!emailPattern.test(value)) { setError('Please enter a valid email address.'); return }
+    if (!isValidEmailAddress(value)) { setError('Please enter a valid email address.'); return }
     setError('')
     setEmail('')
     toast.success('Thank you for joining Eshaz Dream World.')
@@ -29,7 +28,7 @@ function Newsletter() {
           <div className="flex flex-col gap-3 sm:flex-row">
             <div className="flex-1 text-left">
               <label htmlFor="newsletter-email" className="sr-only">Email address</label>
-              <input id="newsletter-email" type="email" value={email} onChange={(event) => { setEmail(event.target.value); setError('') }} className="input-field bg-white" placeholder="Email address" aria-invalid={Boolean(error)} aria-describedby={error ? 'newsletter-error' : undefined} />
+              <input id="newsletter-email" type="email" inputMode="email" autoComplete="email" maxLength={160} value={email} onChange={(event) => { setEmail(event.target.value); setError('') }} className="input-field bg-white" placeholder="Email address" aria-invalid={Boolean(error)} aria-describedby={error ? 'newsletter-error' : undefined} />
             </div>
             <button type="submit" className="primary-button px-7">Subscribe</button>
           </div>

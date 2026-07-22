@@ -11,18 +11,18 @@ export async function register(request, response) {
   if (existingUser) throw new AppError('An account with this email already exists', 409, [{ field: 'email', message: 'Email is already in use' }])
 
   const user = await User.create(request.validatedBody)
-  setAuthCookie(response, user._id)
+  setAuthCookie(response, user._id, false, Date.now(), user.sessionVersion)
   void sendEmailSafely({ to: user.email, ...welcomeEmail(user, env.clientOrigins[0]) })
   return sendSuccess(response, { statusCode: 201, message: 'Welcome to Eshaz Dream World!', data: { user: user.toJSON() } })
 }
 
 export async function login(request, response) {
   const { email, password, rememberMe } = request.validatedBody
-  const user = await User.findOne({ email }).select('+password')
+  const user = await User.findOne({ email }).select('+password +sessionVersion')
 
   if (!user || !user.isActive || !(await user.comparePassword(password))) throw new AppError('Invalid email or password', 401)
 
-  setAuthCookie(response, user._id, rememberMe)
+  setAuthCookie(response, user._id, rememberMe, Date.now(), user.sessionVersion)
   return sendSuccess(response, { message: 'Login successful', data: { user: user.toJSON() } })
 }
 
@@ -57,13 +57,14 @@ export async function forgotPassword(request, response) {
 
 export async function resetPassword(request, response) {
   const hashedToken = hashResetToken(request.params.token)
-  const user = await User.findOne({ resetPasswordToken: hashedToken, resetPasswordExpire: { $gt: new Date() } }).select('+password +resetPasswordToken +resetPasswordExpire')
+  const user = await User.findOne({ resetPasswordToken: hashedToken, resetPasswordExpire: { $gt: new Date() } }).select('+password +resetPasswordToken +resetPasswordExpire +sessionVersion')
   if (!user) throw new AppError('Password reset link is invalid or has expired', 400)
 
   user.password = request.validatedBody.password
   user.resetPasswordToken = undefined
   user.resetPasswordExpire = undefined
+  user.sessionVersion = Number(user.sessionVersion || 0) + 1
   await user.save()
-  setAuthCookie(response, user._id)
+  setAuthCookie(response, user._id, false, Date.now(), user.sessionVersion)
   return sendSuccess(response, { message: 'Password reset successful', data: { user: user.toJSON() } })
 }

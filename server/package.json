@@ -7,14 +7,19 @@
     "dev": "nodemon server.js",
     "start": "node server.js",
     "test:phase3": "node scripts/phase3-smoke.js",
-    "test:phase4": "node scripts/phase4-smoke.js",
-    "test:phase5": "node scripts/phase5-smoke.js",
-    "test:stripe": "node scripts/phase5-stripe-smoke.js",
+    "test:phase5": "node scripts/normal-order-bank-transfer-smoke.js",
     "make-admin": "node scripts/make-admin.js",
     "import:catalog": "node scripts/import-phase2-catalog.js",
     "check": "node scripts/check-syntax.js",
     "test:products": "node scripts/product-fields-smoke.js",
-    "test:custom-orders": "node scripts/custom-order-smoke.js"
+    "test:custom-orders": "node scripts/custom-order-smoke.js",
+    "test:bank-transfer": "node scripts/normal-order-bank-transfer-smoke.js",
+    "test:site-settings": "node scripts/site-settings-smoke.js",
+    "test:user-actions": "node scripts/user-actions-smoke.js",
+    "test:reviews": "node scripts/review-workflow-smoke.js",
+    "test:validation": "node scripts/session-validation-smoke.js",
+    "test:notifications": "node scripts/notification-smoke.js",
+    "test:user-deletion": "node scripts/user-cascade-deletion-smoke.js"
   },
   "keywords": [],
   "author": "Eshaz Dream World",
@@ -37,8 +42,7 @@
     "multer": "^2.2.0",
     "nodemailer": "^9.0.3",
     "pdfkit": "^0.19.1",
-    "sharp": "^0.35.3",
-    "stripe": "^22.3.2"
+    "sharp": "^0.35.3"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"

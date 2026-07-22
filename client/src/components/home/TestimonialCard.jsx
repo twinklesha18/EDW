@@ -10,7 +10,7 @@ function TestimonialCard({ testimonial }) {
       <blockquote className="mt-6 font-serif text-xl leading-8 text-ink">“{testimonial.review}”</blockquote>
       <div className="mt-6 border-t border-gold/10 pt-4">
         <p className="text-sm font-semibold text-ink">{testimonial.name}</p>
-        <p className="mt-1 text-xs text-muted">{testimonial.ordered} · Sample review</p>
+        <p className="mt-1 text-xs text-muted">{testimonial.ordered}</p>
       </div>
     </article>
   )

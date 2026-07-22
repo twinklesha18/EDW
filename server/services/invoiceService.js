@@ -7,14 +7,17 @@ const currentDir = path.dirname(fileURLToPath(import.meta.url))
 const logoPath = path.resolve(currentDir, '../../client/src/assets/images/eshaz-dream-world-logo.png')
 const money = (value) => `LKR ${Number(value).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
-export function streamInvoice(order, response) {
-  const doc = new PDFDocument({ size: 'A4', margin: 48, info: { Title: `Invoice ${order.orderNumber}`, Author: 'Eshaz Dream World' } })
+export function streamInvoice(order, response, siteSettings, managedLogo = null) {
+  const businessName = siteSettings?.business?.name || 'Eshaz Dream World'
+  const tagline = siteSettings?.business?.tagline || 'Your Destination | My Passion'
+  const doc = new PDFDocument({ size: 'A4', margin: 48, info: { Title: `Invoice ${order.orderNumber}`, Author: businessName } })
   response.setHeader('Content-Type', 'application/pdf')
   response.setHeader('Content-Disposition', `attachment; filename="${order.orderNumber}-invoice.pdf"`)
   doc.pipe(response)
-  if (fs.existsSync(logoPath)) doc.image(logoPath, 48, 42, { fit: [72, 72] })
-  doc.fillColor('#7d2948').font('Times-Bold').fontSize(24).text('Eshaz Dream World', 135, 52)
-  doc.fillColor('#8e7a81').font('Helvetica').fontSize(9).text('YOUR DESTINATION | MY PASSION', 135, 82)
+  if (managedLogo) doc.image(managedLogo, 48, 42, { fit: [72, 72] })
+  else if (fs.existsSync(logoPath)) doc.image(logoPath, 48, 42, { fit: [72, 72] })
+  doc.fillColor('#7d2948').font('Times-Bold').fontSize(24).text(businessName, 135, 52)
+  doc.fillColor('#8e7a81').font('Helvetica').fontSize(9).text(tagline.toUpperCase(), 135, 82)
   doc.fillColor('#33252a').font('Times-Bold').fontSize(22).text('INVOICE', 400, 52, { align: 'right' })
   doc.font('Helvetica').fontSize(10).text(order.orderNumber, 350, 82, { align: 'right' })
   doc.moveTo(48, 128).lineTo(547, 128).strokeColor('#d9b46f').stroke()
@@ -36,9 +39,9 @@ export function streamInvoice(order, response) {
   y += 12
   doc.moveTo(300, y).lineTo(547, y).strokeColor('#eaded8').stroke(); y += 16
   const row = (label, value, bold = false) => { doc.font(bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(bold ? 12 : 10).fillColor(bold ? '#7d2948' : '#65545b').text(label, 320, y).text(value, 430, y, { width: 117, align: 'right' }); y += bold ? 24 : 19 }
-  row('Subtotal', money(order.subtotal)); row('Shipping', money(order.shippingFee)); row('Discount', `-${money(order.discount)}`); row('Grand Total', money(order.total), true)
+  row('Subtotal', money(order.subtotal)); row('Shipping', money(order.shippingFee)); row('Grand Total', money(order.total), true)
   y += 12
   doc.font('Helvetica').fontSize(9).fillColor('#65545b').text(`Payment: ${order.paymentMethod} · ${order.paymentStatus}`, 48, y).text(`Invoice date: ${new Date(order.createdAt).toLocaleDateString('en-LK')}`, 48, y + 16)
-  doc.font('Times-Italic').fontSize(10).fillColor('#7d2948').text('Thank you for choosing Eshaz Dream World.', 48, 760, { width: 499, align: 'center' })
+  doc.font('Times-Italic').fontSize(10).fillColor('#7d2948').text(`Thank you for choosing ${businessName}.`, 48, 760, { width: 499, align: 'center' })
   doc.end()
 }

@@ -36,7 +36,7 @@ function AddressFormModal({ open, address, onClose, onSubmit, loading, apiError 
             <form onSubmit={handleSubmit(onSubmit)} className="mt-5 grid gap-4 sm:mt-6 sm:grid-cols-2">
               <FormInput label="Label" placeholder="Home or Work" error={errors.label?.message} {...register('label')} />
               <FormInput label="Full name" error={errors.fullName?.message} {...register('fullName')} />
-              <FormInput label="Phone" type="tel" error={errors.phone?.message} {...register('phone')} />
+              <FormInput label="Phone" type="tel" inputMode="numeric" maxLength={10} autoComplete="tel" placeholder="0750894221" error={errors.phone?.message} {...register('phone')} />
               <FormInput label="Address line 1" error={errors.addressLine1?.message} {...register('addressLine1')} />
               <FormInput label="Address line 2 (optional)" error={errors.addressLine2?.message} {...register('addressLine2')} />
               <FormInput label="City" error={errors.city?.message} {...register('city')} />

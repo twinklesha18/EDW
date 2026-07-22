@@ -27,6 +27,7 @@ export const addToCart = createAsyncThunk('cart/add', async (payload, { getState
 })
 
 export const updateCartQuantity = createAsyncThunk('cart/update', async ({ itemId, quantity }, { getState, rejectWithValue }) => {
+  if (!Number.isInteger(quantity) || quantity < 0 || quantity > 99) return rejectWithValue({ message: 'Quantity must be between 0 and 99' })
   if (getState().auth.isAuthenticated) {
     try { return (await api.put(`/cart/items/${itemId}`, { quantity })).data.data.cart } catch (error) { return rejectApi(error, rejectWithValue) }
   }

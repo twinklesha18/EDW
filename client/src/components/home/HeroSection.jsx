@@ -7,7 +7,7 @@ import { brandLogo, productImages } from '../../assets/images/index.js'
 import { useBrand } from '../../hooks/useBrand.js'
 
 function HeroSection() {
-  const { tagline } = useBrand()
+  const { tagline, logo } = useBrand()
   const banner = useSelector((state) => state.catalog.banners.find((item) => item.position === 'hero'))
 
   return (
@@ -25,12 +25,12 @@ function HeroSection() {
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.28em] text-rosewood">Welcome to Eshaz Dream World</p>
           </div>
           <h1 className="mt-6 font-serif text-4xl font-semibold leading-[1.03] tracking-[-0.03em] text-ink min-[380px]:text-5xl sm:text-6xl xl:text-7xl">
-            {banner?.title || <>Turning Your Ideas into <span className="text-rosewood">Beautiful Creations</span></>}
+            Turning Your Ideas into <span className="text-rosewood">Beautiful Creations</span>
           </h1>
           <p className="mt-5 font-serif text-xl italic text-gold sm:text-2xl">{tagline}</p>
-          <p className="mx-auto mt-5 max-w-xl text-sm leading-7 text-muted sm:text-base lg:mx-0">{banner?.subtitle || 'Discover beautifully customized bouquets, thoughtful gifts and creative designs made with love for every special moment.'}</p>
+          <p className="mx-auto mt-5 max-w-xl text-sm leading-7 text-muted sm:text-base lg:mx-0">Discover beautifully customized bouquets, thoughtful gifts and creative designs made with love for every special moment.</p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
-            <Link to={banner?.link || '/shop'} className="primary-button px-7">{banner?.buttonText || 'Shop Now'} <FiArrowRight aria-hidden="true" /></Link>
+            <Link to="/shop" className="primary-button px-7">Shop Now <FiArrowRight aria-hidden="true" /></Link>
             <Link to="/categories" className="secondary-button px-7">Explore Collections</Link>
           </div>
           <div className="mt-8 flex items-start justify-center gap-3 text-center text-xs leading-5 text-muted lg:justify-start lg:text-left">
@@ -43,7 +43,7 @@ function HeroSection() {
             <img src={banner?.image?.url || productImages.giftHamper} alt={banner?.title || 'Pastel customized gift hamper'} className="h-full w-full object-cover" fetchPriority="high" />
           </motion.div>
           <div className="absolute -bottom-5 left-1/2 w-[38%] -translate-x-1/2 rounded-full border border-gold/25 bg-white/90 p-2 shadow-luxury backdrop-blur">
-            <img src={brandLogo} alt="Eshaz Dream World logo" className="mx-auto aspect-square w-full rounded-full object-contain" />
+            <img src={logo?.url || brandLogo} alt="Eshaz Dream World logo" className="mx-auto aspect-square w-full rounded-full object-contain" />
           </div>
           <span className="absolute -left-3 top-[18%] h-20 w-20 rounded-full border border-gold/35 sm:-left-8" aria-hidden="true" />
           <span className="absolute -right-2 bottom-[18%] h-12 w-12 rounded-full bg-pink-primary/50 blur-sm" aria-hidden="true" />
