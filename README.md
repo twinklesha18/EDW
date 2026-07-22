@@ -92,6 +92,10 @@ npm.cmd run make-admin -- your-email@example.com
 
 No administrator or fake user is created automatically.
 
+## Local-to-Atlas data sync
+
+Run `scripts/sync-local-to-atlas.mongosh.js` with MongoDB Shell when valid local records must be merged into production Atlas. The script performs a dry run by default, rejects unique-key conflicts, excludes orphaned carts and wishlists, preserves Atlas-only records, and creates a timestamped Atlas backup database before applying changes. Credentials remain in ignored environment files and must never be passed in source control.
+
 ## Website management
 
 Administrators can manage business and contact details, social links, bank-transfer information, delivery fees, users, homepage images, products, categories, orders, custom orders, reviews, notifications, and deletion logs from the admin dashboard.
