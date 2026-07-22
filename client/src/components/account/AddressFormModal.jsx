@@ -34,15 +34,15 @@ function AddressFormModal({ open, address, onClose, onSubmit, loading, apiError 
             </div>
             {apiError && <p className="mt-4 break-words rounded-xl bg-red-50 p-3 text-sm text-red-700">{apiError}</p>}
             <form onSubmit={handleSubmit(onSubmit)} className="mt-5 grid gap-4 sm:mt-6 sm:grid-cols-2">
-              <FormInput label="Label" placeholder="Home or Work" error={errors.label?.message} {...register('label')} />
-              <FormInput label="Full name" error={errors.fullName?.message} {...register('fullName')} />
-              <FormInput label="Phone" type="tel" inputMode="numeric" maxLength={10} autoComplete="tel" placeholder="0750894221" error={errors.phone?.message} {...register('phone')} />
-              <FormInput label="Address line 1" error={errors.addressLine1?.message} {...register('addressLine1')} />
-              <FormInput label="Address line 2 (optional)" error={errors.addressLine2?.message} {...register('addressLine2')} />
-              <FormInput label="City" error={errors.city?.message} {...register('city')} />
-              <FormInput label="District" error={errors.district?.message} {...register('district')} />
-              <FormInput label="Province" error={errors.province?.message} {...register('province')} />
-              <FormInput label="Postal code (optional)" error={errors.postalCode?.message} {...register('postalCode')} />
+              <FormInput label="Label" placeholder="e.g. Home or Work" error={errors.label?.message} {...register('label')} />
+              <FormInput label="Full name" placeholder="Enter the recipient's full name" error={errors.fullName?.message} {...register('fullName')} />
+              <FormInput label="Phone" type="tel" inputMode="numeric" maxLength={10} autoComplete="tel" placeholder="Enter a 10-digit phone number" error={errors.phone?.message} {...register('phone')} />
+              <FormInput label="Address line 1" placeholder="House number and street name" error={errors.addressLine1?.message} {...register('addressLine1')} />
+              <FormInput label="Address line 2 (optional)" placeholder="Apartment, suite, or landmark" error={errors.addressLine2?.message} {...register('addressLine2')} />
+              <FormInput label="City" placeholder="Enter the city or town" error={errors.city?.message} {...register('city')} />
+              <FormInput label="District" placeholder="Enter the district" error={errors.district?.message} {...register('district')} />
+              <FormInput label="Province" placeholder="Enter the province" error={errors.province?.message} {...register('province')} />
+              <FormInput label="Postal code (optional)" placeholder="Enter the postal code" error={errors.postalCode?.message} {...register('postalCode')} />
               <FormInput label="Country" readOnly error={errors.country?.message} {...register('country')} />
               <label className="flex min-h-11 items-center gap-3 text-sm text-muted sm:col-span-2"><input type="checkbox" className="h-4 w-4 accent-rosewood" {...register('isDefault')} /> Make this my default address</label>
               <div className="mt-2 flex flex-col-reverse gap-3 sm:col-span-2 sm:flex-row sm:justify-end">
