@@ -35,11 +35,20 @@ const configuredClientOrigins = String(process.env.CLIENT_URL || '')
   .filter(Boolean)
 const isProduction = process.env.NODE_ENV === 'production' || Boolean(process.env.VERCEL) || process.env.VERCEL_ENV === 'production'
 
+const resolveMongoUri = () => {
+  const candidates = isProduction
+    ? [process.env.MONGODB_URI_PRODUCTION, process.env.MONGODB_URI, process.env.MONGO_URI]
+    : [process.env.MONGODB_URI_LOCAL, process.env.MONGODB_URI, process.env.MONGO_URI]
+  const value = candidates.find((candidate) => candidate?.trim())?.trim()
+  if (!value) throw new Error(`Missing required environment variable: ${isProduction ? 'MONGODB_URI_PRODUCTION' : 'MONGODB_URI_LOCAL'}`)
+  return value
+}
+
 export const env = Object.freeze({
   nodeEnv: process.env.NODE_ENV?.trim() || 'development',
   isProduction,
   port: parsePort(process.env.PORT || '5000'),
-  mongoUri: process.env.MONGO_URI?.trim() || required('MONGODB_URI'),
+  mongoUri: resolveMongoUri(),
   jwtSecret: required('JWT_SECRET'),
   session: Object.freeze({
     idleMinutes: positiveInteger(process.env.SESSION_IDLE_TIMEOUT_MINUTES, 10, 'SESSION_IDLE_TIMEOUT_MINUTES'),

@@ -38,7 +38,7 @@ The backend Vercel project uses `server` as its root directory. Configure the fo
 
 ```env
 NODE_ENV=production
-MONGODB_URI=your_production_mongodb_uri
+MONGODB_URI_PRODUCTION=your_production_mongodb_uri
 JWT_SECRET=your_long_random_production_secret
 CLIENT_URL=https://edw-phi.vercel.app
 SESSION_IDLE_TIMEOUT_MINUTES=10
@@ -55,6 +55,8 @@ EMAIL_FROM=Eshaz Dream World <your_email>
 ```
 
 After changing Vercel environment variables, redeploy the affected project so the new values are included in the deployment.
+
+MongoDB selection is environment-aware. Local development reads `MONGODB_URI_LOCAL`; Vercel or `NODE_ENV=production` reads `MONGODB_URI_PRODUCTION`. The legacy `MONGODB_URI` and `MONGO_URI` names remain supported as fallbacks.
 
 ## Verification
 
