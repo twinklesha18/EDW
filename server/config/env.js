@@ -35,12 +35,25 @@ const configuredClientOrigins = String(process.env.CLIENT_URL || '')
   .filter(Boolean)
 const isProduction = process.env.NODE_ENV === 'production' || Boolean(process.env.VERCEL) || process.env.VERCEL_ENV === 'production'
 
+const isLocalMongoUri = (value) => /^mongodb:\/\/(?:[^@/]+@)?(?:localhost|127\.0\.0\.1|\[::1\])(?::\d+)?\//i.test(value)
+const isAtlasMongoUri = (value) => /^mongodb\+srv:\/\//i.test(value)
+const hasDatabaseName = (value) => {
+  const authorityEnd = value.indexOf('/', value.indexOf('://') + 3)
+  return authorityEnd > -1 && Boolean(value.slice(authorityEnd + 1).split('?')[0].trim())
+}
+
 const resolveMongoUri = () => {
   const candidates = isProduction
     ? [process.env.MONGODB_URI_PRODUCTION, process.env.MONGODB_URI, process.env.MONGO_URI]
     : [process.env.MONGODB_URI_LOCAL, process.env.MONGODB_URI, process.env.MONGO_URI]
   const value = candidates.find((candidate) => candidate?.trim())?.trim()
   if (!value) throw new Error(`Missing required environment variable: ${isProduction ? 'MONGODB_URI_PRODUCTION' : 'MONGODB_URI_LOCAL'}`)
+  if (isProduction && (!isAtlasMongoUri(value) || !hasDatabaseName(value))) {
+    throw new Error('Production MongoDB must use a MongoDB Atlas SRV URI with an explicit database name')
+  }
+  if (!isProduction && process.env.MONGODB_URI_LOCAL?.trim() && !isLocalMongoUri(value)) {
+    throw new Error('MONGODB_URI_LOCAL must use localhost, 127.0.0.1, or ::1 with an explicit database name')
+  }
   return value
 }
 

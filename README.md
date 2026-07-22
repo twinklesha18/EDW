@@ -56,7 +56,7 @@ EMAIL_FROM=Eshaz Dream World <your_email>
 
 After changing Vercel environment variables, redeploy the affected project so the new values are included in the deployment.
 
-MongoDB selection is environment-aware. Local development reads `MONGODB_URI_LOCAL`; Vercel or `NODE_ENV=production` reads `MONGODB_URI_PRODUCTION`. The legacy `MONGODB_URI` and `MONGO_URI` names remain supported as fallbacks.
+MongoDB selection is environment-aware. Local development prefers `MONGODB_URI_LOCAL`; Vercel or `NODE_ENV=production` uses `MONGODB_URI_PRODUCTION`. Production startup rejects localhost and non-Atlas URLs, and requires an Atlas `mongodb+srv://` URI with an explicit database name. The legacy `MONGODB_URI` and `MONGO_URI` names remain supported only as validated fallbacks.
 
 ## Verification
 
