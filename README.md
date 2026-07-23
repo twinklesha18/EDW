@@ -50,9 +50,9 @@ CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
-EMAIL_USER=your_email
+EMAIL_USER=eshazdreamworld@gmail.com
 EMAIL_PASS=your_email_app_password
-EMAIL_FROM=Eshaz Dream World <your_email>
+EMAIL_FROM=Eshaz Dream World <eshazdreamworld@gmail.com>
 ```
 
 After changing Vercel environment variables, redeploy the affected project so the new values are included in the deployment.

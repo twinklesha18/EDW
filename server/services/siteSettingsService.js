@@ -6,7 +6,7 @@ export function defaultSiteSettings() {
   return {
     business: { name: 'Eshaz Dream World', tagline: 'Your Destination | My Passion', logo: { url: '', publicId: '', width: 0, height: 0, bytes: 0, storage: '' } },
     contact: {
-      phone: '0750894221', whatsapp: '0750894221', email: 'eshadreamworld22@gmail.com', location: 'View our location',
+      phone: '0750894221', whatsapp: '0750894221', email: 'eshazdreamworld@gmail.com', location: 'View our location',
       mapsHref: 'https://www.google.com/maps?q=7.728977507983271,81.69298067448817',
       mapEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m17!1m12!1m3!1d3577.7767937020376!2d81.69298067448817!3d7.728977507983271!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m2!1m1!2zN8KwNDMnNDQuMyJOIDgxwrA0MSc0NC4wIkU!5e1!3m2!1sen!2slk!4v1784549433627!5m2!1sen!2slk',
       instagram: 'https://www.instagram.com/eshazdreamworld?igsh=MXJ4Znd4N2dmNXBreg==',

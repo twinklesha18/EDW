@@ -21,7 +21,8 @@
     "test:notifications": "node scripts/notification-smoke.js",
     "test:user-deletion": "node scripts/user-cascade-deletion-smoke.js",
     "test:seo": "node scripts/seo-smoke.js",
-    "test:analytics": "node scripts/analytics-smoke.js"
+    "test:analytics": "node scripts/analytics-smoke.js",
+    "migrate:owner-email": "node scripts/migrate-owner-email.js"
   },
   "keywords": [],
   "author": "Eshaz Dream World",

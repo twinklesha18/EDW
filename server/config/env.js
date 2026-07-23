@@ -88,6 +88,6 @@ export const env = Object.freeze({
     port: parsePort(process.env.EMAIL_PORT || '587'),
     user: process.env.EMAIL_USER?.trim() || '',
     pass: process.env.EMAIL_PASS?.trim() || '',
-    from: process.env.EMAIL_FROM?.trim() || 'Eshaz Dream World <no-reply@eshazdreamworld.com>',
+    from: process.env.EMAIL_FROM?.trim() || 'Eshaz Dream World <eshazdreamworld@gmail.com>',
   }),
 })
