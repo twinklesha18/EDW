@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import LoadingSkeleton from '../components/common/LoadingSkeleton.jsx'
 import MainLayout from '../layouts/MainLayout.jsx'
+import HomePage from '../pages/HomePage.jsx'
 import GuestRoute from './GuestRoute.jsx'
 import ProtectedRoute from './ProtectedRoute.jsx'
 import AdminRoute from './AdminRoute.jsx'
@@ -10,7 +11,6 @@ import CustomerRoute from './CustomerRoute.jsx'
 const AuthLayout = lazy(() => import('../layouts/AuthLayout.jsx'))
 const ProfileLayout = lazy(() => import('../layouts/ProfileLayout.jsx'))
 const AdminLayout = lazy(() => import('../layouts/AdminLayout.jsx'))
-const HomePage = lazy(() => import('../pages/HomePage.jsx'))
 const ShopPage = lazy(() => import('../pages/ShopPage.jsx'))
 const CategoriesPage = lazy(() => import('../pages/CategoriesPage.jsx'))
 const ProductDetailsPage = lazy(() => import('../pages/ProductDetailsPage.jsx'))

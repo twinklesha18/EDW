@@ -47,12 +47,7 @@ function VisitorTracker() {
     } catch {
       // Analytics must never interrupt navigation when storage is unavailable.
     }
-    const send = () => sendVisit('pageview', pathname)
-    if ('requestIdleCallback' in window) {
-      const idleId = window.requestIdleCallback(send, { timeout: 3000 })
-      return () => window.cancelIdleCallback(idleId)
-    }
-    const timeoutId = window.setTimeout(send, 1500)
+    const timeoutId = window.setTimeout(() => sendVisit('pageview', pathname), 5000)
     return () => window.clearTimeout(timeoutId)
   }, [pathname, trackable])
 

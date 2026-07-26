@@ -25,11 +25,7 @@ function AppBootstrap({ children }) {
       dispatch(getCurrentUser())
       return undefined
     }
-    if ('requestIdleCallback' in window) {
-      const idleId = window.requestIdleCallback(() => dispatch(getCurrentUser()), { timeout: 1500 })
-      return () => window.cancelIdleCallback(idleId)
-    }
-    const timeoutId = window.setTimeout(() => dispatch(getCurrentUser()), 900)
+    const timeoutId = window.setTimeout(() => dispatch(getCurrentUser()), 3500)
     return () => window.clearTimeout(timeoutId)
   }, [dispatch, pathname])
   useEffect(() => { dispatch(fetchCatalog()) }, [dispatch])
