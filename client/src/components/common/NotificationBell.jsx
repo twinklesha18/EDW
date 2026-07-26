@@ -17,7 +17,7 @@ const dateLabel = (value) => {
   return date.toLocaleDateString()
 }
 
-function NotificationBell() {
+function NotificationBell({ stackedMobile = false }) {
   const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
@@ -80,7 +80,7 @@ function NotificationBell() {
       <FiBell />
       {unreadCount > 0 && <span className="count-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>}
     </button>
-    <AnimatePresence>{open && <motion.section initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="fixed inset-x-3 top-[4.5rem] z-[80] max-h-[min(75dvh,36rem)] overflow-hidden rounded-2xl border border-gold/15 bg-white shadow-2xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-3 sm:w-[25rem]" aria-label="Notifications">
+    <AnimatePresence>{open && <motion.section initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className={`fixed inset-x-3 z-[80] max-h-[min(75dvh,36rem)] overflow-hidden rounded-2xl border border-gold/15 bg-white shadow-2xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-3 sm:w-[25rem] ${stackedMobile ? 'top-[8.75rem]' : 'top-[4.5rem]'}`} aria-label="Notifications">
       <header className="flex items-center justify-between border-b border-gold/10 p-4"><div><h2 className="font-serif text-xl font-semibold">Notifications</h2><p className="text-xs text-muted">{unreadCount ? `${unreadCount} unread` : 'You are all caught up'}</p></div><div className="flex gap-1">{unreadCount > 0 && <button type="button" className="icon-button" title="Mark all as read" aria-label="Mark all notifications as read" onClick={markAllRead}><FiCheck /></button>}<button type="button" className="icon-button sm:hidden" aria-label="Close notifications" onClick={() => setOpen(false)}><FiX /></button></div></header>
       <div className="max-h-[calc(min(75dvh,36rem)-5rem)] overflow-y-auto overscroll-contain">
         {loading ? <p className="p-6 text-center text-sm text-muted">Loading notifications…</p> : notifications.length === 0 ? <div className="p-8 text-center"><FiBell className="mx-auto text-2xl text-rosewood" /><p className="mt-3 font-semibold">No notifications yet</p><p className="mt-1 text-xs text-muted">Important order updates will appear here.</p></div> : notifications.map((notification) => <button key={notification.id} type="button" onClick={() => openNotification(notification)} className={`flex w-full gap-3 border-b border-gold/10 p-4 text-left transition hover:bg-pink-light/35 ${notification.readAt ? 'bg-white' : 'bg-pink-light/25'}`}><span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white text-rosewood shadow-sm"><FiPackage /></span><span className="min-w-0 flex-1"><span className="flex items-start justify-between gap-2"><strong className="text-sm leading-5">{notification.title}</strong>{!notification.readAt && <i className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-rosewood" />}</span><span className="mt-1 block text-xs leading-5 text-muted">{notification.message}</span><time className="mt-1 block text-[.68rem] font-semibold text-gold">{dateLabel(notification.createdAt)}</time></span></button>)}

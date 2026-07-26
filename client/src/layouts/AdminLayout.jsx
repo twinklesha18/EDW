@@ -44,7 +44,7 @@ function AdminLayout() {
         loggingOut={isLoading}
       />
       <div className="min-w-0 lg:pl-72">
-        <header className="sticky top-0 z-40 flex h-16 min-w-0 items-center gap-1.5 border-b border-gold/15 bg-white/90 px-2 backdrop-blur-xl sm:h-20 sm:gap-3 sm:px-7">
+        <header className="fixed inset-x-0 top-0 z-40 flex h-16 min-w-0 items-center gap-1.5 border-b border-gold/15 bg-white/90 px-2 backdrop-blur-xl sm:h-20 sm:gap-3 sm:px-7 lg:sticky lg:inset-x-auto">
           <button
             type="button"
             className="icon-button lg:hidden"
@@ -62,7 +62,7 @@ function AdminLayout() {
             </div>
           </div>
         </header>
-        <main className="min-w-0 p-3 sm:p-7 lg:p-9">
+        <main className="min-w-0 px-3 pb-3 pt-[4.75rem] sm:px-7 sm:pb-7 sm:pt-[6.75rem] lg:p-9">
           <Outlet />
         </main>
       </div>
