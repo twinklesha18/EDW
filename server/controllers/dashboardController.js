@@ -1,4 +1,6 @@
 import Category from '../models/Category.js'
+import ContactMessage from '../models/ContactMessage.js'
+import NewsletterSubscriber from '../models/NewsletterSubscriber.js'
 import Order from '../models/Order.js'
 import Product from '../models/Product.js'
 import User from '../models/User.js'
@@ -75,7 +77,23 @@ async function getVisitorAnalytics() {
 
 export async function getDashboardAnalytics(_request, response) {
   const startOfYear = new Date(new Date().getFullYear(), 0, 1)
-  const [orders, products, customers, pendingOrders, sales, monthly, topCategories, bestSellers, recentOrders, visitors] = await Promise.all([
+  const [
+    orders,
+    products,
+    customers,
+    pendingOrders,
+    sales,
+    monthly,
+    topCategories,
+    bestSellers,
+    recentOrders,
+    visitors,
+    contactMessageCount,
+    unreadContactMessageCount,
+    subscriberCount,
+    recentContactMessages,
+    recentSubscribers,
+  ] = await Promise.all([
     Order.countDocuments(),
     Product.countDocuments(),
     User.countDocuments({ role: 'user' }),
@@ -86,12 +104,40 @@ export async function getDashboardAnalytics(_request, response) {
     Order.aggregate([{ $match: { orderStatus: { $ne: 'Cancelled' } } }, { $unwind: '$items' }, { $group: { _id: '$items.product', name: { $first: '$items.name' }, sold: { $sum: '$items.quantity' } } }, { $sort: { sold: -1 } }, { $limit: 5 }]),
     Order.find().populate('user', 'firstName lastName email').sort({ createdAt: -1 }).limit(6),
     getVisitorAnalytics(),
+    ContactMessage.countDocuments(),
+    ContactMessage.countDocuments({ status: 'Unread' }),
+    NewsletterSubscriber.countDocuments({ isActive: true }),
+    ContactMessage.find().sort({ createdAt: -1 }).limit(5),
+    NewsletterSubscriber.find({ isActive: true }).sort({ subscribedAt: -1 }).limit(5),
   ])
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
   const monthlyMap = new Map(monthly.map((entry) => [entry._id.month, entry]))
   const chart = monthNames.map((month, index) => ({ month, orders: monthlyMap.get(index + 1)?.orders || 0, revenue: monthlyMap.get(index + 1)?.revenue || 0 }))
   return sendSuccess(response, {
     message: 'Dashboard analytics retrieved',
-    data: { summary: { totalSales: sales[0]?.totalSales || 0, revenue: sales[0]?.revenue || 0, orders, products, customers, pendingOrders }, monthly: chart, topCategories, bestSellers, recentOrders, visitors },
+    data: {
+      summary: {
+        totalSales: sales[0]?.totalSales || 0,
+        revenue: sales[0]?.revenue || 0,
+        orders,
+        products,
+        customers,
+        pendingOrders,
+      },
+      monthly: chart,
+      topCategories,
+      bestSellers,
+      recentOrders,
+      visitors,
+      communications: {
+        summary: {
+          contactMessages: contactMessageCount,
+          unreadMessages: unreadContactMessageCount,
+          activeSubscribers: subscriberCount,
+        },
+        recentContactMessages,
+        recentSubscribers,
+      },
+    },
   })
 }

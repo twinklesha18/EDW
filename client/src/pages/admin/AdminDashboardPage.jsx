@@ -5,12 +5,14 @@ import {
   FiClock,
   FiDollarSign,
   FiEye,
+  FiMail,
   FiMonitor,
   FiMousePointer,
   FiShoppingBag,
   FiTrendingUp,
   FiUsers,
 } from 'react-icons/fi'
+import { Link } from 'react-router-dom'
 import {
   Area,
   AreaChart,
@@ -64,6 +66,7 @@ function AdminDashboardPage() {
 
   const summary = data?.summary || {}
   const visitorSummary = data?.visitors?.summary || {}
+  const communicationSummary = data?.communications?.summary || {}
   const storeCards = [
     { label: 'Total Sales', value: formatCurrency(summary.totalSales || 0), icon: FiTrendingUp },
     { label: 'Revenue', value: formatCurrency(summary.revenue || 0), icon: FiDollarSign },
@@ -84,6 +87,17 @@ function AdminDashboardPage() {
     { key: 'customer', label: 'Customer', render: (row) => row.user ? `${row.user.firstName} ${row.user.lastName}` : 'Deleted user' },
     { key: 'status', label: 'Status', render: (row) => <StatusBadge>{row.orderStatus}</StatusBadge> },
     { key: 'total', label: 'Total', render: (row) => formatCurrency(row.total) },
+  ]
+  const contactMessageColumns = [
+    { key: 'fullName', label: 'Customer', render: (row) => <div><p className="font-semibold">{row.fullName}</p><p className="break-all text-xs text-muted">{row.email}</p><p className="text-xs text-muted">{row.phone}</p></div> },
+    { key: 'subject', label: 'Subject' },
+    { key: 'message', label: 'Message', render: (row) => <p className="max-w-sm line-clamp-3 whitespace-pre-wrap text-xs leading-5 text-muted">{row.message}</p> },
+    { key: 'status', label: 'Status', render: (row) => <StatusBadge>{row.status}</StatusBadge> },
+    { key: 'createdAt', label: 'Received', render: (row) => new Date(row.createdAt).toLocaleDateString('en-LK') },
+  ]
+  const subscriberColumns = [
+    { key: 'email', label: 'Email address' },
+    { key: 'subscribedAt', label: 'Subscribed', render: (row) => new Date(row.subscribedAt).toLocaleDateString('en-LK') },
   ]
 
   return (
@@ -176,6 +190,27 @@ function AdminDashboardPage() {
       <section className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
         <div className="overflow-hidden rounded-[1.75rem] border border-gold/15 bg-white"><div className="p-5"><h2 className="font-serif text-2xl font-semibold">Recent Orders</h2></div><DataTable columns={recentColumns} rows={data?.recentOrders || []} loading={loading} emptyTitle="No orders yet" /></div>
         <div className="rounded-[1.75rem] border border-gold/15 bg-white p-5"><h2 className="font-serif text-2xl font-semibold">Best Selling Products</h2><div className="mt-5 h-72"><ResponsiveContainer width="100%" height="100%"><BarChart data={data?.bestSellers || []} layout="vertical" margin={{ left: 10 }}><CartesianGrid strokeDasharray="3 3" /><XAxis type="number" /><YAxis type="category" dataKey="name" width={110} tick={{ fontSize: 10 }} /><Tooltip /><Bar dataKey="sold" fill="#A94F73" radius={[0, 6, 6, 0]} /></BarChart></ResponsiveContainer></div></div>
+      </section>
+
+      <section id="customer-enquiries" aria-labelledby="customer-enquiries-title" className="space-y-4">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[.18em] text-gold">Customer communications</p>
+            <h2 id="customer-enquiries-title" className="mt-1 font-serif text-3xl font-semibold">Messages & Subscribers</h2>
+            <p className="mt-2 text-sm text-muted">{communicationSummary.unreadMessages || 0} unread messages · {communicationSummary.activeSubscribers || 0} active subscribers</p>
+          </div>
+          <Link to="/admin/communications" className="secondary-button"><FiMail /> View All Communications</Link>
+        </div>
+        <div className="grid min-w-0 gap-6 xl:grid-cols-[1.5fr_1fr]">
+          <div className="min-w-0 overflow-hidden rounded-[1.75rem] border border-gold/15 bg-white">
+            <div className="border-b border-gold/10 p-5"><h3 className="font-serif text-2xl font-semibold">Recent Contact Messages</h3><p className="mt-1 text-xs text-muted">{communicationSummary.contactMessages || 0} messages received through the contact form</p></div>
+            <DataTable columns={contactMessageColumns} rows={data?.communications?.recentContactMessages || []} loading={loading} emptyTitle="No contact messages yet" />
+          </div>
+          <div className="min-w-0 overflow-hidden rounded-[1.75rem] border border-gold/15 bg-white">
+            <div className="border-b border-gold/10 p-5"><h3 className="font-serif text-2xl font-semibold">Recent Subscribers</h3><p className="mt-1 text-xs text-muted">Newsletter email subscriptions</p></div>
+            <DataTable columns={subscriberColumns} rows={data?.communications?.recentSubscribers || []} loading={loading} emptyTitle="No newsletter subscribers yet" />
+          </div>
+        </div>
       </section>
     </div>
   )

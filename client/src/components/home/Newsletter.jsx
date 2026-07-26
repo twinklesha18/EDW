@@ -1,20 +1,30 @@
 import { useState } from 'react'
 import { FiMail } from 'react-icons/fi'
 import toast from 'react-hot-toast'
+import api from '../../services/api.js'
 import { isValidEmailAddress, normalizeEmailInput } from '../../utils/inputValidation.js'
 
 function Newsletter() {
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
-  const subscribe = (event) => {
+  const subscribe = async (event) => {
     event.preventDefault()
     const value = normalizeEmailInput(email)
     if (!value) { setError('Please enter your email address.'); return }
     if (!isValidEmailAddress(value)) { setError('Please enter a valid email address.'); return }
     setError('')
-    setEmail('')
-    toast.success('Thank you for joining Eshaz Dream World.')
+    setSubmitting(true)
+    try {
+      const response = await api.post('/communications/newsletter-subscriptions', { email: value })
+      setEmail('')
+      toast.success(response.data.message || 'Thank you for joining Eshaz Dream World.')
+    } catch (requestError) {
+      setError(requestError.response?.data?.errors?.[0]?.message || requestError.response?.data?.message || 'Unable to subscribe right now. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -30,7 +40,7 @@ function Newsletter() {
               <label htmlFor="newsletter-email" className="sr-only">Email address</label>
               <input id="newsletter-email" type="email" inputMode="email" autoComplete="email" maxLength={160} value={email} onChange={(event) => { setEmail(event.target.value); setError('') }} className="input-field bg-white" placeholder="Email address" aria-invalid={Boolean(error)} aria-describedby={error ? 'newsletter-error' : undefined} />
             </div>
-            <button type="submit" className="primary-button px-7">Subscribe</button>
+            <button type="submit" disabled={submitting} className="primary-button px-7 disabled:cursor-not-allowed disabled:opacity-60">{submitting ? 'Subscribing…' : 'Subscribe'}</button>
           </div>
           {error && <p id="newsletter-error" className="mt-2 text-left text-xs text-red-600">{error}</p>}
         </form>

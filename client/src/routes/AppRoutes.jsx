@@ -49,6 +49,7 @@ const AdminBannersPage = lazy(() => import('../pages/admin/AdminBannersPage.jsx'
 const AdminSettingsPage = lazy(() => import('../pages/admin/AdminSettingsPage.jsx'))
 const AdminCustomOrdersPage = lazy(() => import('../pages/admin/AdminCustomOrdersPage.jsx'))
 const AdminCustomOrderDetailsPage = lazy(() => import('../pages/admin/AdminCustomOrderDetailsPage.jsx'))
+const AdminCommunicationsPage = lazy(() => import('../pages/admin/AdminCommunicationsPage.jsx'))
 
 function AppRoutes() {
   return (
@@ -90,7 +91,7 @@ function AppRoutes() {
         </Route>
         <Route element={<GuestRoute />}><Route element={<AuthLayout />}><Route path="login" element={<LoginPage />} /><Route path="register" element={<RegisterPage />} /><Route path="forgot-password" element={<ForgotPasswordPage />} /></Route></Route>
         <Route element={<AuthLayout />}><Route path="reset-password/:token" element={<ResetPasswordPage />} /></Route>
-        <Route element={<AdminRoute />}><Route path="admin" element={<AdminLayout />}><Route index element={<Navigate to="dashboard" replace />} /><Route path="dashboard" element={<AdminDashboardPage />} /><Route path="products" element={<AdminProductsPage />} /><Route path="products/new" element={<AdminProductFormPage />} /><Route path="products/:id/edit" element={<AdminProductFormPage />} /><Route path="categories" element={<AdminCategoriesPage />} /><Route path="orders" element={<AdminOrdersPage />} /><Route path="orders/:id" element={<AdminOrderDetailsPage />} /><Route path="cancellations" element={<AdminCancellationsPage />} /><Route path="custom-orders" element={<AdminCustomOrdersPage />} /><Route path="custom-orders/:id" element={<AdminCustomOrderDetailsPage />} /><Route path="users" element={<AdminUsersPage />} /><Route path="user-deletion-logs" element={<AdminUserDeletionLogsPage />} /><Route path="reviews" element={<AdminReviewsPage />} /><Route path="banners" element={<AdminBannersPage />} /><Route path="settings" element={<AdminSettingsPage />} /></Route></Route>
+        <Route element={<AdminRoute />}><Route path="admin" element={<AdminLayout />}><Route index element={<Navigate to="dashboard" replace />} /><Route path="dashboard" element={<AdminDashboardPage />} /><Route path="products" element={<AdminProductsPage />} /><Route path="products/new" element={<AdminProductFormPage />} /><Route path="products/:id/edit" element={<AdminProductFormPage />} /><Route path="categories" element={<AdminCategoriesPage />} /><Route path="orders" element={<AdminOrdersPage />} /><Route path="orders/:id" element={<AdminOrderDetailsPage />} /><Route path="cancellations" element={<AdminCancellationsPage />} /><Route path="custom-orders" element={<AdminCustomOrdersPage />} /><Route path="custom-orders/:id" element={<AdminCustomOrderDetailsPage />} /><Route path="communications" element={<AdminCommunicationsPage />} /><Route path="users" element={<AdminUsersPage />} /><Route path="user-deletion-logs" element={<AdminUserDeletionLogsPage />} /><Route path="reviews" element={<AdminReviewsPage />} /><Route path="banners" element={<AdminBannersPage />} /><Route path="settings" element={<AdminSettingsPage />} /></Route></Route>
       </Routes>
     </Suspense>
   )

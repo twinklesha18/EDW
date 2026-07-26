@@ -14,6 +14,7 @@ import bannerRoutes from './routes/bannerRoutes.js'
 import cartRoutes from './routes/cartRoutes.js'
 import categoryRoutes from './routes/categoryRoutes.js'
 import checkoutRoutes from './routes/checkoutRoutes.js'
+import communicationRoutes from './routes/communicationRoutes.js'
 import customOrderRoutes from './routes/customOrderRoutes.js'
 import notificationRoutes from './routes/notificationRoutes.js'
 import orderRoutes from './routes/orderRoutes.js'
@@ -77,6 +78,7 @@ app.use('/api/banners', bannerRoutes)
 app.use('/api/reviews', reviewRoutes)
 app.use('/api/notifications', notificationRoutes)
 app.use('/api/checkout', checkoutRoutes)
+app.use('/api/communications', communicationRoutes)
 app.use('/api/orders', orderRoutes)
 app.use('/api/custom-orders', customOrderRoutes)
 app.use('/api/site-settings', siteSettingsRoutes)

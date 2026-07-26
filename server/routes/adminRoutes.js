@@ -4,6 +4,7 @@ import { globalSearch } from '../controllers/searchController.js'
 import { protect, authorizeRoles } from '../middleware/authMiddleware.js'
 import adminBannerRoutes from './adminBannerRoutes.js'
 import adminCategoryRoutes from './adminCategoryRoutes.js'
+import adminCommunicationRoutes from './adminCommunicationRoutes.js'
 import adminOrderRoutes from './adminOrderRoutes.js'
 import adminProductRoutes from './adminProductRoutes.js'
 import adminReviewRoutes from './adminReviewRoutes.js'
@@ -18,6 +19,7 @@ router.get('/dashboard', getDashboardAnalytics)
 router.get('/search', globalSearch)
 router.use('/products', adminProductRoutes)
 router.use('/categories', adminCategoryRoutes)
+router.use('/communications', adminCommunicationRoutes)
 router.use('/orders', adminOrderRoutes)
 router.use('/custom-orders', adminCustomOrderRoutes)
 router.use('/users', adminUserRoutes)

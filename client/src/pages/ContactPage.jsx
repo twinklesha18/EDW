@@ -6,22 +6,26 @@ import FormField from '../components/common/FormField.jsx'
 import PageBanner from '../components/common/PageBanner.jsx'
 import PageTransition from '../components/common/PageTransition.jsx'
 import { useBrand } from '../hooks/useBrand.js'
+import api from '../services/api.js'
 import { EMAIL_ERROR, PHONE_ERROR, emailPattern, normalizeEmailInput, normalizePhoneInput, phonePattern } from '../utils/inputValidation.js'
 
 function ContactPage() {
   const { contact } = useBrand()
-  const { register, handleSubmit, reset, formState: { errors } } = useForm()
+  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm()
   const socialLinks = [
     { label: 'Instagram', href: contact.instagram, Icon: FiInstagram },
     { label: 'Facebook', href: contact.facebook, Icon: FiFacebook },
     { label: 'TikTok', href: contact.tiktok, Icon: FaTiktok },
   ].filter((item) => item.href)
 
-  const submitContact = ({ fullName, email, phone, subject, message }) => {
-    const body = [`Name: ${fullName}`, `Email: ${email}`, `Phone: ${phone}`, '', message].join('\n')
-    window.location.href = `${contact.emailHref}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
-    toast.success('Opening your email app with the message prepared.')
-    reset()
+  const submitContact = async (values) => {
+    try {
+      const response = await api.post('/communications/contact-messages', values)
+      toast.success(response.data.message || 'Your message has been sent successfully.')
+      reset()
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Unable to send your message. Please try again.')
+    }
   }
 
   return (
@@ -47,7 +51,7 @@ function ContactPage() {
               <FormField label="Phone Number" name="phone" type="tel" inputMode="numeric" maxLength={10} autoComplete="tel" register={register} rules={{ required: 'Phone number is required.', setValueAs: normalizePhoneInput, pattern: { value: phonePattern, message: PHONE_ERROR } }} error={errors.phone} placeholder="Enter your 10-digit phone number" />
               <FormField label="Subject" name="subject" register={register} rules={{ required: 'Subject is required.', minLength: { value: 3, message: 'Please enter at least 3 characters.' }, maxLength: { value: 120, message: 'Subject is too long.' } }} error={errors.subject} placeholder="How can we help?" />
               <div className="sm:col-span-2"><FormField label="Message" name="message" type="textarea" register={register} rules={{ required: 'Message is required.', minLength: { value: 20, message: 'Please write at least 20 characters.' }, maxLength: { value: 2000, message: 'Message must be 2,000 characters or fewer.' } }} error={errors.message} placeholder="Tell us about your question or idea…" /></div>
-              <div className="sm:col-span-2"><button type="submit" className="primary-button px-8">Email Your Message</button></div>
+              <div className="sm:col-span-2"><button type="submit" disabled={isSubmitting} className="primary-button px-8 disabled:cursor-not-allowed disabled:opacity-60">{isSubmitting ? 'Sending Message…' : 'Send Message'}</button></div>
             </form>
           </div>
           <div className="flex min-h-[28rem] flex-col bg-gradient-to-br from-pink-light via-lavender/45 to-blue-light p-5 sm:p-7">

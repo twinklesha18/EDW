@@ -10,6 +10,13 @@ const sanitizeText = (value, maxLength = 250) =>
     .trim()
     .slice(0, maxLength)
 
+const sanitizeMultilineText = (value, maxLength = 2000) =>
+  String(value ?? '')
+    .replace(/\r\n?/g, '\n')
+    .replace(/[<>\u0000-\u0009\u000B-\u001F\u007F]/g, '')
+    .trim()
+    .slice(0, maxLength)
+
 const error = (field, message) => ({ field, message })
 
 const requiredText = (body, field, label, { min = 1, max = 120 } = {}) => {
@@ -73,6 +80,33 @@ export const loginValidator = (body) => {
 export const emailValidator = (body) => {
   const email = readEmail(body)
   return validateFields({ email: email.value }, [email.error])
+}
+
+export const newsletterSubscriptionValidator = emailValidator
+
+export const contactMessageValidator = (body) => {
+  const fullName = requiredText(body, 'fullName', 'Full name', { min: 2, max: 120 })
+  const email = readEmail(body)
+  const phone = readPhone(body)
+  const subject = requiredText(body, 'subject', 'Subject', { min: 3, max: 120 })
+  const message = sanitizeMultilineText(body.message, 2000)
+  return validateFields(
+    {
+      fullName: fullName.value,
+      email: email.value,
+      phone: phone.value,
+      subject: subject.value,
+      message,
+    },
+    [
+      fullName.error,
+      email.error,
+      phone.error,
+      subject.error,
+      !message && error('message', 'Message is required'),
+      message && message.length < 20 && error('message', 'Message must be at least 20 characters'),
+    ],
+  )
 }
 
 export const resetPasswordValidator = (body) => {
