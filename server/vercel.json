@@ -1,0 +1,5 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run migrate:catalog-media -- --apply",
+  "regions": ["sin1"]
+}

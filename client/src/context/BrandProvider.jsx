@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import api from '../services/api.js'
+import { getStorefrontBootstrap, invalidateStorefrontBootstrap } from '../services/storefrontApi.js'
 import { BrandContext } from './BrandContext.js'
 
 const defaults = {
@@ -23,10 +23,14 @@ function BrandProvider({ children }) {
 
   useEffect(() => {
     let active = true
-    const load = () => api.get('/site-settings').then((response) => { if (active) setSettings(response.data.data.settings) }).catch(() => {})
+    const load = () => getStorefrontBootstrap().then((storefront) => { if (active) setSettings(storefront.settings) }).catch(() => {})
+    const reload = () => {
+      invalidateStorefrontBootstrap()
+      void load()
+    }
     void load()
-    window.addEventListener('edw:settings-updated', load)
-    return () => { active = false; window.removeEventListener('edw:settings-updated', load) }
+    window.addEventListener('edw:settings-updated', reload)
+    return () => { active = false; window.removeEventListener('edw:settings-updated', reload) }
   }, [])
 
   const brand = useMemo(() => ({

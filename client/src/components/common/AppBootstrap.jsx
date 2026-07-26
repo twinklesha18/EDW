@@ -6,6 +6,7 @@ import { syncGuestCart } from '../../redux/slices/cartSlice.js'
 import { syncGuestWishlist } from '../../redux/slices/wishlistSlice.js'
 import { fetchCatalog, refreshCatalog } from '../../redux/slices/catalogSlice.js'
 import api from '../../services/api.js'
+import { invalidateStorefrontBootstrap } from '../../services/storefrontApi.js'
 
 const configuredIdleMinutes = Number(import.meta.env?.VITE_SESSION_IDLE_TIMEOUT_MINUTES || 10)
 const sessionIdleMilliseconds = Math.max(1, configuredIdleMinutes) * 60 * 1000
@@ -13,13 +14,17 @@ const sessionEventKey = 'edw_session_expired_at'
 
 function AppBootstrap({ children }) {
   const dispatch = useDispatch()
-  const { authChecked, isAuthenticated, user } = useSelector((state) => state.auth)
+  const { isAuthenticated, user } = useSelector((state) => state.auth)
   const synchronizedUser = useRef(null)
 
   useEffect(() => { dispatch(getCurrentUser()) }, [dispatch])
   useEffect(() => { dispatch(fetchCatalog()) }, [dispatch])
   useEffect(() => {
-    const reloadCatalog = () => { dispatch(refreshCatalog()); dispatch(fetchCatalog()) }
+    const reloadCatalog = () => {
+      invalidateStorefrontBootstrap()
+      dispatch(refreshCatalog())
+      dispatch(fetchCatalog())
+    }
     window.addEventListener('edw:catalog-updated', reloadCatalog)
     return () => window.removeEventListener('edw:catalog-updated', reloadCatalog)
   }, [dispatch])
@@ -78,7 +83,6 @@ function AppBootstrap({ children }) {
     if (!isAuthenticated) synchronizedUser.current = null
   }, [dispatch, isAuthenticated, user?.id])
 
-  if (!authChecked) return <div className="grid min-h-screen place-items-center bg-cream"><div className="text-center"><div className="mx-auto h-11 w-11 animate-spin rounded-full border-2 border-pink-primary border-t-rosewood" /><p className="mt-4 font-serif text-xl text-ink">Eshaz Dream World</p></div></div>
   return children
 }
 export default AppBootstrap

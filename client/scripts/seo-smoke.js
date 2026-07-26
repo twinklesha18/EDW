@@ -16,7 +16,7 @@ assert.match(html, /name="robots" content="index, follow/)
 assert.match(html, /name="google-site-verification" content="jPWEIY76vvhyNphtVBY_g4rh5J0ctrJ9HytwmvmgbnY"/)
 assert.match(html, /property="og:title"/)
 assert.match(html, /name="twitter:card"/)
-const socialImage = html.match(/property="og:image" content="https:\/\/eshazdreamworld\.vercel\.app(\/assets\/[^"?]+)"/)?.[1]
+const socialImage = html.match(/property="og:image" content="https:\/\/eshazdreamworld\.vercel\.app(\/[^"?]+)"/)?.[1]
 assert.ok(socialImage, 'The Open Graph image must use an absolute production URL')
 assert.ok(existsSync(path.join(root, 'dist', socialImage)), 'The Open Graph image must exist in the production build')
 assert.match(html, /<link rel="canonical" href="https:\/\/eshazdreamworld\.vercel\.app\/"/)

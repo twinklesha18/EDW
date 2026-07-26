@@ -3,8 +3,9 @@ import { createReview, deleteOwnReview, listHomepageReviews, updateOwnReview } f
 import { protect } from '../middleware/authMiddleware.js'
 import { reviewUpdateValidator, reviewValidator, validateBody } from '../middleware/adminValidateMiddleware.js'
 import { validateObjectIdParameter } from '../middleware/validateMiddleware.js'
+import { cachePublicResponse } from '../middleware/publicCacheMiddleware.js'
 const router = Router()
-router.get('/homepage', listHomepageReviews)
+router.get('/homepage', cachePublicResponse, listHomepageReviews)
 router.use(protect)
 router.post('/', validateBody(reviewValidator), createReview)
 router.put('/:id', validateObjectIdParameter('id'), validateBody(reviewUpdateValidator), updateOwnReview)

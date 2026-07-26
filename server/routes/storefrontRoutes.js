@@ -1,6 +1,10 @@
 import { Router } from 'express'
-import { listCategories } from '../controllers/categoryController.js'
+import { getStorefrontBootstrap } from '../controllers/storefrontController.js'
 import { cachePublicResponse } from '../middleware/publicCacheMiddleware.js'
+
 const router = Router()
-router.get('/', cachePublicResponse, listCategories)
+
+router.get('/bootstrap', cachePublicResponse, getStorefrontBootstrap)
+
 export default router
+

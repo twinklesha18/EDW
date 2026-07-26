@@ -7,6 +7,7 @@ import { formatCurrency } from '../../utils/formatCurrency.js'
 import RatingStars from '../common/RatingStars.jsx'
 import { toggleWishlist } from '../../redux/slices/wishlistSlice.js'
 import { productToWishlistPayload } from '../../utils/productAdapters.js'
+import { responsiveImageProps } from '../../utils/imageUrl.js'
 
 function ProductCard({ product, view = 'grid' }) {
   const dispatch = useDispatch()
@@ -26,7 +27,16 @@ function ProductCard({ product, view = 'grid' }) {
     >
       <div className={`relative overflow-hidden bg-pink-light ${isList ? 'min-h-64' : 'aspect-square'}`}>
         <Link to={`/product/${product.slug}`} aria-label={`View ${product.name}`}>
-          <img src={product.image} alt={product.name} loading="lazy" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+          <img
+            {...responsiveImageProps(product.image, [320, 480, 640, 800])}
+            sizes={isList ? '(min-width: 640px) 240px, 100vw' : '(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw'}
+            alt={product.name}
+            width="800"
+            height="800"
+            loading="lazy"
+            decoding="async"
+            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+          />
         </Link>
         {product.badge && <span className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1.5 text-[0.65rem] font-bold uppercase tracking-wider text-rosewood shadow-sm backdrop-blur-sm">{product.badge}</span>}
         <button

@@ -1,5 +1,6 @@
 import { FiArrowUpRight } from 'react-icons/fi'
 import { Link } from 'react-router-dom'
+import { responsiveImageProps } from '../../utils/imageUrl.js'
 
 function CategoryCard({ category }) {
   const designLabel = category.count > 0
@@ -11,9 +12,13 @@ function CategoryCard({ category }) {
       <Link to={`/shop?category=${category.slug}`} className="block min-w-0" aria-label={`Explore ${category.name}`}>
         <div className="relative aspect-square overflow-hidden rounded-[1.55rem] bg-gradient-to-br from-pink-light to-blue-light">
           <img
-            src={category.image}
+            {...responsiveImageProps(category.image, [320, 480, 640, 800])}
             alt={category.name}
+            width="800"
+            height="800"
             loading="lazy"
+            decoding="async"
+            sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"
             className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.035]"
           />
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/10 via-transparent to-white/5" />

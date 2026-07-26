@@ -1,4 +1,4 @@
-import logo from './eshaz-dream-world-logo.png'
+import logo from './eshaz-dream-world-logo-ui.webp'
 import chocolateBouquet from './products/chocolate-bouquet.jpg'
 import earringBouquet from './products/earring-bouquet.jpg'
 import giftHamper from './products/gift-hamper.jpg'

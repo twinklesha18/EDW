@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { brandLogo } from '../../assets/images/index.js'
 import { useBrand } from '../../hooks/useBrand.js'
+import { optimizedImageUrl } from '../../utils/imageUrl.js'
 
 function Logo({ onClick, size = 'default' }) {
   const { name, logo } = useBrand()
@@ -8,7 +9,14 @@ function Logo({ onClick, size = 'default' }) {
 
   return (
     <Link to="/" onClick={onClick} className="block w-fit shrink-0" aria-label={`${name} home`}>
-      <img src={logo?.url || brandLogo} alt={`${name} logo`} className={`${dimensions} rounded-full object-contain`} />
+      <img
+        src={optimizedImageUrl(logo?.url || brandLogo, size === 'large' ? 224 : 128)}
+        alt={`${name} logo`}
+        width={size === 'large' ? 112 : 64}
+        height={size === 'large' ? 112 : 64}
+        decoding="async"
+        className={`${dimensions} rounded-full object-contain`}
+      />
     </Link>
   )
 }

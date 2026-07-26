@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import api from '../../services/api.js'
+import { getStorefrontBootstrap } from '../../services/storefrontApi.js'
 import SectionTitle from '../common/SectionTitle.jsx'
 import TestimonialCard from './TestimonialCard.jsx'
 
@@ -10,9 +10,9 @@ function TestimonialsSection() {
 
   useEffect(() => {
     let active = true
-    api.get('/reviews/homepage').then((response) => {
+    getStorefrontBootstrap().then((storefront) => {
       if (!active) return
-      setReviews(response.data.data.reviews.map((review) => ({
+      setReviews(storefront.reviews.map((review) => ({
         id: review.id || review._id,
         name: `${review.user?.firstName || 'Customer'} ${review.user?.lastName || ''}`.trim(),
         initials: initials(review.user),

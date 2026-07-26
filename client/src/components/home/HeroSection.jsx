@@ -5,10 +5,13 @@ import { Link } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { brandLogo, productImages } from '../../assets/images/index.js'
 import { useBrand } from '../../hooks/useBrand.js'
+import { optimizedImageUrl, responsiveImageProps } from '../../utils/imageUrl.js'
 
 function HeroSection() {
   const { tagline, logo } = useBrand()
   const banner = useSelector((state) => state.catalog.banners.find((item) => item.position === 'hero'))
+  const catalogLoaded = useSelector((state) => state.catalog.loaded)
+  const heroImage = banner?.image?.url || (catalogLoaded ? productImages.giftHamper : '')
 
   return (
     <section className="relative isolate overflow-hidden bg-gradient-to-br from-cream via-pink-light/65 to-blue-light/80">
@@ -40,10 +43,21 @@ function HeroSection() {
 
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.75, delay: 0.12 }} className="relative mx-auto w-full max-w-xl">
           <motion.div animate={{ y: [0, -8, 0] }} transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }} className="relative mx-auto aspect-square max-w-[520px] overflow-hidden rounded-[45%_55%_48%_52%/48%_46%_54%_52%] border-4 border-white bg-white shadow-[0_30px_80px_-30px_rgba(112,59,80,0.45)]">
-            <img src={banner?.image?.url || productImages.giftHamper} alt={banner?.title || 'Pastel customized gift hamper'} className="h-full w-full object-cover" fetchPriority="high" />
+            {heroImage ? (
+              <img
+                {...responsiveImageProps(heroImage, [480, 640, 960, 1200])}
+                sizes="(min-width: 1024px) 45vw, 90vw"
+                alt={banner?.title || 'Pastel customized gift hamper'}
+                width="1200"
+                height="1200"
+                decoding="async"
+                className="h-full w-full object-cover"
+                fetchPriority="high"
+              />
+            ) : <div className="h-full w-full animate-pulse bg-gradient-to-br from-pink-light via-white to-blue-light" aria-hidden="true" />}
           </motion.div>
           <div className="absolute -bottom-5 left-1/2 w-[38%] -translate-x-1/2 rounded-full border border-gold/25 bg-white/90 p-2 shadow-luxury backdrop-blur">
-            <img src={logo?.url || brandLogo} alt="Eshaz Dream World logo" className="mx-auto aspect-square w-full rounded-full object-contain" />
+            <img src={optimizedImageUrl(logo?.url || brandLogo, 320)} alt="Eshaz Dream World logo" width="320" height="320" decoding="async" className="mx-auto aspect-square w-full rounded-full object-contain" />
           </div>
           <span className="absolute -left-3 top-[18%] h-20 w-20 rounded-full border border-gold/35 sm:-left-8" aria-hidden="true" />
           <span className="absolute -right-2 bottom-[18%] h-12 w-12 rounded-full bg-pink-primary/50 blur-sm" aria-hidden="true" />

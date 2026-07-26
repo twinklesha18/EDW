@@ -18,6 +18,7 @@ import LoadingSkeleton from '../components/common/LoadingSkeleton.jsx'
 import ProductReviews from '../components/product/ProductReviews.jsx'
 import { brandLogo } from '../assets/images/index.js'
 import { INDEX_ROBOTS, NO_INDEX_ROBOTS, SITE_URL, absoluteUrl } from '../utils/seo.js'
+import { responsiveImageProps } from '../utils/imageUrl.js'
 
 function ProductDetailsPage() {
   const { slug } = useParams()
@@ -152,12 +153,12 @@ function ProductDetailsPage() {
         <div className="grid gap-10 lg:grid-cols-2 lg:gap-14">
           <div>
             <div className="aspect-square overflow-hidden rounded-[2rem] bg-pink-light">
-              <img src={selectedImage} alt={product.name} className="h-full w-full object-cover" />
+              <img {...responsiveImageProps(selectedImage, [480, 720, 960, 1200])} sizes="(min-width: 1024px) 50vw, 100vw" alt={product.name} width="1200" height="1200" decoding="async" fetchPriority="high" className="h-full w-full object-cover" />
             </div>
             <div className="mt-4 grid grid-cols-3 gap-3">
               {product.images.map((image, index) => (
                 <button key={`${image}-${index}`} type="button" onClick={() => setSelectedImage(image)} className={`aspect-square overflow-hidden rounded-xl border-2 ${selectedImage === image ? 'border-rosewood' : 'border-transparent'}`} aria-label={`View product image ${index + 1}`}>
-                  <img src={image} alt="" className="h-full w-full object-cover" />
+                  <img {...responsiveImageProps(image, [160, 240, 320])} sizes="160px" alt="" width="320" height="320" loading="lazy" decoding="async" className="h-full w-full object-cover" />
                 </button>
               ))}
             </div>

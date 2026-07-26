@@ -21,6 +21,7 @@ import orderRoutes from './routes/orderRoutes.js'
 import productRoutes from './routes/productRoutes.js'
 import reviewRoutes from './routes/reviewRoutes.js'
 import siteSettingsRoutes from './routes/siteSettingsRoutes.js'
+import storefrontRoutes from './routes/storefrontRoutes.js'
 import userRoutes from './routes/userRoutes.js'
 import wishlistRoutes from './routes/wishlistRoutes.js'
 import { getSitemap } from './controllers/seoController.js'
@@ -72,6 +73,7 @@ app.use('/api/auth', authRoutes)
 app.use('/api/users', userRoutes)
 app.use('/api/cart', cartRoutes)
 app.use('/api/wishlist', wishlistRoutes)
+app.use('/api/storefront', storefrontRoutes)
 app.use('/api/products', productRoutes)
 app.use('/api/categories', categoryRoutes)
 app.use('/api/banners', bannerRoutes)

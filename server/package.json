@@ -25,6 +25,7 @@
     "test:communications": "node scripts/communications-smoke.js",
     "migrate:owner-email": "node scripts/migrate-owner-email.js",
     "migrate:payment-slips": "node scripts/migrate-local-payment-slips.js",
+    "migrate:catalog-media": "node scripts/migrate-catalog-media.js",
     "test:invoice": "node scripts/invoice-logo-smoke.js"
   },
   "keywords": [],

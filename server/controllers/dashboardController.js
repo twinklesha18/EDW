@@ -8,6 +8,8 @@ import WebsiteVisit from '../models/WebsiteVisit.js'
 import { sendSuccess } from '../utils/responseUtils.js'
 
 const sriLankaOffsetMilliseconds = 5.5 * 60 * 60 * 1000
+const dashboardCacheMilliseconds = 30 * 1000
+let dashboardCache = { expiresAt: 0, promise: null }
 const dateKeyInSriLanka = (date) => new Date(date.getTime() + sriLankaOffsetMilliseconds).toISOString().slice(0, 10)
 
 const startOfSriLankaDay = (date = new Date()) => {
@@ -75,69 +77,102 @@ async function getVisitorAnalytics() {
   }
 }
 
-export async function getDashboardAnalytics(_request, response) {
+async function loadDashboardAnalytics() {
   const startOfYear = new Date(new Date().getFullYear(), 0, 1)
   const [
-    orders,
+    orderFacets,
+    recentOrders,
     products,
     customers,
-    pendingOrders,
-    sales,
-    monthly,
     topCategories,
-    bestSellers,
-    recentOrders,
     visitors,
-    contactMessageCount,
-    unreadContactMessageCount,
-    subscriberCount,
-    recentContactMessages,
-    recentSubscribers,
+    contactFacets,
+    subscriberFacets,
   ] = await Promise.all([
-    Order.countDocuments(),
+    Order.aggregate([{
+      $facet: {
+        orders: [{ $count: 'count' }],
+        pendingOrders: [{ $match: { orderStatus: 'Pending' } }, { $count: 'count' }],
+        sales: [
+          { $match: { paymentStatus: 'Paid', orderStatus: { $ne: 'Cancelled' } } },
+          { $group: { _id: null, totalSales: { $sum: '$total' }, revenue: { $sum: { $subtract: ['$total', '$shippingFee'] } } } },
+        ],
+        monthly: [
+          { $match: { createdAt: { $gte: startOfYear }, orderStatus: { $ne: 'Cancelled' } } },
+          { $group: { _id: { month: { $month: '$createdAt' } }, orders: { $sum: 1 }, revenue: { $sum: '$total' } } },
+          { $sort: { '_id.month': 1 } },
+        ],
+        bestSellers: [
+          { $match: { orderStatus: { $ne: 'Cancelled' } } },
+          { $unwind: '$items' },
+          { $group: { _id: '$items.product', name: { $first: '$items.name' }, sold: { $sum: '$items.quantity' } } },
+          { $sort: { sold: -1 } },
+          { $limit: 5 },
+        ],
+      },
+    }]),
+    Order.find().populate('user', 'firstName lastName email').sort({ createdAt: -1 }).limit(6).lean(),
     Product.countDocuments(),
     User.countDocuments({ role: 'user' }),
-    Order.countDocuments({ orderStatus: 'Pending' }),
-    Order.aggregate([{ $match: { paymentStatus: 'Paid', orderStatus: { $ne: 'Cancelled' } } }, { $group: { _id: null, totalSales: { $sum: '$total' }, revenue: { $sum: { $subtract: ['$total', '$shippingFee'] } } } }]),
-    Order.aggregate([{ $match: { createdAt: { $gte: startOfYear }, orderStatus: { $ne: 'Cancelled' } } }, { $group: { _id: { month: { $month: '$createdAt' } }, orders: { $sum: 1 }, revenue: { $sum: '$total' } } }, { $sort: { '_id.month': 1 } }]),
     Product.aggregate([{ $group: { _id: '$category', products: { $sum: 1 } } }, { $sort: { products: -1 } }, { $limit: 5 }, { $lookup: { from: Category.collection.name, localField: '_id', foreignField: '_id', as: 'category' } }, { $unwind: '$category' }, { $project: { name: '$category.name', products: 1 } }]),
-    Order.aggregate([{ $match: { orderStatus: { $ne: 'Cancelled' } } }, { $unwind: '$items' }, { $group: { _id: '$items.product', name: { $first: '$items.name' }, sold: { $sum: '$items.quantity' } } }, { $sort: { sold: -1 } }, { $limit: 5 }]),
-    Order.find().populate('user', 'firstName lastName email').sort({ createdAt: -1 }).limit(6),
     getVisitorAnalytics(),
-    ContactMessage.countDocuments(),
-    ContactMessage.countDocuments({ status: 'Unread' }),
-    NewsletterSubscriber.countDocuments({ isActive: true }),
-    ContactMessage.find().sort({ createdAt: -1 }).limit(5),
-    NewsletterSubscriber.find({ isActive: true }).sort({ subscribedAt: -1 }).limit(5),
+    ContactMessage.aggregate([{
+      $facet: {
+        total: [{ $count: 'count' }],
+        unread: [{ $match: { status: 'Unread' } }, { $count: 'count' }],
+        recent: [{ $sort: { createdAt: -1 } }, { $limit: 5 }],
+      },
+    }]),
+    NewsletterSubscriber.aggregate([{
+      $facet: {
+        active: [{ $match: { isActive: true } }, { $count: 'count' }],
+        recent: [{ $match: { isActive: true } }, { $sort: { subscribedAt: -1 } }, { $limit: 5 }],
+      },
+    }]),
   ])
+  const orderData = orderFacets[0] || {}
+  const contactData = contactFacets[0] || {}
+  const subscriberData = subscriberFacets[0] || {}
+  const monthly = orderData.monthly || []
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
   const monthlyMap = new Map(monthly.map((entry) => [entry._id.month, entry]))
   const chart = monthNames.map((month, index) => ({ month, orders: monthlyMap.get(index + 1)?.orders || 0, revenue: monthlyMap.get(index + 1)?.revenue || 0 }))
+  return {
+    summary: {
+      totalSales: orderData.sales?.[0]?.totalSales || 0,
+      revenue: orderData.sales?.[0]?.revenue || 0,
+      orders: orderData.orders?.[0]?.count || 0,
+      products,
+      customers,
+      pendingOrders: orderData.pendingOrders?.[0]?.count || 0,
+    },
+    monthly: chart,
+    topCategories,
+    bestSellers: orderData.bestSellers || [],
+    recentOrders,
+    visitors,
+    communications: {
+      summary: {
+        contactMessages: contactData.total?.[0]?.count || 0,
+        unreadMessages: contactData.unread?.[0]?.count || 0,
+        activeSubscribers: subscriberData.active?.[0]?.count || 0,
+      },
+      recentContactMessages: contactData.recent || [],
+      recentSubscribers: subscriberData.recent || [],
+    },
+  }
+}
+
+export async function getDashboardAnalytics(_request, response) {
+  if (!dashboardCache.promise || dashboardCache.expiresAt <= Date.now()) {
+    const promise = loadDashboardAnalytics().catch((error) => {
+      if (dashboardCache.promise === promise) dashboardCache = { expiresAt: 0, promise: null }
+      throw error
+    })
+    dashboardCache = { expiresAt: Date.now() + dashboardCacheMilliseconds, promise }
+  }
   return sendSuccess(response, {
     message: 'Dashboard analytics retrieved',
-    data: {
-      summary: {
-        totalSales: sales[0]?.totalSales || 0,
-        revenue: sales[0]?.revenue || 0,
-        orders,
-        products,
-        customers,
-        pendingOrders,
-      },
-      monthly: chart,
-      topCategories,
-      bestSellers,
-      recentOrders,
-      visitors,
-      communications: {
-        summary: {
-          contactMessages: contactMessageCount,
-          unreadMessages: unreadContactMessageCount,
-          activeSubscribers: subscriberCount,
-        },
-        recentContactMessages,
-        recentSubscribers,
-      },
-    },
+    data: await dashboardCache.promise,
   })
 }
