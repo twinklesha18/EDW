@@ -160,6 +160,7 @@ try {
   response = await fetch(`${base}/orders/${createdOrder.orderNumber}/invoice`, { headers: { Cookie: customerCookie } })
   assert.equal(response.status, 200, 'Customer invoice must become available after delivery')
   assert.match(response.headers.get('content-type') || '', /application\/pdf/)
+  assert.match(response.headers.get('content-disposition') || '', /^inline;/, 'Customer invoices must open in the browser')
   await response.arrayBuffer()
 
   await Cart.updateOne({ user: customer._id }, { $set: { items: [{ productId: String(product._id), signature: createCartSignature(String(product._id), 'S'), name: product.name, slug: product.slug, image: product.image.url, size: 'S', price: product.prices.S, quantity: 1, category: category.name }], subtotal: product.prices.S } })

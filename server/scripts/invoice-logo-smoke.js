@@ -2,7 +2,8 @@ import assert from 'node:assert/strict'
 import { PassThrough } from 'node:stream'
 import sharp from 'sharp'
 import { normalizeInvoiceLogo } from '../services/invoiceBrandingService.js'
-import { streamInvoice } from '../services/invoiceService.js'
+import { createInvoiceBuffer, streamInvoice } from '../services/invoiceService.js'
+import { createDeliveredInvoiceEmailPayload } from '../services/deliveredInvoiceEmailService.js'
 
 const webpLogo = await sharp({
   create: { width: 160, height: 160, channels: 4, background: { r: 246, g: 184, b: 206, alpha: 1 } },
@@ -42,4 +43,12 @@ for (const logo of [normalizedLogo, Buffer.from('not-an-image')]) {
   assert.ok(pdf.length > 1000, 'The generated invoice must contain PDF data')
 }
 
-console.log('Invoice logo smoke test passed: WebP conversion, PDF embedding, and invalid-logo fallback all produce downloadable invoices.')
+const bufferedInvoice = await createInvoiceBuffer(order, { business: { name: 'Eshaz Dream World', tagline: 'Your Destination | My Passion' } }, normalizedLogo)
+assert.match(bufferedInvoice.subarray(0, 8).toString('ascii'), /^%PDF-/)
+const deliveredEmail = await createDeliveredInvoiceEmailPayload(order, order.user, { business: { name: 'Eshaz Dream World', tagline: 'Your Destination | My Passion' } }, normalizedLogo)
+assert.match(deliveredEmail.subject, /invoice/i)
+assert.equal(deliveredEmail.attachments.length, 1)
+assert.equal(deliveredEmail.attachments[0].contentType, 'application/pdf')
+assert.match(deliveredEmail.attachments[0].content.subarray(0, 8).toString('ascii'), /^%PDF-/)
+
+console.log('Invoice smoke test passed: browser PDF output, managed logos, buffering, and delivered-email attachments are valid.')

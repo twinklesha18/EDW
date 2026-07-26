@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { FiArrowLeft, FiDownload, FiMapPin, FiMessageSquare, FiRefreshCw, FiStar, FiTruck, FiUpload, FiXCircle } from 'react-icons/fi'
+import { FiArrowLeft, FiExternalLink, FiMapPin, FiMessageSquare, FiRefreshCw, FiStar, FiTruck, FiUpload, FiXCircle } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import { useDispatch } from 'react-redux'
 import { Link, useNavigate, useParams } from 'react-router-dom'
@@ -10,7 +10,7 @@ import LoadingSkeleton from '../components/common/LoadingSkeleton.jsx'
 import OrderTimeline from '../components/order/OrderTimeline.jsx'
 import CustomerPaymentSlip from '../components/payment/CustomerPaymentSlip.jsx'
 import { fetchCart } from '../redux/slices/cartSlice.js'
-import { checkoutApi, downloadBlob } from '../services/checkoutApi.js'
+import { checkoutApi } from '../services/checkoutApi.js'
 import { formatCurrency } from '../utils/formatCurrency.js'
 
 function OrderDetailsPage() {
@@ -41,7 +41,22 @@ function OrderDetailsPage() {
 
   useEffect(() => { void load(); const timer = setInterval(() => void load({ quiet: true }), 15000); return () => clearInterval(timer) }, [load])
 
-  const invoice = async () => { try { downloadBlob(await checkoutApi.invoice(orderNumber), `${orderNumber}-invoice.pdf`) } catch { toast.error('Unable to download invoice.') } }
+  const invoice = async () => {
+    const preview = window.open('', '_blank')
+    if (preview) {
+      preview.document.title = `Invoice ${orderNumber}`
+      preview.document.body.innerHTML = '<p style="font:16px Arial;padding:24px">Preparing your invoice...</p>'
+    }
+    try {
+      const url = URL.createObjectURL(await checkoutApi.invoice(orderNumber))
+      if (preview) preview.location.replace(url)
+      else window.location.assign(url)
+      window.setTimeout(() => URL.revokeObjectURL(url), 5 * 60 * 1000)
+    } catch {
+      preview?.close()
+      toast.error('Unable to open invoice.')
+    }
+  }
   const cancel = async () => {
     if (cancellationReason.trim().length < 10) return toast.error('Please enter a cancellation reason of at least 10 characters.')
     setCancelling(true)
@@ -98,7 +113,7 @@ function OrderDetailsPage() {
       <div className="section-shell">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div><Link to="/profile/orders" className="inline-flex items-center gap-2 text-xs font-semibold text-rosewood"><FiArrowLeft /> My Orders</Link><h1 className="mt-3 font-serif text-4xl font-semibold">{order.orderNumber}</h1><p className="mt-1 text-sm text-muted">Placed {new Date(order.createdAt).toLocaleString()}</p></div>
-          <div className="flex flex-wrap gap-2">{order.orderStatus === 'Delivered' && <button type="button" className="secondary-button" onClick={invoice}><FiDownload /> Invoice</button>}{['Delivered', 'Cancelled'].includes(order.orderStatus) && <button type="button" className="secondary-button" onClick={reorder}><FiRefreshCw /> Reorder</button>}{order.orderStatus === 'Pending' && <button type="button" className="secondary-button text-red-600" onClick={() => setCancelOpen(true)}><FiXCircle /> Cancel</button>}</div>
+          <div className="flex flex-wrap gap-2">{order.orderStatus === 'Delivered' && <button type="button" className="secondary-button" onClick={invoice}><FiExternalLink /> Open Invoice</button>}{['Delivered', 'Cancelled'].includes(order.orderStatus) && <button type="button" className="secondary-button" onClick={reorder}><FiRefreshCw /> Reorder</button>}{order.orderStatus === 'Pending' && <button type="button" className="secondary-button text-red-600" onClick={() => setCancelOpen(true)}><FiXCircle /> Cancel</button>}</div>
           {!['Delivered', 'Cancelled'].includes(order.orderStatus) && <p className="mt-3 text-xs text-muted">Your invoice will be available here after the order is delivered.</p>}
         </div>
         <div className="mt-8 grid items-start gap-7 xl:grid-cols-[minmax(0,1fr)_370px]">

@@ -16,7 +16,7 @@ export async function downloadCustomerInvoice(request, response) {
   if (order.orderStatus === 'Cancelled') throw new AppError('Invoices are not available for cancelled orders', 409)
   if (order.orderStatus !== 'Delivered') throw new AppError('Your invoice will be available after the order is delivered', 409)
   const { settings, logo } = await invoiceBranding()
-  streamInvoice(order, response, settings, logo)
+  streamInvoice(order, response, settings, logo, { disposition: 'inline' })
 }
 
 export async function downloadAdminInvoice(request, response) {

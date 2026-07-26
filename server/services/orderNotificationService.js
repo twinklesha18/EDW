@@ -1,4 +1,5 @@
 import { notifyAdmins, notifySafely, notifyUser } from './notificationService.js'
+import { sendDeliveredInvoiceEmailSafely } from './deliveredInvoiceEmailService.js'
 
 const normalCustomerLink = (order) => `/orders/${order.orderNumber}`
 const normalAdminLink = (order) => `/admin/orders/${order._id}`
@@ -10,12 +11,17 @@ export const notifyNormalOrderPlaced = (order, user) => notifySafely(async () =>
   notifyAdmins({ type: 'new_order', title: `New order ${order.orderNumber}`, message: `${user.firstName} ${user.lastName} placed a ${order.paymentMethod} order for LKR ${Number(order.total).toLocaleString('en-LK')}.`, link: normalAdminLink(order), order }),
 ]))
 
-export const notifyNormalOrderStatus = (order, user) => notifySafely(() => notifyUser({
-  user, type: order.orderStatus === 'Delivered' ? 'order_delivered' : 'order_status',
-  title: order.orderStatus === 'Delivered' ? `Order ${order.orderNumber} delivered` : `Order ${order.orderNumber}: ${order.orderStatus}`,
-  message: `Your order status changed to ${order.orderStatus}.${order.trackingNumber ? ` Tracking number: ${order.trackingNumber}.` : ''}`,
-  link: normalCustomerLink(order), order,
-}))
+export const notifyNormalOrderStatus = (order, user) => notifySafely(async () => {
+  const delivered = order.orderStatus === 'Delivered'
+  const notification = await notifyUser({
+    user, type: delivered ? 'order_delivered' : 'order_status',
+    title: delivered ? `Order ${order.orderNumber} delivered` : `Order ${order.orderNumber}: ${order.orderStatus}`,
+    message: `Your order status changed to ${order.orderStatus}.${delivered ? ' Your PDF invoice has been sent to your email.' : ''}${order.trackingNumber ? ` Tracking number: ${order.trackingNumber}.` : ''}`,
+    link: normalCustomerLink(order), order, email: !delivered,
+  })
+  if (delivered) await sendDeliveredInvoiceEmailSafely(order, user)
+  return notification
+})
 
 export const notifyNormalOrderPayment = (order, user, note = '') => notifySafely(() => notifyUser({
   user, type: 'payment_status', title: `Payment update for ${order.orderNumber}`,

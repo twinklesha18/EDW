@@ -7,13 +7,14 @@ const currentDir = path.dirname(fileURLToPath(import.meta.url))
 const logoPath = path.resolve(currentDir, '../../client/src/assets/images/eshaz-dream-world-logo.png')
 const money = (value) => `LKR ${Number(value).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
-export function streamInvoice(order, response, siteSettings, managedLogo = null) {
+const createDocument = (order, siteSettings) => {
+  const businessName = siteSettings?.business?.name || 'Eshaz Dream World'
+  return new PDFDocument({ size: 'A4', margin: 48, info: { Title: `Invoice ${order.orderNumber}`, Author: businessName } })
+}
+
+const writeInvoice = (doc, order, siteSettings, managedLogo) => {
   const businessName = siteSettings?.business?.name || 'Eshaz Dream World'
   const tagline = siteSettings?.business?.tagline || 'Your Destination | My Passion'
-  const doc = new PDFDocument({ size: 'A4', margin: 48, info: { Title: `Invoice ${order.orderNumber}`, Author: businessName } })
-  response.setHeader('Content-Type', 'application/pdf')
-  response.setHeader('Content-Disposition', `attachment; filename="${order.orderNumber}-invoice.pdf"`)
-  doc.pipe(response)
   let logoAdded = false
   if (managedLogo) {
     try { doc.image(managedLogo, 48, 42, { fit: [72, 72] }); logoAdded = true } catch { /* Continue with the bundled logo or text-only branding. */ }
@@ -48,5 +49,25 @@ export function streamInvoice(order, response, siteSettings, managedLogo = null)
   y += 12
   doc.font('Helvetica').fontSize(9).fillColor('#65545b').text(`Payment: ${order.paymentMethod} | ${order.paymentStatus}`, 48, y).text(`Invoice date: ${new Date(order.createdAt).toLocaleDateString('en-LK')}`, 48, y + 16)
   doc.font('Times-Italic').fontSize(10).fillColor('#7d2948').text(`Thank you for choosing ${businessName}.`, 48, 760, { width: 499, align: 'center' })
+}
+
+export function streamInvoice(order, response, siteSettings, managedLogo = null, { disposition = 'attachment' } = {}) {
+  const doc = createDocument(order, siteSettings)
+  response.setHeader('Content-Type', 'application/pdf')
+  response.setHeader('Content-Disposition', `${disposition}; filename="${order.orderNumber}-invoice.pdf"`)
+  doc.pipe(response)
+  writeInvoice(doc, order, siteSettings, managedLogo)
   doc.end()
+}
+
+export function createInvoiceBuffer(order, siteSettings, managedLogo = null) {
+  return new Promise((resolve, reject) => {
+    const doc = createDocument(order, siteSettings)
+    const chunks = []
+    doc.on('data', (chunk) => chunks.push(chunk))
+    doc.on('end', () => resolve(Buffer.concat(chunks)))
+    doc.on('error', reject)
+    writeInvoice(doc, order, siteSettings, managedLogo)
+    doc.end()
+  })
 }
