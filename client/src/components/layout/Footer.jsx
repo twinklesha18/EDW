@@ -54,8 +54,19 @@ function Footer() {
 
       <div className="border-t border-white/10">
         <div className="section-shell flex flex-col items-center justify-between gap-3 py-5 text-center text-xs sm:flex-row sm:text-left">
-          <p>&copy; {new Date().getFullYear()} {name}. Designed with love for Eshaz Dream World.</p>
-          <span className="rounded-full border border-white/15 px-3 py-1.5">Bank transfer · Cash on Delivery</span>
+          <p>
+            &copy; {new Date().getFullYear()} {name}. Developed by{' '}
+            <a
+              href="https://jumail.ict5.lk/portfolio/index.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-pink-primary transition-colors hover:text-white hover:underline"
+            >
+              JUMAIL TM
+            </a>
+            .
+          </p>
+          <span className="rounded-full border border-white/15 px-3 py-1.5">Bank transfer &middot; Cash on Delivery</span>
         </div>
       </div>
     </footer>
