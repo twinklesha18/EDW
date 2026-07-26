@@ -54,7 +54,10 @@ function SeoManager() {
         telephone: contact.phoneHref?.replace('tel:', '') || contact.phone,
         currenciesAccepted: 'LKR',
         paymentAccepted: ['Cash on Delivery', 'Bank Transfer'],
+        priceRange: 'LKR',
         areaServed: { '@type': 'Country', name: 'Sri Lanka' },
+        hasMap: contact.mapsHref,
+        knowsAbout: ['Custom bouquets', 'Personalized gifts', 'Birthday gifts', 'Chocolate bouquets', 'Custom gift design'],
         sameAs: [contact.instagram, contact.facebook, contact.tiktok].filter(Boolean),
         contactPoint: {
           '@type': 'ContactPoint',
@@ -69,7 +72,7 @@ function SeoManager() {
         '@id': `${SITE_URL}/#website`,
         url: `${SITE_URL}/`,
         name,
-        alternateName: 'EDW',
+        alternateName: ['Eshaz Dream World Sri Lanka', 'EDW'],
         description: tagline,
         publisher: { '@id': `${SITE_URL}/#store` },
         inLanguage: 'en-LK',
@@ -84,6 +87,13 @@ function SeoManager() {
     seo = {
       title: 'Custom Gift Creation | Eshaz Dream World',
       description: 'View this custom gift creation from Eshaz Dream World and choose the size that suits your special occasion.',
+      canonicalPath: pathname,
+      robots: INDEX_ROBOTS,
+    }
+  } else if (/^\/category\/[^/]+$/.test(pathname)) {
+    seo = {
+      title: 'Gift Collection | Eshaz Dream World',
+      description: 'Explore a curated Eshaz Dream World gift collection with custom creations for special occasions in Sri Lanka.',
       canonicalPath: pathname,
       robots: INDEX_ROBOTS,
     }

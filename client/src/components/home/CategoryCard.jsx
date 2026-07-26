@@ -9,7 +9,7 @@ function CategoryCard({ category }) {
 
   return (
     <article className="group min-w-0 overflow-hidden rounded-[2rem] border border-gold/15 bg-white p-2.5 shadow-[0_18px_55px_-38px_rgba(59,47,54,0.55)] transition-all duration-500 hover:-translate-y-1.5 hover:border-gold/35 hover:shadow-luxury">
-      <Link to={`/shop?category=${category.slug}`} className="block min-w-0" aria-label={`Explore ${category.name}`}>
+      <Link to={`/category/${category.slug}`} className="block min-w-0" aria-label={`Explore ${category.name}`}>
         <div className="relative aspect-square overflow-hidden rounded-[1.55rem] bg-gradient-to-br from-pink-light to-blue-light">
           <img
             {...responsiveImageProps(category.image, [320, 480, 640, 800])}

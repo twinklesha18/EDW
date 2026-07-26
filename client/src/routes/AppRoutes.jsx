@@ -13,6 +13,7 @@ const ProfileLayout = lazy(() => import('../layouts/ProfileLayout.jsx'))
 const AdminLayout = lazy(() => import('../layouts/AdminLayout.jsx'))
 const ShopPage = lazy(() => import('../pages/ShopPage.jsx'))
 const CategoriesPage = lazy(() => import('../pages/CategoriesPage.jsx'))
+const CategoryDetailsPage = lazy(() => import('../pages/CategoryDetailsPage.jsx'))
 const ProductDetailsPage = lazy(() => import('../pages/ProductDetailsPage.jsx'))
 const CustomOrdersPage = lazy(() => import('../pages/CustomOrdersPage.jsx'))
 const ContactPage = lazy(() => import('../pages/ContactPage.jsx'))
@@ -59,6 +60,7 @@ function AppRoutes() {
           <Route index element={<HomePage />} />
           <Route path="shop" element={<ShopPage />} />
           <Route path="categories" element={<CategoriesPage />} />
+          <Route path="category/:slug" element={<CategoryDetailsPage />} />
           <Route path="product/:slug" element={<ProductDetailsPage />} />
           <Route path="contact" element={<ContactPage />} />
           <Route path="faq" element={<PolicyPage policyKey="faq" />} />

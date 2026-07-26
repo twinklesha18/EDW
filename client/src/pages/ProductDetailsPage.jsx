@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { FiChevronRight, FiHeart, FiMinus, FiPackage, FiPlus, FiShare2, FiShoppingBag, FiTruck } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import { useDispatch, useSelector } from 'react-redux'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import EmptyState from '../components/common/EmptyState.jsx'
 import PageTransition from '../components/common/PageTransition.jsx'
 import RatingStars from '../components/common/RatingStars.jsx'
@@ -19,9 +19,12 @@ import ProductReviews from '../components/product/ProductReviews.jsx'
 import { brandLogo } from '../assets/images/index.js'
 import { INDEX_ROBOTS, NO_INDEX_ROBOTS, SITE_URL, absoluteUrl } from '../utils/seo.js'
 import { responsiveImageProps } from '../utils/imageUrl.js'
+import { useBrand } from '../hooks/useBrand.js'
 
 function ProductDetailsPage() {
   const { slug } = useParams()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const { shipping } = useBrand()
   const catalogProducts = useSelector((state) => state.catalog.products)
   const [product, setProduct] = useState(null)
   const [reviews, setReviews] = useState([])
@@ -51,25 +54,40 @@ function ProductDetailsPage() {
     const canonicalPath = `/product/${product.slug}`
     const reviewCount = reviews.length
     const ratingValue = reviewCount ? reviews.reduce((total, review) => total + Number(review.rating || 0), 0) / reviewCount : 0
-    const offers = Object.entries(product.prices).map(([size, price]) => ({
-      '@type': 'Offer',
-      name: `Size ${size}`,
-      url: absoluteUrl(canonicalPath),
-      priceCurrency: 'LKR',
-      price: Number(price).toFixed(2),
-      availability: 'https://schema.org/InStock',
-      itemCondition: 'https://schema.org/NewCondition',
+    const productUrl = absoluteUrl(canonicalPath)
+    const shippingPolicyId = `${productUrl}#shipping-policy`
+    const variants = Object.entries(product.prices).map(([size, price]) => ({
+      '@type': 'Product',
+      '@id': `${productUrl}#size-${size.toLowerCase()}`,
+      name: `${product.name} - Size ${size}`,
+      description: product.description,
+      image: product.images.map(absoluteUrl),
+      sku: `${product.id}-${size}`,
+      size,
+      url: `${productUrl}?size=${encodeURIComponent(size)}`,
+      offers: {
+        '@type': 'Offer',
+        url: `${productUrl}?size=${encodeURIComponent(size)}`,
+        priceCurrency: 'LKR',
+        price: Number(price).toFixed(2),
+        availability: 'https://schema.org/InStock',
+        itemCondition: 'https://schema.org/NewCondition',
+        seller: { '@id': `${SITE_URL}/#store` },
+        shippingDetails: { '@id': shippingPolicyId },
+      },
     }))
     const productData = {
-      '@type': 'Product',
+      '@type': 'ProductGroup',
       '@id': `${absoluteUrl(canonicalPath)}#product`,
       name: product.name,
       description: product.description,
+      url: productUrl,
       image: product.images.map(absoluteUrl),
-      sku: product.id,
+      productGroupID: product.id,
+      variesBy: ['https://schema.org/size'],
       category: product.categoryLabel,
       brand: { '@type': 'Brand', name: 'Eshaz Dream World' },
-      offers,
+      hasVariant: variants,
       ...(reviewCount > 0 && {
         aggregateRating: {
           '@type': 'AggregateRating',
@@ -77,6 +95,34 @@ function ProductDetailsPage() {
           reviewCount,
         },
       }),
+    }
+    const shippingData = {
+      '@type': 'OfferShippingDetails',
+      '@id': shippingPolicyId,
+      shippingRate: {
+        '@type': 'MonetaryAmount',
+        value: Number(shipping.standardFee || 0).toFixed(2),
+        currency: 'LKR',
+      },
+      shippingDestination: {
+        '@type': 'DefinedRegion',
+        addressCountry: 'LK',
+      },
+      deliveryTime: {
+        '@type': 'ShippingDeliveryTime',
+        handlingTime: {
+          '@type': 'QuantitativeValue',
+          minValue: 0,
+          maxValue: 1,
+          unitCode: 'DAY',
+        },
+        transitTime: {
+          '@type': 'QuantitativeValue',
+          minValue: Math.max(1, Number(shipping.standardDays || 5) - 2),
+          maxValue: Number(shipping.standardDays || 5),
+          unitCode: 'DAY',
+        },
+      },
     }
     const breadcrumbData = {
       '@type': 'BreadcrumbList',
@@ -96,9 +142,12 @@ function ProductDetailsPage() {
       imageAlt: product.name,
       type: 'product',
       robots: INDEX_ROBOTS,
-      structuredData: { '@context': 'https://schema.org', '@graph': [productData, breadcrumbData] },
+      price: Math.min(...Object.values(product.prices).map(Number)),
+      currency: 'LKR',
+      availability: 'in stock',
+      structuredData: { '@context': 'https://schema.org', '@graph': [productData, shippingData, breadcrumbData] },
     }
-  }, [loading, product, reviews, slug])
+  }, [loading, product, reviews, shipping, slug])
   useSeo(productSeo)
 
   const loadProduct = useCallback(async () => { try { const response = await api.get(`/products/${slug}`); const normalized = normalizeCatalogProduct(response.data.data.product); setProduct(normalized); setReviews(response.data.data.reviews || []); setProductError('') } catch (error) { setProduct(null); setProductError(getApiError(error).message) } finally { setLoading(false) } }, [slug])
@@ -108,9 +157,13 @@ function ProductDetailsPage() {
   useEffect(() => {
     setSelectedImage(product?.image)
     setQuantity(1)
-    setSelectedSize('S')
     setCustomization({ message: '', preferredColor: '', notes: '' })
   }, [product])
+
+  useEffect(() => {
+    const requestedSize = String(searchParams.get('size') || 'S').toUpperCase()
+    setSelectedSize(['S', 'M', 'L'].includes(requestedSize) ? requestedSize : 'S')
+  }, [product, searchParams])
 
   const related = useMemo(() => product ? catalogProducts.filter((item) => item.id !== product.id && item.category === product.category).slice(0, 4) : [], [catalogProducts, product])
 
@@ -140,6 +193,12 @@ function ProductDetailsPage() {
     } catch (error) { toast.error(error?.message || 'Unable to start checkout.') }
   }
   const toggleSaved = async () => { try { await dispatch(toggleWishlist(productToWishlistPayload(product))).unwrap(); toast.success(wishlisted ? 'Removed from your wishlist.' : 'Added to your wishlist.') } catch (error) { toast.error(error?.message || 'Unable to update your wishlist.') } }
+  const selectSize = (size) => {
+    setSelectedSize(size)
+    const next = new URLSearchParams(searchParams)
+    next.set('size', size)
+    setSearchParams(next, { replace: true })
+  }
 
   return (
     <PageTransition>
@@ -178,7 +237,7 @@ function ProductDetailsPage() {
             <fieldset className="mt-6">
               <legend className="form-label">Size</legend>
               <div className="mt-2 flex flex-wrap gap-3">
-                {['S', 'M', 'L'].map((size) => <button key={size} type="button" onClick={() => setSelectedSize(size)} className={`min-w-24 rounded-full border px-5 py-3 text-sm font-semibold transition ${selectedSize === size ? 'border-rosewood bg-rosewood text-white' : 'border-gold/25 bg-white text-ink hover:border-rosewood'}`} aria-pressed={selectedSize === size}>{size} · {formatCurrency(product.prices[size])}</button>)}
+                {['S', 'M', 'L'].map((size) => <button key={size} type="button" onClick={() => selectSize(size)} className={`min-w-24 rounded-full border px-5 py-3 text-sm font-semibold transition ${selectedSize === size ? 'border-rosewood bg-rosewood text-white' : 'border-gold/25 bg-white text-ink hover:border-rosewood'}`} aria-pressed={selectedSize === size}>{size} · {formatCurrency(product.prices[size])}</button>)}
               </div>
             </fieldset>
 

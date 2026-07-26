@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { FiFacebook, FiInstagram, FiMail, FiMapPin, FiMessageCircle, FiPhone } from 'react-icons/fi'
 import { FaTiktok } from 'react-icons/fa'
 import { useForm } from 'react-hook-form'
@@ -6,17 +7,58 @@ import FormField from '../components/common/FormField.jsx'
 import PageBanner from '../components/common/PageBanner.jsx'
 import PageTransition from '../components/common/PageTransition.jsx'
 import { useBrand } from '../hooks/useBrand.js'
+import { useSeo } from '../hooks/useSeo.js'
+import { brandLogo } from '../assets/images/index.js'
 import api from '../services/api.js'
 import { EMAIL_ERROR, PHONE_ERROR, emailPattern, normalizeEmailInput, normalizePhoneInput, phonePattern } from '../utils/inputValidation.js'
+import { INDEX_ROBOTS, SITE_URL } from '../utils/seo.js'
 
 function ContactPage() {
-  const { contact } = useBrand()
+  const { name, logo, contact } = useBrand()
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm()
   const socialLinks = [
     { label: 'Instagram', href: contact.instagram, Icon: FiInstagram },
     { label: 'Facebook', href: contact.facebook, Icon: FiFacebook },
     { label: 'TikTok', href: contact.tiktok, Icon: FaTiktok },
   ].filter((item) => item.href)
+  const structuredData = useMemo(() => ({
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'ContactPage',
+        '@id': `${SITE_URL}/contact#page`,
+        url: `${SITE_URL}/contact`,
+        name: `Contact ${name}`,
+        description: `Contact ${name} for custom bouquets, personalized gifts, delivery, and order enquiries in Sri Lanka.`,
+        isPartOf: { '@id': `${SITE_URL}/#website` },
+        about: { '@id': `${SITE_URL}/#store` },
+        inLanguage: 'en-LK',
+        mainEntity: {
+          '@type': 'ContactPoint',
+          telephone: contact.phoneHref?.replace('tel:', '') || contact.phone,
+          email: contact.email,
+          contactType: 'customer service',
+          areaServed: 'LK',
+        },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
+          { '@type': 'ListItem', position: 2, name: 'Contact', item: `${SITE_URL}/contact` },
+        ],
+      },
+    ],
+  }), [contact, name])
+  useSeo({
+    title: `Contact ${name} | Custom Gift Enquiries Sri Lanka`,
+    description: `Contact ${name} by phone, email or WhatsApp for custom bouquets, personalized gifts, delivery and order enquiries in Sri Lanka.`,
+    canonicalPath: '/contact',
+    image: logo?.url || brandLogo,
+    imageAlt: `${name} logo`,
+    robots: INDEX_ROBOTS,
+    structuredData,
+  })
 
   const submitContact = async (values) => {
     try {

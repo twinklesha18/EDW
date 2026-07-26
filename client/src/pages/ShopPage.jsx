@@ -7,6 +7,9 @@ import PageBanner from '../components/common/PageBanner.jsx'
 import PageTransition from '../components/common/PageTransition.jsx'
 import SearchBar from '../components/layout/SearchBar.jsx'
 import ProductGrid from '../components/product/ProductGrid.jsx'
+import { brandLogo } from '../assets/images/index.js'
+import { useSeo } from '../hooks/useSeo.js'
+import { INDEX_ROBOTS, NO_INDEX_ROBOTS, SITE_URL, absoluteUrl } from '../utils/seo.js'
 
 const pageSize = 6
 
@@ -26,6 +29,49 @@ function ShopPage() {
   const maxPrice = Number(searchParams.get('maxPrice') || availableMax)
   const sort = searchParams.get('sort') || 'newest'
   const page = Math.max(1, Number(searchParams.get('page') || 1))
+  const hasFilters = searchParams.toString().length > 0
+
+  const structuredData = useMemo(() => ({
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'CollectionPage',
+        '@id': `${SITE_URL}/shop#collection`,
+        url: `${SITE_URL}/shop`,
+        name: 'Custom Gifts and Bouquets | Eshaz Dream World',
+        description: 'Shop custom bouquets, chocolate gifts and personalized creations for special occasions in Sri Lanka.',
+        isPartOf: { '@id': `${SITE_URL}/#website` },
+        inLanguage: 'en-LK',
+        mainEntity: {
+          '@type': 'ItemList',
+          numberOfItems: products.length,
+          itemListElement: products.map((product, index) => ({
+            '@type': 'ListItem',
+            position: index + 1,
+            url: absoluteUrl(`/product/${product.slug}`),
+            name: product.name,
+            image: absoluteUrl(product.image),
+          })),
+        },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
+          { '@type': 'ListItem', position: 2, name: 'Shop', item: `${SITE_URL}/shop` },
+        ],
+      },
+    ],
+  }), [products])
+  useSeo({
+    title: 'Shop Custom Gifts & Bouquets in Sri Lanka | Eshaz Dream World',
+    description: 'Shop custom bouquets, chocolate gifts and personalized creations for birthdays and special occasions in Sri Lanka.',
+    canonicalPath: '/shop',
+    image: products[0]?.image || brandLogo,
+    imageAlt: 'Custom gifts and bouquets from Eshaz Dream World',
+    robots: hasFilters ? NO_INDEX_ROBOTS : INDEX_ROBOTS,
+    structuredData,
+  })
 
   useEffect(() => setSearchInput(search), [search])
 

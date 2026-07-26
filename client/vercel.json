@@ -6,6 +6,10 @@
       "destination": "https://edw-jvpw.vercel.app/sitemap.xml"
     },
     {
+      "source": "/merchant-feed.xml",
+      "destination": "https://edw-jvpw.vercel.app/merchant-feed.xml"
+    },
+    {
       "source": "/api/:path*",
       "destination": "https://edw-jvpw.vercel.app/api/:path*"
     },

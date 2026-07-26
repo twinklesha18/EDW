@@ -1,5 +1,6 @@
 import { FiFacebook, FiInstagram, FiMail, FiMapPin, FiPhone } from 'react-icons/fi'
 import { FaTiktok, FaWhatsapp } from 'react-icons/fa'
+import { useSelector } from 'react-redux'
 import { Link } from 'react-router-dom'
 import { footerGroups } from '../../data/navigation.js'
 import { useBrand } from '../../hooks/useBrand.js'
@@ -7,6 +8,16 @@ import Logo from './Logo.jsx'
 
 function Footer() {
   const { name, tagline, contact } = useBrand()
+  const categories = useSelector((state) => state.catalog.categories)
+  const footerNavigation = footerGroups.map((group) => group.title === 'Collections' && categories.length
+    ? {
+        ...group,
+        links: categories.slice(0, 5).map((category) => ({
+          label: category.name,
+          to: `/category/${category.slug}`,
+        })),
+      }
+    : group)
   const socialLinks = [
     { label: 'Instagram', href: contact.instagram, Icon: FiInstagram },
     { label: 'Facebook', href: contact.facebook, Icon: FiFacebook },
@@ -30,7 +41,7 @@ function Footer() {
           </div>
         </div>
 
-        {footerGroups.map((group) => (
+        {footerNavigation.map((group) => (
           <div key={group.title}>
             <h3 className="font-serif text-lg text-white">{group.title}</h3>
             <ul className="mt-5 space-y-3 text-sm">

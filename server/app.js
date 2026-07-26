@@ -24,7 +24,7 @@ import siteSettingsRoutes from './routes/siteSettingsRoutes.js'
 import storefrontRoutes from './routes/storefrontRoutes.js'
 import userRoutes from './routes/userRoutes.js'
 import wishlistRoutes from './routes/wishlistRoutes.js'
-import { getSitemap } from './controllers/seoController.js'
+import { getMerchantFeed, getSitemap } from './controllers/seoController.js'
 
 const app = express()
 const uploadsDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), 'uploads')
@@ -66,6 +66,7 @@ app.use('/uploads', express.static(uploadsDirectory, {
 }))
 
 app.get('/sitemap.xml', getSitemap)
+app.get('/merchant-feed.xml', getMerchantFeed)
 
 app.use('/api/v1', apiRoutes)
 app.use('/api/analytics', analyticsRoutes)

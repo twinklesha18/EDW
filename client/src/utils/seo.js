@@ -17,6 +17,14 @@ const upsertMeta = (attribute, key, content) => {
   element.setAttribute('content', content)
 }
 
+const setOptionalMeta = (attribute, key, content) => {
+  if (content === undefined || content === null || content === '') {
+    document.head.querySelector(`meta[${attribute}="${key}"]`)?.remove()
+    return
+  }
+  upsertMeta(attribute, key, String(content))
+}
+
 const setCanonical = (path) => {
   let canonical = document.head.querySelector('link[rel="canonical"]')
   if (!path) {
@@ -46,7 +54,19 @@ const setStructuredData = (structuredData) => {
   script.textContent = JSON.stringify(structuredData).replaceAll('<', '\\u003c')
 }
 
-export function applySeo({ title, description, canonicalPath, image, imageAlt = '', type = 'website', robots = INDEX_ROBOTS, structuredData }) {
+export function applySeo({
+  title,
+  description,
+  canonicalPath,
+  image,
+  imageAlt = '',
+  type = 'website',
+  robots = INDEX_ROBOTS,
+  price,
+  currency,
+  availability,
+  structuredData,
+}) {
   const canonicalUrl = canonicalPath ? absoluteUrl(canonicalPath) : ''
   const imageUrl = absoluteUrl(image)
 
@@ -62,11 +82,16 @@ export function applySeo({ title, description, canonicalPath, image, imageAlt = 
   upsertMeta('property', 'og:description', description)
   upsertMeta('property', 'og:url', canonicalUrl || SITE_URL)
   upsertMeta('property', 'og:image', imageUrl)
+  upsertMeta('property', 'og:image:secure_url', imageUrl)
   upsertMeta('property', 'og:image:alt', imageAlt || title)
   upsertMeta('name', 'twitter:card', 'summary_large_image')
   upsertMeta('name', 'twitter:title', title)
   upsertMeta('name', 'twitter:description', description)
   upsertMeta('name', 'twitter:image', imageUrl)
+  upsertMeta('name', 'twitter:image:alt', imageAlt || title)
+  setOptionalMeta('property', 'product:price:amount', price)
+  setOptionalMeta('property', 'product:price:currency', currency)
+  setOptionalMeta('property', 'product:availability', availability)
   setCanonical(canonicalPath)
   setStructuredData(structuredData)
 }

@@ -18,11 +18,8 @@ export const footerGroups = Object.freeze([
   {
     title: 'Collections',
     links: [
-      { label: 'Bouquets', to: '/shop?category=chocolate-bouquets' },
       { label: 'Gift Collections', to: '/categories' },
-      { label: 'Photo Frames', to: '/shop?category=photo-frames' },
-      { label: 'Greeting Cards', to: '/shop?category=greeting-cards' },
-      { label: 'Custom Designs', to: '/custom-orders' },
+      { label: 'All Products', to: '/shop' },
     ],
   },
 ])
