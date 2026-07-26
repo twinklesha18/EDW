@@ -1,4 +1,3 @@
-import { timingSafeEqual } from 'node:crypto'
 import CustomOrder from '../models/CustomOrder.js'
 import Order from '../models/Order.js'
 import { loadPaymentSlip } from '../services/paymentSlipService.js'
@@ -80,25 +79,4 @@ export async function replaceAdminCustomOrderPaymentSlip(request, response) {
   const customOrder = await CustomOrder.findById(request.params.id)
   if (!customOrder) throw new AppError('Custom order not found', 404)
   return replaceSlip({ request, response, document: customOrder, field: 'paymentSlip', reference: customOrder.requestNumber })
-}
-
-export async function migrateLegacyPaymentSlip(request, response) {
-  const expectedToken = String(process.env.PAYMENT_SLIP_MIGRATION_TOKEN || '').trim()
-  const providedToken = String(request.get('x-migration-token') || '').trim()
-  const expectedBuffer = Buffer.from(expectedToken)
-  const providedBuffer = Buffer.from(providedToken)
-  const authorized = expectedBuffer.length > 31
-    && expectedBuffer.length === providedBuffer.length
-    && timingSafeEqual(expectedBuffer, providedBuffer)
-  if (!authorized) throw new AppError('Route not found', 404)
-  if (!request.file) throw new AppError('Select the legacy payment slip image', 422)
-
-  const orderNumber = String(request.body?.orderNumber || '').trim().toUpperCase()
-  if (!/^EDW-\d{4}-\d{6}$/.test(orderNumber)) throw new AppError('A valid order number is required', 422)
-  const order = await Order.findOne({ orderNumber })
-  if (!order) throw new AppError('Order not found', 404)
-  if (!String(order.payment?.slip?.publicId || '').startsWith('local:payment-slips/')) {
-    throw new AppError('This payment slip is not a legacy local upload', 409)
-  }
-  return replaceSlip({ request, response, document: order, field: 'payment.slip', reference: order.orderNumber })
 }
