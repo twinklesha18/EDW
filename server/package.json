@@ -23,6 +23,7 @@
     "test:seo": "node scripts/seo-smoke.js",
     "test:analytics": "node scripts/analytics-smoke.js",
     "migrate:owner-email": "node scripts/migrate-owner-email.js",
+    "migrate:payment-slips": "node scripts/migrate-local-payment-slips.js",
     "test:invoice": "node scripts/invoice-logo-smoke.js"
   },
   "keywords": [],

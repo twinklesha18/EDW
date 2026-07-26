@@ -1,11 +1,30 @@
 import { useEffect, useState } from 'react'
 import { FiDownload, FiExternalLink, FiImage, FiRefreshCw } from 'react-icons/fi'
+import toast from 'react-hot-toast'
 import { adminApi } from '../../services/adminApi.js'
 import StatusBadge from './StatusBadge.jsx'
 
 function PaymentSlipViewer({ resource, id, reference, status, originalUrl }) {
   const [state, setState] = useState({ url: '', loading: true, error: '' })
   const [reloadKey, setReloadKey] = useState(0)
+  const [restoring, setRestoring] = useState(false)
+
+  const restore = async (event) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    if (file.size > 12 * 1024 * 1024) return toast.error('Payment slip must be smaller than 12 MB.')
+    setRestoring(true)
+    try {
+      await adminApi.replacePaymentSlip(resource, id, file)
+      toast.success('Payment slip restored and saved to cloud storage.')
+      setReloadKey((current) => current + 1)
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Unable to restore the payment slip.')
+    } finally {
+      setRestoring(false)
+    }
+  }
 
   useEffect(() => {
     let active = true
@@ -32,7 +51,7 @@ function PaymentSlipViewer({ resource, id, reference, status, originalUrl }) {
         <StatusBadge>{status}</StatusBadge>
       </div>
       {state.loading && <div className="mt-5 grid min-h-64 place-items-center rounded-2xl bg-cream"><div className="text-center text-muted"><FiImage className="mx-auto animate-pulse text-3xl" /><p className="mt-2 text-sm">Loading payment slip…</p></div></div>}
-      {state.error && <div className="mt-5 rounded-2xl border border-red-100 bg-red-50 p-5 text-sm text-red-700"><p>{state.error}</p><div className="mt-4 flex flex-wrap gap-2"><button type="button" className="secondary-button min-h-10" onClick={() => setReloadKey((current) => current + 1)}><FiRefreshCw /> Retry</button>{originalUrl && <a href={originalUrl} target="_blank" rel="noreferrer" className="secondary-button min-h-10"><FiExternalLink /> Open Original</a>}</div></div>}
+      {state.error && <div className="mt-5 rounded-2xl border border-red-100 bg-red-50 p-5 text-sm text-red-700"><p>{state.error}</p><p className="mt-2 text-xs">For a legacy local upload, select the original image once to restore it permanently to cloud storage.</p><div className="mt-4 flex flex-wrap gap-2"><button type="button" className="secondary-button min-h-10" onClick={() => setReloadKey((current) => current + 1)}><FiRefreshCw /> Retry</button><label className="secondary-button min-h-10 cursor-pointer"><FiImage /> {restoring ? 'Restoring...' : 'Restore Slip'}<input type="file" className="sr-only" accept="image/*,.heic,.heif" disabled={restoring} onChange={restore} /></label>{originalUrl && !originalUrl.includes('/uploads/') && <a href={originalUrl} target="_blank" rel="noreferrer" className="secondary-button min-h-10"><FiExternalLink /> Open Original</a>}</div></div>}
       {state.url && <><a href={state.url} target="_blank" rel="noreferrer"><img src={state.url} alt={`Payment slip for ${reference}`} className="mt-5 max-h-[680px] w-full rounded-2xl border border-gold/15 bg-cream object-contain" /></a><div className="mt-4 flex flex-wrap gap-3"><a href={state.url} target="_blank" rel="noreferrer" className="secondary-button"><FiExternalLink /> Open Full Slip</a><a href={state.url} download={`${reference}-payment-slip.png`} className="secondary-button"><FiDownload /> Download Slip</a></div></>}
     </section>
   )

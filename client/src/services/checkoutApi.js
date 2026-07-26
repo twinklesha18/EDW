@@ -30,6 +30,7 @@ export const checkoutApi = {
     }).then((response) => response.data.data.order)
   },
   invoice: (orderNumber) => api.get(`/orders/${orderNumber}/invoice`, { responseType: 'blob' }).then((response) => response.data),
+  paymentSlip: (orderNumber) => api.get(`/orders/${orderNumber}/payment-slip/view`, { responseType: 'blob', timeout: 30000 }).then((response) => response.data),
 }
 
 export function downloadBlob(blob, filename) {

@@ -6,4 +6,5 @@ export const customOrderApi = {
   paymentConfig: () => api.get('/custom-orders/payment-config').then((response) => response.data.data),
   submitPayment: (id, formData) => api.post(`/custom-orders/${id}/payment`, formData, { timeout: 60000 }).then((response) => response.data.data.customOrder),
   cancel: (id) => api.post(`/custom-orders/${id}/cancel`).then((response) => response.data.data.customOrder),
+  paymentSlip: (id) => api.get(`/custom-orders/${id}/payment-slip`, { responseType: 'blob', timeout: 30000 }).then((response) => response.data),
 }
