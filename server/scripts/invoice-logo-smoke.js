@@ -56,4 +56,4 @@ assert.equal(deliveredEmail.attachments.length, 1)
 assert.equal(deliveredEmail.attachments[0].contentType, 'application/pdf')
 assert.match(deliveredEmail.attachments[0].content.subarray(0, 8).toString('ascii'), /^%PDF-/)
 
-console.log('Invoice smoke test passed: browser PDF output, managed logos, buffering, and delivered-email attachments are valid.')
+console.log('Invoice smoke test passed: browser PDF output, managed logos, vector butterfly branding, buffering, and delivered-email attachments are valid.')

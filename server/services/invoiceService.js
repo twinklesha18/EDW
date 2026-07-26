@@ -16,6 +16,25 @@ export const invoiceSafeLine = (value) => Array.from(String(value ?? '').normali
   .replace(/\s+/g, ' ')
   .trim()
 
+const drawButterflyMark = (doc, x, y) => {
+  doc.save()
+  doc.translate(x, y)
+
+  doc.fillColor('#d65b91')
+    .path('M 0 7 C -3 2 -9 -2 -12 1 C -15 5 -11 11 -4 11 C -9 14 -8 19 -4 18 C -1 17 0 13 0 9 Z')
+    .fill()
+  doc.fillColor('#8f5aa8')
+    .path('M 3 7 C 6 2 12 -2 15 1 C 18 5 14 11 7 11 C 12 14 11 19 7 18 C 4 17 3 13 3 9 Z')
+    .fill()
+  doc.fillColor('#c8a96b').roundedRect(1, 6, 2, 12, 1).fill()
+  doc.strokeColor('#8f5aa8').lineWidth(0.8)
+    .moveTo(1.5, 6).bezierCurveTo(0, 3, -1, 2, -2, 1)
+    .moveTo(2.5, 6).bezierCurveTo(4, 3, 5, 2, 6, 1)
+    .stroke()
+
+  doc.restore()
+}
+
 const createDocument = (order, siteSettings) => {
   const businessName = siteSettings?.business?.name || 'Eshaz Dream World'
   return new PDFDocument({ size: 'A4', margin: 48, info: { Title: `Invoice ${order.orderNumber}`, Author: businessName } })
@@ -32,7 +51,10 @@ const writeInvoice = (doc, order, siteSettings, managedLogo) => {
     try { doc.image(logoPath, 48, 42, { fit: [72, 72] }) } catch { /* A logo must never prevent invoice generation. */ }
   }
   doc.fillColor('#7d2948').font('Times-Bold').fontSize(24).text(businessName, 135, 52)
-  doc.fillColor('#8e7a81').font('Helvetica').fontSize(9).text(tagline.toUpperCase(), 135, 82)
+  const invoiceTagline = tagline.toUpperCase()
+  doc.fillColor('#8e7a81').font('Helvetica').fontSize(9).text(invoiceTagline, 135, 82, { width: 230, lineBreak: false, ellipsis: true })
+  const butterflyX = Math.min(372, 141 + doc.widthOfString(invoiceTagline))
+  drawButterflyMark(doc, butterflyX, 78)
   doc.fillColor('#33252a').font('Times-Bold').fontSize(22).text('INVOICE', 400, 52, { align: 'right' })
   doc.font('Helvetica').fontSize(10).text(order.orderNumber, 350, 82, { align: 'right' })
   doc.moveTo(48, 128).lineTo(547, 128).strokeColor('#d9b46f').stroke()
