@@ -16,7 +16,7 @@ function MainLayout() {
   return (
     <div className="flex min-h-screen flex-col overflow-x-clip">
       <Navbar />
-      <main className="flex-1"><Outlet /></main>
+      <main className="flex-1 pt-[4.75rem]"><Outlet /></main>
       <Footer />
       <CartDrawer />
       <BackToTop />

@@ -25,7 +25,7 @@ function Navbar() {
   const logout = async () => { try { await dispatch(logoutUser()).unwrap(); setAccountOpen(false); setIsMenuOpen(false); toast.success('You have been logged out.') } catch (error) { toast.error(error?.message || 'Unable to log out.') } }
   const closeAccount = () => setAccountOpen(false)
 
-  return <header className={`sticky top-0 z-50 border-b transition-all duration-300 ${isScrolled ? 'border-gold/15 bg-white/90 shadow-[0_8px_30px_-20px_rgba(59,47,54,.45)] backdrop-blur-xl' : 'border-transparent bg-cream/90 backdrop-blur-md'}`}>
+  return <header className={`fixed inset-x-0 top-0 z-50 border-b transition-all duration-300 ${isScrolled ? 'border-gold/15 bg-white/90 shadow-[0_8px_30px_-20px_rgba(59,47,54,.45)] backdrop-blur-xl' : 'border-transparent bg-cream/90 backdrop-blur-md'}`}>
     <nav className="section-shell flex h-[4.75rem] items-center justify-between gap-4" aria-label="Main navigation">
       <Logo onClick={() => setIsMenuOpen(false)} />
       <div className="hidden items-center gap-3 lg:flex xl:gap-6">{primaryNavigation.map((item) => <NavLink key={item.to} to={item.to} end={item.to === '/'} className={({ isActive }) => `nav-link whitespace-nowrap ${isActive ? 'nav-link-active' : ''}`}>{item.label}</NavLink>)}</div>
