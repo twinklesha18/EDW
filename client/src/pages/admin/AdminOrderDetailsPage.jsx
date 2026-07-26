@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { FiArrowLeft, FiCheckCircle, FiDownload, FiExternalLink, FiMapPin, FiPackage, FiTruck, FiUser, FiXCircle } from 'react-icons/fi'
+import { FiArrowLeft, FiCheckCircle, FiDownload, FiMapPin, FiPackage, FiTruck, FiUser, FiXCircle } from 'react-icons/fi'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { Link, useParams } from 'react-router-dom'
 import AdminPageHeader from '../../components/admin/AdminPageHeader.jsx'
 import StatusBadge from '../../components/admin/StatusBadge.jsx'
+import PaymentSlipViewer from '../../components/admin/PaymentSlipViewer.jsx'
 import LoadingButton from '../../components/common/LoadingButton.jsx'
 import OrderTimeline from '../../components/order/OrderTimeline.jsx'
 import { adminApi } from '../../services/adminApi.js'
@@ -76,7 +77,7 @@ function AdminOrderDetailsPage() {
           </div>
           <section className="form-section"><h2 className="form-section-title"><span><FiTruck /></span> Fulfilment Timeline</h2><div className="mt-6"><OrderTimeline timeline={order.timeline} status={order.orderStatus} /></div></section>
           {order.orderStatus === 'Cancelled' && <section className="form-section border-red-100 bg-red-50/50"><h2 className="font-serif text-2xl font-semibold text-red-800">Cancellation Information</h2><dl className="mt-5 grid gap-4 text-sm sm:grid-cols-2"><div><dt className="text-muted">Cancelled by</dt><dd className="mt-1 font-semibold">{order.cancellation?.cancelledBy ? `${order.cancellation.cancelledBy.firstName} ${order.cancellation.cancelledBy.lastName}` : order.cancellation?.cancelledByRole || 'Not recorded'}</dd></div><div><dt className="text-muted">Cancelled at</dt><dd className="mt-1 font-semibold">{order.cancellation?.cancelledAt ? new Date(order.cancellation.cancelledAt).toLocaleString() : 'Not recorded'}</dd></div><div className="sm:col-span-2"><dt className="text-muted">Reason</dt><dd className="mt-1 whitespace-pre-wrap rounded-xl bg-white p-4 font-medium">{order.cancellation?.reason || 'Reason was not recorded for this older cancellation.'}</dd></div></dl></section>}
-          {order.payment?.slip?.url && <section className="form-section"><div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-serif text-2xl font-semibold">Bank Payment Slip</h2><p className="mt-1 text-sm text-muted">Verify this transfer proof before processing the order.</p></div><StatusBadge>{order.paymentStatus}</StatusBadge></div><a href={order.payment.slip.url} target="_blank" rel="noreferrer"><img src={order.payment.slip.url} alt={`Payment slip for ${order.orderNumber}`} className="mt-5 max-h-[680px] w-full rounded-2xl bg-cream object-contain" /></a><div className="mt-4 flex flex-wrap gap-3"><a href={order.payment.slip.url} target="_blank" rel="noreferrer" className="secondary-button"><FiExternalLink /> Open Full Slip</a></div></section>}
+          {(order.payment?.slip?.url || order.payment?.slip?.publicId) && <PaymentSlipViewer resource="orders" id={id} reference={order.orderNumber} status={order.paymentStatus} originalUrl={order.payment?.slip?.url} />}
         </div>
         <aside className="space-y-6">
           <form onSubmit={handleSubmit(save)} className="form-section"><h2 className="font-serif text-2xl font-semibold">Manage Order</h2><div className="mt-5 space-y-4"><label><span className="form-label">Order status</span><select className="input-field" {...register('orderStatus')}>{statuses.map((status) => <option key={status}>{status}</option>)}</select></label>{order.paymentMethod !== 'Bank Transfer' && <label><span className="form-label">Payment status</span><select className="input-field" {...register('paymentStatus')}><option>Pending</option><option>Paid</option><option>Failed</option><option>Refunded</option></select></label>}<label><span className="form-label">Tracking number</span><input className="input-field" {...register('trackingNumber')} /></label><label><span className="form-label">Internal/timeline note</span><textarea className="input-field min-h-24" {...register('notes')} /></label><LoadingButton type="submit" loading={saving} className="primary-button w-full">Save Order</LoadingButton></div></form>

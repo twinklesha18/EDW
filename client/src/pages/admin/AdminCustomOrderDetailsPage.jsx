@@ -5,6 +5,7 @@ import toast from 'react-hot-toast'
 import { Link, useParams } from 'react-router-dom'
 import AdminPageHeader from '../../components/admin/AdminPageHeader.jsx'
 import StatusBadge from '../../components/admin/StatusBadge.jsx'
+import PaymentSlipViewer from '../../components/admin/PaymentSlipViewer.jsx'
 import LoadingButton from '../../components/common/LoadingButton.jsx'
 import LoadingSkeleton from '../../components/common/LoadingSkeleton.jsx'
 import { adminApi } from '../../services/adminApi.js'
@@ -110,13 +111,7 @@ function AdminCustomOrderDetailsPage() {
             </section>
           )}
 
-          {customOrder.paymentSlip?.url && (
-            <section className="form-section">
-              <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-serif text-2xl font-semibold">Bank Payment Slip</h2><p className="mt-1 text-sm text-muted">Review the uploaded transfer proof before approving payment.</p></div><StatusBadge>{customOrder.paymentStatus}</StatusBadge></div>
-              <a href={customOrder.paymentSlip.url} target="_blank" rel="noreferrer"><img src={customOrder.paymentSlip.url} alt={`Payment slip for ${customOrder.requestNumber}`} className="mt-5 max-h-[680px] w-full rounded-2xl bg-cream object-contain" /></a>
-              <div className="mt-4 flex flex-wrap gap-3"><a href={customOrder.paymentSlip.url} target="_blank" rel="noreferrer" className="secondary-button"><FiExternalLink /> Open Full Slip</a></div>
-            </section>
-          )}
+          {(customOrder.paymentSlip?.url || customOrder.paymentSlip?.publicId) && <PaymentSlipViewer resource="custom-orders" id={id} reference={customOrder.requestNumber} status={customOrder.paymentStatus} originalUrl={customOrder.paymentSlip?.url} />}
 
           {customOrder.deliveryAddress?.addressLine1 && <section className="form-section"><h2 className="form-section-title"><span><FiMapPin /></span> Delivery Address</h2><p className="mt-4 text-sm leading-7 text-muted"><strong className="text-ink">{customOrder.deliveryAddress.fullName}</strong><br />{customOrder.deliveryAddress.addressLine1}{customOrder.deliveryAddress.addressLine2 && `, ${customOrder.deliveryAddress.addressLine2}`}<br />{customOrder.deliveryAddress.city}, {customOrder.deliveryAddress.district}, {customOrder.deliveryAddress.province}<br />{customOrder.deliveryAddress.country} · {customOrder.deliveryAddress.phone}</p></section>}
 

@@ -150,6 +150,10 @@ try {
   result = await jsonRequest(`/admin/custom-orders/${customOrderId}`, { cookie: adminCookie })
   assert.equal(result.body.data.customOrder.paymentStatus, 'Slip Submitted')
   assert.ok(result.body.data.customOrder.paymentSlip.url, 'Admin must be able to view the payment slip')
+  response = await fetch(`http://127.0.0.1:5105/api/admin/custom-orders/${customOrderId}/payment-slip`, { headers: { Cookie: adminCookie } })
+  assert.equal(response.status, 200, 'Admin must be able to load the protected custom-order payment slip')
+  assert.match(response.headers.get('content-type') || '', /image\/png/)
+  assert.ok((await response.arrayBuffer()).byteLength > 100, 'The protected custom-order slip endpoint must return image data')
 
   result = await jsonRequest(`/admin/custom-orders/${customOrderId}/payment`, { method: 'PUT', cookie: adminCookie, body: { action: 'approve', note: 'Transfer verified by the automated smoke test.' } })
   assert.equal(result.status, 200)

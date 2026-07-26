@@ -16,6 +16,7 @@ export const adminApi = {
   search: (query) => api.get('/admin/search', { params: { q: query } }).then((response) => response.data.data),
   resetUserPassword: (userId) => api.post(`/admin/users/${userId}/password-reset`).then((response) => response.data.data),
   invoice: (orderId) => api.get(`/admin/orders/${orderId}/invoice`, { responseType: 'blob' }).then((response) => response.data),
+  paymentSlip: (resource, id) => api.get(`/admin/${resource}/${id}/payment-slip`, { responseType: 'blob', timeout: 30000 }).then((response) => response.data),
   getSettings: () => api.get('/admin/settings').then((response) => response.data.data.settings),
   createSettings: (body) => api.post('/admin/settings', body).then((response) => response.data.data.settings),
   updateSettings: (body) => api.put('/admin/settings', body).then((response) => response.data.data.settings),
