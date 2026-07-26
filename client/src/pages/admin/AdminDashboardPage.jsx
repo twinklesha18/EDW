@@ -87,7 +87,7 @@ function AdminDashboardPage() {
   ]
 
   return (
-    <div className="space-y-8">
+    <div className="flex flex-col gap-8">
       <AdminPageHeader title="Dashboard" description="A live overview of your website visitors, customers, products, and order performance." />
 
       <section aria-labelledby="store-overview-title" className="space-y-4">
@@ -97,7 +97,7 @@ function AdminDashboardPage() {
         </div>
       </section>
 
-      <section aria-labelledby="visitor-analytics-title" className="space-y-4">
+      <section aria-labelledby="visitor-analytics-title" className="order-last space-y-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <p className="text-xs font-bold uppercase tracking-[.18em] text-gold">Live analytics</p>
