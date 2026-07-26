@@ -122,6 +122,7 @@ try {
   response = await fetch(`${base}/admin/orders/${createdOrder._id}/invoice`, { headers: { Cookie: adminCookie } })
   assert.equal(response.status, 200, 'Administrator invoice access must remain available before delivery')
   assert.match(response.headers.get('content-type') || '', /application\/pdf/)
+  assert.match(response.headers.get('content-disposition') || '', /^inline;/, 'Admin invoices must open in the browser')
   await response.arrayBuffer()
 
   result = await jsonRequest(`/admin/orders/${createdOrder._id}/payment`, { method: 'PUT', cookie: adminCookie, body: { action: 'reject', note: 'The transfer amount is not readable.' } })

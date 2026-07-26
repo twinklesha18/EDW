@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { FiArrowLeft, FiCheckCircle, FiDownload, FiMapPin, FiPackage, FiTruck, FiUser, FiXCircle } from 'react-icons/fi'
+import { FiArrowLeft, FiCheckCircle, FiExternalLink, FiMapPin, FiPackage, FiTruck, FiUser, FiXCircle } from 'react-icons/fi'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { Link, useParams } from 'react-router-dom'
@@ -9,8 +9,8 @@ import PaymentSlipViewer from '../../components/admin/PaymentSlipViewer.jsx'
 import LoadingButton from '../../components/common/LoadingButton.jsx'
 import OrderTimeline from '../../components/order/OrderTimeline.jsx'
 import { adminApi } from '../../services/adminApi.js'
-import { downloadBlob } from '../../services/checkoutApi.js'
 import { formatCurrency } from '../../utils/formatCurrency.js'
+import { openPdfPreview } from '../../utils/openPdfPreview.js'
 
 const statuses = ['Pending', 'Confirmed', 'Processing', 'Packed', 'Shipped', 'Delivered', 'Cancelled']
 
@@ -56,7 +56,10 @@ function AdminOrderDetailsPage() {
     finally { setPaymentSaving(false) }
   }
 
-  const invoice = async () => { try { downloadBlob(await adminApi.invoice(id), `${order.orderNumber}-invoice.pdf`) } catch { toast.error('Unable to download invoice.') } }
+  const invoice = async () => {
+    try { await openPdfPreview(() => adminApi.invoice(id), `Invoice ${order.orderNumber}`) }
+    catch { toast.error('Unable to open invoice.') }
+  }
 
   if (loading) return <p className="p-10 text-center text-muted">Loading order…</p>
   if (error || !order) return <p className="rounded-xl bg-red-50 p-5 text-red-700">{error}</p>
@@ -64,7 +67,7 @@ function AdminOrderDetailsPage() {
 
   return (
     <div className="space-y-6">
-      <AdminPageHeader title={order.orderNumber} description={`Placed ${new Date(order.createdAt).toLocaleString()}`} action={<div className="flex gap-2">{order.orderStatus !== 'Cancelled' && <button type="button" className="secondary-button" onClick={invoice}><FiDownload /> Invoice</button>}<Link to="/admin/orders" className="secondary-button"><FiArrowLeft /> Orders</Link></div>} />
+      <AdminPageHeader title={order.orderNumber} description={`Placed ${new Date(order.createdAt).toLocaleString()}`} action={<div className="flex gap-2">{order.orderStatus !== 'Cancelled' && <button type="button" className="secondary-button" onClick={invoice}><FiExternalLink /> Open Invoice</button>}<Link to="/admin/orders" className="secondary-button"><FiArrowLeft /> Orders</Link></div>} />
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-6">
           <section className="form-section">

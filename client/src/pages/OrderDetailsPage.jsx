@@ -12,6 +12,7 @@ import CustomerPaymentSlip from '../components/payment/CustomerPaymentSlip.jsx'
 import { fetchCart } from '../redux/slices/cartSlice.js'
 import { checkoutApi } from '../services/checkoutApi.js'
 import { formatCurrency } from '../utils/formatCurrency.js'
+import { openPdfPreview } from '../utils/openPdfPreview.js'
 
 function OrderDetailsPage() {
   const { orderNumber } = useParams()
@@ -42,20 +43,8 @@ function OrderDetailsPage() {
   useEffect(() => { void load(); const timer = setInterval(() => void load({ quiet: true }), 15000); return () => clearInterval(timer) }, [load])
 
   const invoice = async () => {
-    const preview = window.open('', '_blank')
-    if (preview) {
-      preview.document.title = `Invoice ${orderNumber}`
-      preview.document.body.innerHTML = '<p style="font:16px Arial;padding:24px">Preparing your invoice...</p>'
-    }
-    try {
-      const url = URL.createObjectURL(await checkoutApi.invoice(orderNumber))
-      if (preview) preview.location.replace(url)
-      else window.location.assign(url)
-      window.setTimeout(() => URL.revokeObjectURL(url), 5 * 60 * 1000)
-    } catch {
-      preview?.close()
-      toast.error('Unable to open invoice.')
-    }
+    try { await openPdfPreview(() => checkoutApi.invoice(orderNumber), `Invoice ${orderNumber}`) }
+    catch { toast.error('Unable to open invoice.') }
   }
   const cancel = async () => {
     if (cancellationReason.trim().length < 10) return toast.error('Please enter a cancellation reason of at least 10 characters.')
