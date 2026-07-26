@@ -90,6 +90,13 @@ function AdminDashboardPage() {
     <div className="space-y-8">
       <AdminPageHeader title="Dashboard" description="A live overview of your website visitors, customers, products, and order performance." />
 
+      <section aria-labelledby="store-overview-title" className="space-y-4">
+        <h2 id="store-overview-title" className="font-serif text-3xl font-semibold">Store Overview</h2>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {storeCards.map((card) => <MetricCard key={card.label} {...card} />)}
+        </div>
+      </section>
+
       <section aria-labelledby="visitor-analytics-title" className="space-y-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
@@ -139,13 +146,6 @@ function AdminDashboardPage() {
             </div>
             <p className="mt-6 text-xs leading-5 text-muted">Analytics are anonymous. Customer names, emails, and raw IP addresses are not collected.</p>
           </section>
-        </div>
-      </section>
-
-      <section aria-labelledby="store-overview-title" className="space-y-4">
-        <h2 id="store-overview-title" className="font-serif text-3xl font-semibold">Store Overview</h2>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {storeCards.map((card) => <MetricCard key={card.label} {...card} />)}
         </div>
       </section>
 
