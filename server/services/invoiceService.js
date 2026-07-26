@@ -7,6 +7,15 @@ const currentDir = path.dirname(fileURLToPath(import.meta.url))
 const logoPath = path.resolve(currentDir, '../../client/src/assets/images/eshaz-dream-world-logo.png')
 const money = (value) => `LKR ${Number(value).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
+export const invoiceSafeLine = (value) => Array.from(String(value ?? '').normalize('NFKC'))
+  .filter((character) => {
+    const codePoint = character.codePointAt(0)
+    return codePoint >= 0x20 && codePoint <= 0x7e
+  })
+  .join('')
+  .replace(/\s+/g, ' ')
+  .trim()
+
 const createDocument = (order, siteSettings) => {
   const businessName = siteSettings?.business?.name || 'Eshaz Dream World'
   return new PDFDocument({ size: 'A4', margin: 48, info: { Title: `Invoice ${order.orderNumber}`, Author: businessName } })
@@ -14,7 +23,7 @@ const createDocument = (order, siteSettings) => {
 
 const writeInvoice = (doc, order, siteSettings, managedLogo) => {
   const businessName = siteSettings?.business?.name || 'Eshaz Dream World'
-  const tagline = siteSettings?.business?.tagline || 'Your Destination | My Passion'
+  const tagline = invoiceSafeLine(siteSettings?.business?.tagline) || 'Your Destination | My Passion'
   let logoAdded = false
   if (managedLogo) {
     try { doc.image(managedLogo, 48, 42, { fit: [72, 72] }); logoAdded = true } catch { /* Continue with the bundled logo or text-only branding. */ }

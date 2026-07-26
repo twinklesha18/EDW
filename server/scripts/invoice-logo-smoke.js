@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { PassThrough } from 'node:stream'
 import sharp from 'sharp'
 import { normalizeInvoiceLogo } from '../services/invoiceBrandingService.js'
-import { createInvoiceBuffer, streamInvoice } from '../services/invoiceService.js'
+import { createInvoiceBuffer, invoiceSafeLine, streamInvoice } from '../services/invoiceService.js'
 import { createDeliveredInvoiceEmailPayload } from '../services/deliveredInvoiceEmailService.js'
 
 const webpLogo = await sharp({
@@ -11,6 +11,11 @@ const webpLogo = await sharp({
 const normalizedLogo = await normalizeInvoiceLogo(webpLogo)
 const metadata = await sharp(normalizedLogo).metadata()
 assert.equal(metadata.format, 'png', 'Managed WebP logos must be converted to PNG for PDFKit')
+assert.equal(
+  invoiceSafeLine('Your Destination | My Passion 💕'),
+  'Your Destination | My Passion',
+  'Invoice taglines must remove unsupported emoji instead of rendering corrupted characters',
+)
 
 const order = {
   orderNumber: 'EDW-INVOICE-LOGO-TEST',
