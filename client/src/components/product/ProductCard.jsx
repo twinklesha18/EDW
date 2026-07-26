@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion'
 import { FiEye, FiHeart, FiShoppingBag } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import { useDispatch, useSelector } from 'react-redux'
@@ -18,11 +17,7 @@ function ProductCard({ product, view = 'grid' }) {
   const handleWishlist = async () => { try { await dispatch(toggleWishlist(productToWishlistPayload(product))).unwrap(); toast.success(isWishlisted ? 'Removed from your wishlist.' : 'Added to your wishlist.') } catch (error) { toast.error(error?.message || 'Unable to update your wishlist.') } }
 
   return (
-    <motion.article
-      layout
-      initial={{ opacity: 0, y: 16 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.15 }}
+    <article
       className={`group overflow-hidden rounded-[1.75rem] border border-gold/15 bg-white shadow-[0_14px_45px_-30px_rgba(59,47,54,0.45)] transition-all duration-300 hover:-translate-y-1 hover:shadow-luxury ${isList ? 'sm:grid sm:grid-cols-[240px_1fr]' : 'flex h-full flex-col'}`}
     >
       <div className={`relative overflow-hidden bg-pink-light ${isList ? 'min-h-64' : 'aspect-square'}`}>
@@ -73,7 +68,7 @@ function ProductCard({ product, view = 'grid' }) {
           </div>
         </div>
       </div>
-    </motion.article>
+    </article>
   )
 }
 

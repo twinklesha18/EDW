@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import toast from 'react-hot-toast'
 import { useDispatch, useSelector } from 'react-redux'
+import { useLocation } from 'react-router-dom'
 import { getCurrentUser, sessionExpired } from '../../redux/slices/authSlice.js'
 import { syncGuestCart } from '../../redux/slices/cartSlice.js'
 import { syncGuestWishlist } from '../../redux/slices/wishlistSlice.js'
@@ -11,13 +12,26 @@ import { invalidateStorefrontBootstrap } from '../../services/storefrontApi.js'
 const configuredIdleMinutes = Number(import.meta.env?.VITE_SESSION_IDLE_TIMEOUT_MINUTES || 10)
 const sessionIdleMilliseconds = Math.max(1, configuredIdleMinutes) * 60 * 1000
 const sessionEventKey = 'edw_session_expired_at'
+const authRequiredPath = /^\/(?:admin|profile|checkout|wishlist|orders?|order-success|order-failed|custom-orders|login|register|forgot-password|reset-password)(?:\/|$)/i
 
 function AppBootstrap({ children }) {
   const dispatch = useDispatch()
+  const { pathname } = useLocation()
   const { isAuthenticated, user } = useSelector((state) => state.auth)
   const synchronizedUser = useRef(null)
 
-  useEffect(() => { dispatch(getCurrentUser()) }, [dispatch])
+  useEffect(() => {
+    if (authRequiredPath.test(pathname)) {
+      dispatch(getCurrentUser())
+      return undefined
+    }
+    if ('requestIdleCallback' in window) {
+      const idleId = window.requestIdleCallback(() => dispatch(getCurrentUser()), { timeout: 1500 })
+      return () => window.cancelIdleCallback(idleId)
+    }
+    const timeoutId = window.setTimeout(() => dispatch(getCurrentUser()), 900)
+    return () => window.clearTimeout(timeoutId)
+  }, [dispatch, pathname])
   useEffect(() => { dispatch(fetchCatalog()) }, [dispatch])
   useEffect(() => {
     const reloadCatalog = () => {

@@ -2,6 +2,7 @@ import logo from './eshaz-dream-world-logo-ui.webp'
 import chocolateBouquet from './products/chocolate-bouquet.jpg'
 import earringBouquet from './products/earring-bouquet.jpg'
 import giftHamper from './products/gift-hamper.jpg'
+import heroGiftHamper from './products/gift-hamper-hero.webp'
 import kinderBouquet from './products/kinder-bouquet.jpg'
 import makeupBouquet from './products/makeup-bouquet.jpg'
 import pictureBouquet from './products/picture-bouquet.jpg'
@@ -9,6 +10,7 @@ import snackBox from './products/snack-box.jpg'
 import teddyBouquet from './products/teddy-bouquet.jpg'
 
 export const brandLogo = logo
+export const heroFallbackImage = heroGiftHamper
 
 export const productImages = Object.freeze({
   chocolateBouquet,

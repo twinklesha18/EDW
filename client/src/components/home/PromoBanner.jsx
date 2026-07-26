@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion'
 import { GiButterfly } from 'react-icons/gi'
 import { FiArrowRight } from 'react-icons/fi'
 import { Link } from 'react-router-dom'
@@ -20,9 +19,9 @@ function PromoBanner() {
           <p className="mt-5 max-w-xl text-sm leading-7 text-muted">Share your idea, preferred colors, budget and special message. We will turn it into a beautiful customized creation.</p>
           <Link to="/custom-orders" className="primary-button mt-7 self-center px-7 lg:self-start">Start a Custom Order <FiArrowRight aria-hidden="true" /></Link>
         </div>
-        <motion.div whileInView={{ opacity: 1, x: 0 }} initial={{ opacity: 0, x: 20 }} viewport={{ once: true }} className="min-h-80 overflow-hidden lg:min-h-[450px]">
+        <div className="min-h-80 overflow-hidden lg:min-h-[450px]">
           {promoImage ? <img {...responsiveImageProps(promoImage, [480, 720, 960, 1200])} sizes="(min-width: 1024px) 45vw, 100vw" alt={banner?.title || 'Customized pastel picture bouquet'} width="1200" height="900" loading="lazy" decoding="async" className="h-full w-full object-cover" /> : <div className="h-full min-h-80 animate-pulse bg-gradient-to-br from-pink-light via-white to-blue-light" aria-hidden="true" />}
-        </motion.div>
+        </div>
       </div>
     </section>
   )

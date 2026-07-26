@@ -10,7 +10,7 @@ function Logo({ onClick, size = 'default' }) {
   return (
     <Link to="/" onClick={onClick} className="block w-fit shrink-0" aria-label={`${name} home`}>
       <img
-        src={optimizedImageUrl(logo?.url || brandLogo, size === 'large' ? 224 : 128)}
+        src={optimizedImageUrl(logo?.url || brandLogo, 256)}
         alt={`${name} logo`}
         width={size === 'large' ? 112 : 64}
         height={size === 'large' ? 112 : 64}

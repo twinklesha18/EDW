@@ -1,10 +1,17 @@
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
+import { useSelector } from 'react-redux'
 import { Outlet, useLocation } from 'react-router-dom'
 import BackToTop from '../components/common/BackToTop.jsx'
 import WhatsAppButton from '../components/common/WhatsAppButton.jsx'
 import Footer from '../components/layout/Footer.jsx'
 import Navbar from '../components/layout/Navbar.jsx'
-import CartDrawer from '../components/cart/CartDrawer.jsx'
+
+const CartDrawer = lazy(() => import('../components/cart/CartDrawer.jsx'))
+
+function DeferredCartDrawer() {
+  const isCartOpen = useSelector((state) => state.cart.isCartOpen)
+  return isCartOpen ? <Suspense fallback={null}><CartDrawer /></Suspense> : null
+}
 
 function MainLayout() {
   const { pathname } = useLocation()
@@ -18,7 +25,7 @@ function MainLayout() {
       <Navbar />
       <main className="flex-1 pt-[4.75rem]"><Outlet /></main>
       <Footer />
-      <CartDrawer />
+      <DeferredCartDrawer />
       <BackToTop />
       <WhatsAppButton />
     </div>

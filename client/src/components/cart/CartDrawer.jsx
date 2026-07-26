@@ -1,4 +1,3 @@
-import { AnimatePresence, motion } from 'framer-motion'
 import { useCallback, useEffect } from 'react'
 import { FiShoppingBag, FiX } from 'react-icons/fi'
 import toast from 'react-hot-toast'
@@ -42,12 +41,11 @@ function CartDrawer() {
     }
   }
 
+  if (!isCartOpen) return null
   return (
-    <AnimatePresence>
-      {isCartOpen && (
         <>
-          <motion.button type="button" className="fixed inset-0 z-[70] bg-ink/30 backdrop-blur-sm" aria-label="Close cart drawer" onClick={close} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />
-          <motion.aside role="dialog" aria-modal="true" aria-labelledby="cart-drawer-title" className="fixed inset-y-0 right-0 z-[75] flex h-dvh w-[min(96vw,430px)] flex-col bg-cream shadow-2xl" initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 30, stiffness: 280 }}>
+          <button type="button" className="overlay-enter fixed inset-0 z-[70] bg-ink/30 backdrop-blur-sm" aria-label="Close cart drawer" onClick={close} />
+          <aside role="dialog" aria-modal="true" aria-labelledby="cart-drawer-title" className="drawer-enter fixed inset-y-0 right-0 z-[75] flex h-dvh w-[min(96vw,430px)] flex-col bg-cream shadow-2xl">
             <header className="flex shrink-0 items-center justify-between border-b border-gold/15 px-4 py-3 sm:px-5 sm:py-4">
               <div>
                 <h2 id="cart-drawer-title" className="font-serif text-2xl font-semibold">Your Cart</h2>
@@ -77,10 +75,8 @@ function CartDrawer() {
                 <button type="button" onClick={checkout} className="secondary-button mt-2 w-full">Proceed to Checkout</button>
               </footer>
             )}
-          </motion.aside>
+          </aside>
         </>
-      )}
-    </AnimatePresence>
   )
 }
 
