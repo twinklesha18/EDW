@@ -2,16 +2,11 @@ import Order from '../models/Order.js'
 import { streamInvoice } from '../services/invoiceService.js'
 import { AppError } from '../utils/responseUtils.js'
 import { getResolvedSiteSettings } from '../services/siteSettingsService.js'
+import { fetchInvoiceLogo } from '../services/invoiceBrandingService.js'
 
 async function invoiceBranding() {
   const settings = await getResolvedSiteSettings()
-  let logo = null
-  if (settings.business?.logo?.url) {
-    try {
-      const response = await fetch(settings.business.logo.url, { signal: AbortSignal.timeout(5000) })
-      if (response.ok && Number(response.headers.get('content-length') || 0) <= 5 * 1024 * 1024) logo = Buffer.from(await response.arrayBuffer())
-    } catch { /* The bundled logo remains the safe fallback. */ }
-  }
+  const logo = await fetchInvoiceLogo(settings.business?.logo?.url)
   return { settings, logo }
 }
 

@@ -14,8 +14,13 @@ export function streamInvoice(order, response, siteSettings, managedLogo = null)
   response.setHeader('Content-Type', 'application/pdf')
   response.setHeader('Content-Disposition', `attachment; filename="${order.orderNumber}-invoice.pdf"`)
   doc.pipe(response)
-  if (managedLogo) doc.image(managedLogo, 48, 42, { fit: [72, 72] })
-  else if (fs.existsSync(logoPath)) doc.image(logoPath, 48, 42, { fit: [72, 72] })
+  let logoAdded = false
+  if (managedLogo) {
+    try { doc.image(managedLogo, 48, 42, { fit: [72, 72] }); logoAdded = true } catch { /* Continue with the bundled logo or text-only branding. */ }
+  }
+  if (!logoAdded && fs.existsSync(logoPath)) {
+    try { doc.image(logoPath, 48, 42, { fit: [72, 72] }) } catch { /* A logo must never prevent invoice generation. */ }
+  }
   doc.fillColor('#7d2948').font('Times-Bold').fontSize(24).text(businessName, 135, 52)
   doc.fillColor('#8e7a81').font('Helvetica').fontSize(9).text(tagline.toUpperCase(), 135, 82)
   doc.fillColor('#33252a').font('Times-Bold').fontSize(22).text('INVOICE', 400, 52, { align: 'right' })
@@ -41,7 +46,7 @@ export function streamInvoice(order, response, siteSettings, managedLogo = null)
   const row = (label, value, bold = false) => { doc.font(bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(bold ? 12 : 10).fillColor(bold ? '#7d2948' : '#65545b').text(label, 320, y).text(value, 430, y, { width: 117, align: 'right' }); y += bold ? 24 : 19 }
   row('Subtotal', money(order.subtotal)); row('Shipping', money(order.shippingFee)); row('Grand Total', money(order.total), true)
   y += 12
-  doc.font('Helvetica').fontSize(9).fillColor('#65545b').text(`Payment: ${order.paymentMethod} · ${order.paymentStatus}`, 48, y).text(`Invoice date: ${new Date(order.createdAt).toLocaleDateString('en-LK')}`, 48, y + 16)
+  doc.font('Helvetica').fontSize(9).fillColor('#65545b').text(`Payment: ${order.paymentMethod} | ${order.paymentStatus}`, 48, y).text(`Invoice date: ${new Date(order.createdAt).toLocaleDateString('en-LK')}`, 48, y + 16)
   doc.font('Times-Italic').fontSize(10).fillColor('#7d2948').text(`Thank you for choosing ${businessName}.`, 48, 760, { width: 499, align: 'center' })
   doc.end()
 }
