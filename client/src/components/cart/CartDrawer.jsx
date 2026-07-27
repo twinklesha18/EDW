@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { FiShoppingBag, FiX } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import { useDispatch, useSelector } from 'react-redux'
@@ -13,6 +13,7 @@ function CartDrawer() {
   const navigate = useNavigate()
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated)
   const { isCartOpen, items, itemCount, subtotal, isLoading } = useSelector((state) => state.cart)
+  const previousPathname = useRef(location.pathname)
   const close = useCallback(() => dispatch(toggleCartDrawer(false)), [dispatch])
   const checkout = () => {
     close()
@@ -20,7 +21,11 @@ function CartDrawer() {
     else navigate('/login', { state: { from: '/checkout' } })
   }
 
-  useEffect(() => { close() }, [close, location.pathname])
+  useEffect(() => {
+    if (previousPathname.current === location.pathname) return
+    previousPathname.current = location.pathname
+    close()
+  }, [close, location.pathname])
   useEffect(() => {
     if (!isCartOpen) return undefined
     const key = (event) => event.key === 'Escape' && close()

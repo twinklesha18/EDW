@@ -9,7 +9,7 @@ import RatingStars from '../components/common/RatingStars.jsx'
 import ProductCard from '../components/product/ProductCard.jsx'
 import { useSeo } from '../hooks/useSeo.js'
 import { formatCurrency } from '../utils/formatCurrency.js'
-import { addToCart } from '../redux/slices/cartSlice.js'
+import { addToCart, ensureCartItem } from '../redux/slices/cartSlice.js'
 import { toggleWishlist } from '../redux/slices/wishlistSlice.js'
 import { productToCartPayload, productToWishlistPayload } from '../utils/productAdapters.js'
 import api, { getApiError } from '../services/api.js'
@@ -187,7 +187,8 @@ function ProductDetailsPage() {
   const addProduct = async () => { try { await dispatch(addToCart(productToCartPayload(product, selectedSize, quantity, customization))).unwrap(); toast.success(`Size ${selectedSize} added to your cart.`) } catch (error) { toast.error(error?.message || 'Unable to add this item.') } }
   const buyNow = async () => {
     try {
-      await dispatch(addToCart(productToCartPayload(product, selectedSize, quantity, customization))).unwrap()
+      const payload = productToCartPayload(product, selectedSize, quantity, customization)
+      await dispatch(ensureCartItem(payload)).unwrap()
       if (isAuthenticated) navigate('/checkout')
       else navigate('/login', { state: { from: '/checkout' } })
     } catch (error) { toast.error(error?.message || 'Unable to start checkout.') }

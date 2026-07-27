@@ -1,6 +1,6 @@
-import { FiClipboard, FiGrid, FiHeart, FiHome, FiLogOut, FiMapPin, FiPackage, FiSettings, FiUser } from 'react-icons/fi'
+import { FiClipboard, FiGrid, FiHeart, FiHome, FiLogOut, FiMapPin, FiPackage, FiSettings, FiShoppingBag, FiUser } from 'react-icons/fi'
 import { NavLink } from 'react-router-dom'
-const links = [{ to: '/profile', label: 'Dashboard', icon: FiGrid, end: true }, { to: '/profile#my-profile', label: 'My Profile', icon: FiUser }, { to: '/profile/orders', label: 'My Orders', icon: FiPackage }, { to: '/profile/custom-orders', label: 'Custom Orders', icon: FiClipboard }, { to: '/profile/addresses', label: 'My Addresses', icon: FiMapPin }, { to: '/wishlist', label: 'Wishlist', icon: FiHeart }, { to: '/profile/settings', label: 'Settings', icon: FiSettings }]
+const links = [{ to: '/profile', label: 'Dashboard', icon: FiGrid, end: true }, { to: '/profile#my-profile', label: 'My Profile', icon: FiUser }, { to: '/cart', label: 'My Cart', icon: FiShoppingBag }, { to: '/profile/orders', label: 'My Orders', icon: FiPackage }, { to: '/profile/custom-orders', label: 'Custom Orders', icon: FiClipboard }, { to: '/profile/addresses', label: 'My Addresses', icon: FiMapPin }, { to: '/wishlist', label: 'Wishlist', icon: FiHeart }, { to: '/profile/settings', label: 'Settings', icon: FiSettings }]
 function AccountSidebar({ onLogout, loading, compact = false }) {
   return (
     <aside className={compact

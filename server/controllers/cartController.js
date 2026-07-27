@@ -45,6 +45,21 @@ export async function addCartItem(request, response) {
   return sendSuccess(response, { statusCode: 201, message: 'Added to your cart', data: { cart: cartData(cart) } })
 }
 
+export async function ensureCartItem(request, response) {
+  const cart = await getOrCreateCart(request.user._id)
+  const item = await trustedCartItem(request.validatedBody)
+  const signature = createCartSignature(item.productId, item.size, item.customization)
+  const existing = cart.items.find((entry) => entry.signature === signature)
+  if (!existing) cart.items.push({ ...item, signature })
+  recalculateCart(cart)
+  await cart.save()
+  return sendSuccess(response, {
+    statusCode: existing ? 200 : 201,
+    message: existing ? 'Item is already in your cart' : 'Cart is ready for checkout',
+    data: { cart: cartData(cart) },
+  })
+}
+
 export async function updateCartItem(request, response) {
   const cart = await getOrCreateCart(request.user._id)
   const item = cart.items.id(request.params.itemId)
@@ -82,7 +97,7 @@ export async function syncCart(request, response) {
     try { item = await trustedCartItem(snapshot) } catch (error) { if (error.statusCode === 409) continue; throw error }
     const signature = createCartSignature(item.productId, item.size, item.customization)
     const existing = cart.items.find((entry) => entry.signature === signature)
-    if (existing) existing.quantity = Math.min(99, existing.quantity + item.quantity)
+    if (existing) existing.quantity = Math.min(99, Math.max(existing.quantity, item.quantity))
     else cart.items.push({ ...item, signature })
   }
   recalculateCart(cart)

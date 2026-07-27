@@ -102,6 +102,9 @@ try {
 
   result = await request('/cart/items', { method: 'POST', body: cartItem('phase-product-1') })
   assert.equal(result.status, 201, 'Adding to cart must succeed')
+  result = await request('/cart/items/ensure', { method: 'POST', body: cartItem('phase-product-1') })
+  assert.equal(result.status, 200, 'Buy Now must recognize an existing cart item')
+  assert.equal(result.payload.data.cart.itemCount, 1, 'Buy Now must not increment an existing cart item')
   result = await request('/cart/items', { method: 'POST', body: { ...cartItem('phase-product-1'), quantity: 2 } })
   assert.equal(result.payload.data.cart.items.length, 1, 'Identical customization must merge')
   assert.equal(result.payload.data.cart.itemCount, 3)
@@ -148,7 +151,7 @@ try {
   result = await request('/auth/login', { method: 'POST', authenticated: false, body: { email, password: 'ResetSecure3', rememberMe: true } })
   assert.equal(result.status, 200, 'Login with reset password must succeed')
 
-  console.log('Phase 3 API smoke test passed: 38 assertions across auth, profile, addresses, cart, wishlist, reset and persistence.')
+  console.log('Phase 3 API smoke test passed: cart, authentication, profile, address, wishlist, reset, and persistence checks completed.')
 } finally {
   await Notification.deleteMany({ type: 'new_user', message: { $regex: email } })
   if (userId) {

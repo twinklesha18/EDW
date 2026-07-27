@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import api, { getApiError } from '../../services/api.js'
-import { createGuestSignature } from '../../utils/productAdapters.js'
+import { createGuestSignature, hasCartConfiguration } from '../../utils/productAdapters.js'
 import { GUEST_CART_KEY, readStorage, removeStorage, writeStorage } from '../../utils/storage.js'
 import { logoutUser, sessionExpired } from './authSlice.js'
 
@@ -23,6 +23,19 @@ export const addToCart = createAsyncThunk('cart/add', async (payload, { getState
     existing.quantity = Math.min(99, existing.quantity + payload.quantity)
   } else items.push({ ...payload, _id: signature, signature })
   writeStorage(GUEST_CART_KEY, items)
+  return summarize(items)
+})
+
+export const ensureCartItem = createAsyncThunk('cart/ensure', async (payload, { getState, rejectWithValue }) => {
+  if (getState().auth.isAuthenticated) {
+    try { return (await api.post('/cart/items/ensure', payload)).data.data.cart } catch (error) { return rejectApi(error, rejectWithValue) }
+  }
+  const items = guestItems()
+  if (!hasCartConfiguration(items, payload)) {
+    const signature = createGuestSignature(payload.productId, payload.size, payload.customization)
+    items.push({ ...payload, _id: signature, signature })
+    writeStorage(GUEST_CART_KEY, items)
+  }
   return summarize(items)
 })
 
@@ -81,6 +94,7 @@ const cartSlice = createSlice({
     builder
       .addCase(fetchCart.pending, pending).addCase(fetchCart.fulfilled, fulfilled).addCase(fetchCart.rejected, failed)
       .addCase(addToCart.pending, (state, action) => { state.pendingProductIds.push(action.meta.arg.productId); state.error = null }).addCase(addToCart.fulfilled, fulfilled).addCase(addToCart.rejected, failed)
+      .addCase(ensureCartItem.pending, (state, action) => { state.pendingProductIds.push(action.meta.arg.productId); state.error = null }).addCase(ensureCartItem.fulfilled, fulfilled).addCase(ensureCartItem.rejected, failed)
       .addCase(updateCartQuantity.pending, pending).addCase(updateCartQuantity.fulfilled, fulfilled).addCase(updateCartQuantity.rejected, failed)
       .addCase(removeCartItem.pending, pending).addCase(removeCartItem.fulfilled, fulfilled).addCase(removeCartItem.rejected, failed)
       .addCase(clearCart.pending, pending).addCase(clearCart.fulfilled, fulfilled).addCase(clearCart.rejected, failed)

@@ -9,6 +9,11 @@ export function createGuestSignature(productId, size, customization = {}) {
   return `${productId}::${size}::${normalized.message.toLowerCase()}::${normalized.preferredColor.toLowerCase()}::${normalized.notes.toLowerCase()}`
 }
 
+export function hasCartConfiguration(items = [], payload) {
+  const requestedSignature = createGuestSignature(payload.productId, payload.size, payload.customization)
+  return items.some((item) => createGuestSignature(item.productId, item.size, item.customization) === requestedSignature)
+}
+
 export function productToCartPayload(product, size, quantity = 1, customization = {}) {
   return {
     productId: product.id,
