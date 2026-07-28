@@ -27,6 +27,13 @@ assert.ok(existsSync(path.join(root, 'dist', socialImage)), 'The Open Graph imag
 assert.equal(html.match(/property="og:image:secure_url" content="([^"]+)"/)?.[1], `https://eshazdreamworld.vercel.app${socialImage}`, 'The secure Open Graph image must match the canonical image')
 assert.equal(html.match(/property="og:image:type" content="([^"]+)"/)?.[1], 'image/jpeg', 'The Open Graph image must declare its MIME type')
 assert.equal(html.match(/name="twitter:image" content="([^"]+)"/)?.[1], `https://eshazdreamworld.vercel.app${socialImage}`, 'Twitter must use the same current social image')
+assert.match(socialImage, /2026-07/, 'The social image URL must be versioned so crawlers do not reuse an older cached logo')
+const favicon = html.match(/rel="icon"[^>]+href="([^"]+)"/)?.[1]
+const appleTouchIcon = html.match(/rel="apple-touch-icon"[^>]+href="([^"]+)"/)?.[1]
+assert.ok(favicon && existsSync(path.join(root, 'dist', favicon)), 'The current Google-compatible favicon must exist')
+assert.ok(appleTouchIcon && existsSync(path.join(root, 'dist', appleTouchIcon)), 'The current Apple touch icon must exist')
+assert.match(html, /id="edw-structured-data"/)
+assert.match(html, /eshaz-dream-world-logo-2026-07\.png/)
 assert.match(html, /<link rel="canonical" href="https:\/\/eshazdreamworld\.vercel\.app\/"/)
 assert.match(robots, /Sitemap: https:\/\/eshazdreamworld\.vercel\.app\/sitemap\.xml/)
 assert.match(robots, /Allow: \/api\/storefront\/bootstrap/)

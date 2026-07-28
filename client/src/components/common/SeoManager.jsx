@@ -37,7 +37,8 @@ const privatePath = /^\/(?:admin|profile|checkout|cart|wishlist|orders?|order-su
 function SeoManager() {
   const { pathname } = useLocation()
   const { name, tagline, logo, contact } = useBrand()
-  const fallbackImage = logo?.url || brandLogo
+  const managedLogo = logo?.url || brandLogo
+  const searchImage = '/eshaz-dream-world-social-2026-07.jpg'
 
   const organizationData = useMemo(() => ({
     '@context': 'https://schema.org',
@@ -48,8 +49,8 @@ function SeoManager() {
         name,
         url: `${SITE_URL}/`,
         description: 'Custom bouquets and personalized gifts for birthdays and special occasions in Sri Lanka.',
-        logo: absoluteUrl(fallbackImage),
-        image: absoluteUrl(fallbackImage),
+        logo: absoluteUrl(managedLogo),
+        image: absoluteUrl(searchImage),
         email: contact.email,
         telephone: contact.phoneHref?.replace('tel:', '') || contact.phone,
         currenciesAccepted: 'LKR',
@@ -78,7 +79,7 @@ function SeoManager() {
         inLanguage: 'en-LK',
       },
     ],
-  }), [contact, fallbackImage, name, tagline])
+  }), [contact, managedLogo, name, tagline])
 
   let seo
   if (publicPages[pathname]) {
@@ -111,7 +112,7 @@ function SeoManager() {
     }
   }
 
-  useSeo({ ...seo, image: fallbackImage, imageAlt: `${name} logo` })
+  useSeo({ ...seo, image: searchImage, imageAlt: `${name} logo` })
   return null
 }
 
