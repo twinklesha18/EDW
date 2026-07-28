@@ -5,14 +5,15 @@ import { validateCustomOrder, validateCustomOrderPayment } from '../middleware/c
 import { imageUpload } from '../middleware/uploadMiddleware.js'
 import { validateObjectIdParameter } from '../middleware/validateMiddleware.js'
 import { viewCustomerCustomOrderPaymentSlip } from '../controllers/paymentSlipController.js'
+import { uploadRateLimiter } from '../middleware/rateLimitMiddleware.js'
 
 const router = Router()
 router.use(protect, authorizeRoles('user'))
 router.get('/payment-config', getCustomOrderPaymentConfig)
 router.get('/', listMyCustomOrders)
-router.post('/', imageUpload.single('inspiration'), validateCustomOrder, createCustomOrder)
+router.post('/', uploadRateLimiter, imageUpload.single('inspiration'), validateCustomOrder, createCustomOrder)
 router.get('/:id', validateObjectIdParameter('id'), getMyCustomOrder)
 router.get('/:id/payment-slip', validateObjectIdParameter('id'), viewCustomerCustomOrderPaymentSlip)
-router.post('/:id/payment', validateObjectIdParameter('id'), imageUpload.single('paymentSlip'), validateCustomOrderPayment, submitCustomOrderPayment)
+router.post('/:id/payment', validateObjectIdParameter('id'), uploadRateLimiter, imageUpload.single('paymentSlip'), validateCustomOrderPayment, submitCustomOrderPayment)
 router.post('/:id/cancel', validateObjectIdParameter('id'), cancelMyCustomOrder)
 export default router

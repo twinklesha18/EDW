@@ -2,6 +2,8 @@ import mongoose from 'mongoose'
 import { env } from './env.js'
 
 let connectionPromise = null
+mongoose.set('strictQuery', true)
+mongoose.set('runValidators', true)
 
 export async function connectDatabase() {
   if (mongoose.connection.readyState === 1) return mongoose.connection

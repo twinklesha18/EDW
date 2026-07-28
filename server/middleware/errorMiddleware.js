@@ -1,3 +1,5 @@
+import { AppError } from '../utils/responseUtils.js'
+
 export function notFound(request, response) {
   response.status(404).json({
     success: false,
@@ -29,6 +31,20 @@ export function errorHandler(error, _request, response, _next) {
   } else if (error.name === 'MulterError') {
     statusCode = 422
     message = error.code === 'LIMIT_FILE_SIZE' ? 'Image must be smaller than 12 MB' : 'Invalid image upload'
+  } else if (error.type === 'entity.parse.failed') {
+    statusCode = 400
+    message = 'Request body contains invalid JSON'
+    errors = []
+  } else if (error.type === 'entity.too.large') {
+    statusCode = 413
+    message = 'Request body is too large'
+    errors = []
+  }
+
+  if (process.env.NODE_ENV === 'production' && statusCode >= 500 && !(error instanceof AppError)) {
+    console.error(error)
+    message = 'Internal server error'
+    errors = []
   }
 
   response.status(statusCode).json({

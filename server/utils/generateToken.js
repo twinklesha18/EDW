@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken'
 import { env } from '../config/env.js'
+import { setCsrfCookie } from '../middleware/csrfMiddleware.js'
 
 const idleMilliseconds = () => env.session.idleMinutes * 60 * 1000
 const absoluteMilliseconds = (rememberMe) => rememberMe
@@ -24,6 +25,7 @@ export function setAuthCookie(response, userId, rememberMe = false, sessionStart
     maxAge,
     path: '/',
   })
+  setCsrfCookie(response, token)
   response.setHeader('X-Session-Idle-Minutes', String(env.session.idleMinutes))
   return true
 }
@@ -40,4 +42,5 @@ export function clearAuthCookie(response) {
     sameSite: env.isProduction ? 'none' : 'lax',
     path: '/',
   })
+  setCsrfCookie(response)
 }

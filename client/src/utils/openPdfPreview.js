@@ -2,7 +2,14 @@ export async function openPdfPreview(loadPdf, title = 'Invoice') {
   const preview = window.open('', '_blank')
   if (preview) {
     preview.document.title = title
-    preview.document.body.innerHTML = '<p style="font:16px Arial;padding:24px">Preparing your invoice...</p>'
+    const message = preview.document.createElement('p')
+    message.textContent = 'Preparing your invoice...'
+    Object.assign(message.style, {
+      fontFamily: 'Arial, sans-serif',
+      fontSize: '16px',
+      padding: '24px',
+    })
+    preview.document.body.replaceChildren(message)
   }
   try {
     const url = URL.createObjectURL(await loadPdf())

@@ -41,6 +41,7 @@ NODE_ENV=production
 SERVER_URL=https://edw-jvpw.vercel.app
 MONGODB_URI_PRODUCTION=your_production_mongodb_uri
 JWT_SECRET=your_long_random_production_secret
+CSRF_SECRET=a_different_long_random_production_secret
 CLIENT_URL=https://eshazdreamworld.vercel.app
 SESSION_IDLE_TIMEOUT_MINUTES=10
 SESSION_ABSOLUTE_TIMEOUT_HOURS=8
@@ -80,6 +81,33 @@ npm.cmd run test:user-deletion
 ```
 
 The API smoke tests create uniquely named test records and remove their test records before exiting.
+
+## Security
+
+The API uses exact-origin CORS checks, HTTP-only authentication cookies, signed
+double-submit CSRF tokens, endpoint-specific rate limits, strict request-size and
+content-type limits, and centralized rejection of MongoDB operator keys and
+parameter pollution. Administrative and customer endpoints also enforce
+authentication, role, and resource-ownership checks.
+
+Uploaded images require a matching filename extension, declared MIME type, and
+binary image signature. Files are pixel-limited, decoded, resized, stripped of
+metadata, re-encoded to WebP, and stored under generated names. Production
+uploads require Cloudinary.
+
+The frontend deployment adds a restrictive Content Security Policy,
+clickjacking protection, MIME sniffing protection, HSTS, a strict referrer
+policy, and a restricted permissions policy. React renders customer content as
+text; direct HTML/code execution sinks are prohibited by the security test.
+
+Use separate random values of at least 32 characters for `JWT_SECRET` and
+`CSRF_SECRET`. Never commit credentials. Run the automated security regression
+suite after endpoint, authentication, or upload changes:
+
+```powershell
+cd server
+npm.cmd run test:security
+```
 
 ## Administrator setup
 

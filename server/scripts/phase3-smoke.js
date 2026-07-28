@@ -30,7 +30,8 @@ async function request(path, { method = 'GET', body, authenticated = true } = {}
     body: body ? JSON.stringify(body) : undefined,
   })
   const setCookies = response.headers.getSetCookie?.() || [response.headers.get('set-cookie')].filter(Boolean)
-  if (setCookies.length) cookie = setCookies.at(-1).split(';')[0]
+  const authCookie = setCookies.filter((value) => value.startsWith('edw_token=')).at(-1)
+  if (authCookie) cookie = authCookie.split(';')[0]
   const payload = await response.json()
   return { status: response.status, payload }
 }

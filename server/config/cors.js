@@ -5,7 +5,8 @@ const allowedOrigins = new Set(env.clientOrigins)
 export const corsOptions = {
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
+  exposedHeaders: ['X-CSRF-Token', 'X-Session-Idle-Minutes', 'RateLimit', 'RateLimit-Policy'],
   origin(origin, callback) {
     if (!origin || allowedOrigins.has(origin.replace(/\/$/, ''))) return callback(null, true)
     const error = new Error('Origin is not allowed by CORS')

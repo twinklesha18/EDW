@@ -5,8 +5,9 @@ import { viewCustomerOrderPaymentSlip } from '../controllers/paymentSlipControll
 import { protect } from '../middleware/authMiddleware.js'
 import { cancellationValidator, trackingValidator, validateBankTransferResubmission, validateCheckout } from '../middleware/checkoutValidateMiddleware.js'
 import { imageUpload } from '../middleware/uploadMiddleware.js'
+import { trackingRateLimiter, uploadRateLimiter } from '../middleware/rateLimitMiddleware.js'
 const router = Router()
-router.post('/track', validateCheckout(trackingValidator), trackOrder)
+router.post('/track', trackingRateLimiter, validateCheckout(trackingValidator), trackOrder)
 router.use(protect)
 router.get('/', listCustomerOrders)
 router.get('/:orderNumber', getCustomerOrder)
@@ -14,5 +15,5 @@ router.get('/:orderNumber/payment-slip/view', viewCustomerOrderPaymentSlip)
 router.get('/:orderNumber/invoice', downloadCustomerInvoice)
 router.post('/:orderNumber/cancel', validateCheckout(cancellationValidator), cancelCustomerOrder)
 router.post('/:orderNumber/reorder', reorderCustomerOrder)
-router.post('/:orderNumber/payment-slip', imageUpload.single('paymentSlip'), validateBankTransferResubmission, resubmitBankTransferSlip)
+router.post('/:orderNumber/payment-slip', uploadRateLimiter, imageUpload.single('paymentSlip'), validateBankTransferResubmission, resubmitBankTransferSlip)
 export default router

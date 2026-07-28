@@ -1,11 +1,16 @@
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import express from 'express'
+import helmet from 'helmet'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { corsOptions } from './config/cors.js'
 import { connectDatabase } from './config/db.js'
+import { env } from './config/env.js'
 import { errorHandler, notFound } from './middleware/errorMiddleware.js'
+import { csrfProtection } from './middleware/csrfMiddleware.js'
+import { apiRateLimiter } from './middleware/rateLimitMiddleware.js'
+import { enforceRequestShape } from './middleware/securityMiddleware.js'
 import adminRoutes from './routes/adminRoutes.js'
 import analyticsRoutes from './routes/analyticsRoutes.js'
 import apiRoutes from './routes/apiRoutes.js'
@@ -31,10 +36,22 @@ const uploadsDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url
 
 app.disable('x-powered-by')
 app.set('trust proxy', 1)
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  hsts: env.isProduction ? { maxAge: 63072000, includeSubDomains: true } : false,
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+}))
+app.use((_request, response, next) => {
+  response.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()')
+  next()
+})
 app.use(cors(corsOptions))
-app.use(express.json({ limit: '10kb' }))
-app.use(express.urlencoded({ extended: true, limit: '10kb' }))
+app.use(express.json({ limit: '10kb', strict: true }))
 app.use(cookieParser())
+app.use(enforceRequestShape)
+app.use(csrfProtection)
+app.use('/api', apiRateLimiter)
 
 // Keep the deployment health check independent from MongoDB availability.
 app.get('/', (request, response) => {
@@ -63,6 +80,10 @@ app.use('/uploads', express.static(uploadsDirectory, {
   index: false,
   maxAge: '7d',
   immutable: true,
+  setHeaders(response) {
+    response.setHeader('Content-Disposition', 'inline')
+    response.setHeader('X-Content-Type-Options', 'nosniff')
+  },
 }))
 
 app.get('/sitemap.xml', getSitemap)

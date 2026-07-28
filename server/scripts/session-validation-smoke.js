@@ -35,7 +35,12 @@ assert.ok(result.errors.some((entry) => entry.field === 'shippingAddress.phone')
 const response = {
   cookieValue: null,
   options: null,
-  cookie(_name, value, options) { this.cookieValue = value; this.options = options },
+  cookie(name, value, options) {
+    if (name === 'edw_token') {
+      this.cookieValue = value
+      this.options = options
+    }
+  },
   setHeader() {},
 }
 assert.equal(setAuthCookie(response, '507f1f77bcf86cd799439011'), true)

@@ -18,13 +18,9 @@ const positiveInteger = (value, fallback, key) => {
   return parsed
 }
 
-const required = (key) => {
-  const value = process.env[key]?.trim()
-
-  if (!value) {
-    throw new Error(`Missing required environment variable: ${key}`)
-  }
-
+const secret = (key, fallback = '') => {
+  const value = process.env[key]?.trim() || fallback
+  if (value.length < 32) throw new Error(`${key} must contain at least 32 characters`)
   return value
 }
 
@@ -41,6 +37,7 @@ const clientUrl = isProduction
   : allClientOrigins.find(isLocalOrigin) || 'http://localhost:5173'
 const port = parsePort(process.env.PORT || '5000')
 const serverUrl = (process.env.SERVER_URL?.trim() || (isProduction ? 'https://edw-jvpw.vercel.app' : `http://localhost:${port}`)).replace(/\/$/, '')
+const jwtSecret = secret('JWT_SECRET')
 
 const isLocalMongoUri = (value) => /^mongodb:\/\/(?:[^@/]+@)?(?:localhost|127\.0\.0\.1|\[::1\])(?::\d+)?\//i.test(value)
 const isAtlasMongoUri = (value) => /^mongodb\+srv:\/\//i.test(value)
@@ -70,7 +67,8 @@ export const env = Object.freeze({
   port,
   serverUrl,
   mongoUri: resolveMongoUri(),
-  jwtSecret: required('JWT_SECRET'),
+  jwtSecret,
+  csrfSecret: secret('CSRF_SECRET', jwtSecret),
   session: Object.freeze({
     idleMinutes: positiveInteger(process.env.SESSION_IDLE_TIMEOUT_MINUTES, 10, 'SESSION_IDLE_TIMEOUT_MINUTES'),
     absoluteHours: positiveInteger(process.env.SESSION_ABSOLUTE_TIMEOUT_HOURS, 8, 'SESSION_ABSOLUTE_TIMEOUT_HOURS'),

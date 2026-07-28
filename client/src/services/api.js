@@ -12,11 +12,49 @@ const api = axios.create({
   withCredentials: true,
 })
 
+const unsafeMethods = new Set(['post', 'put', 'patch', 'delete'])
+let csrfToken = ''
+let csrfRequest
+
+const readCsrfCookie = () => {
+  if (typeof document === 'undefined') return ''
+  for (const name of ['__Host-edw_csrf', 'edw_csrf']) {
+    const prefix = `${encodeURIComponent(name)}=`
+    const entry = document.cookie.split('; ').find((cookie) => cookie.startsWith(prefix))
+    if (entry) return decodeURIComponent(entry.slice(prefix.length))
+  }
+  return ''
+}
+
+const obtainCsrfToken = async () => {
+  const cookieToken = readCsrfCookie()
+  if (cookieToken) return cookieToken
+  if (!csrfRequest) {
+    csrfRequest = api.get('/auth/csrf-token')
+      .then((response) => response.data.data.csrfToken)
+      .finally(() => { csrfRequest = undefined })
+  }
+  csrfToken = await csrfRequest
+  return csrfToken
+}
+
+api.interceptors.request.use(async (configuration) => {
+  if (!unsafeMethods.has(String(configuration.method || 'get').toLowerCase())) return configuration
+  const token = readCsrfCookie() || csrfToken || await obtainCsrfToken()
+  configuration.headers.set('X-CSRF-Token', token)
+  return configuration
+})
+
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const rotatedToken = response.headers?.['x-csrf-token']
+    if (rotatedToken) csrfToken = rotatedToken
+    return response
+  },
   (error) => {
     const isExpectedAuthRequest = ['/auth/login', '/auth/register', '/auth/me', '/auth/forgot-password', '/auth/reset-password'].some((path) => error.config?.url?.includes(path))
     if (error.response?.status === 401 && !isExpectedAuthRequest && typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('edw:unauthorized'))
+    if (error.response?.status === 403 && /security token/i.test(error.response?.data?.message || '')) csrfToken = ''
     return Promise.reject(error)
   },
 )
