@@ -8,6 +8,7 @@ import { syncGuestWishlist } from '../../redux/slices/wishlistSlice.js'
 import { fetchCatalog, refreshCatalog } from '../../redux/slices/catalogSlice.js'
 import api from '../../services/api.js'
 import { invalidateStorefrontBootstrap } from '../../services/storefrontApi.js'
+import { isSearchCrawler } from '../../utils/crawler.js'
 
 const configuredIdleMinutes = Number(import.meta.env?.VITE_SESSION_IDLE_TIMEOUT_MINUTES || 10)
 const sessionIdleMilliseconds = Math.max(1, configuredIdleMinutes) * 60 * 1000
@@ -21,6 +22,7 @@ function AppBootstrap({ children }) {
   const synchronizedUser = useRef(null)
 
   useEffect(() => {
+    if (isSearchCrawler()) return undefined
     if (authRequiredPath.test(pathname)) {
       dispatch(getCurrentUser())
       return undefined

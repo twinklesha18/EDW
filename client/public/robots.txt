@@ -1,5 +1,6 @@
 User-agent: *
 Allow: /
+Allow: /api/storefront/bootstrap
 Disallow: /api/
 
 Sitemap: https://eshazdreamworld.vercel.app/sitemap.xml

@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import api from '../../services/api.js'
+import { isAutomatedAnalyticsClient } from '../../utils/crawler.js'
 
 const visitorKey = 'edw_visitor_id'
 const sessionKey = 'edw_visit_session_id'
@@ -37,7 +38,7 @@ function VisitorTracker() {
   const trackable = !privateRoutePattern.test(pathname)
 
   useEffect(() => {
-    if (!trackable || navigator.webdriver) return
+    if (!trackable || isAutomatedAnalyticsClient()) return
     const now = Date.now()
     const currentKey = `${pathname}|${now}`
     try {
@@ -52,7 +53,7 @@ function VisitorTracker() {
   }, [pathname, trackable])
 
   useEffect(() => {
-    if (!trackable || navigator.webdriver) return undefined
+    if (!trackable || isAutomatedAnalyticsClient()) return undefined
     const heartbeat = () => {
       if (document.visibilityState === 'visible') sendVisit('heartbeat', pathname)
     }
