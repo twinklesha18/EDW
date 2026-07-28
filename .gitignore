@@ -8,3 +8,8 @@ server/uploads/*
 *.log
 .agents/
 .codex-browser-*/
+
+.vercel
+.env*
+!.env.example
+!server/.env.example
