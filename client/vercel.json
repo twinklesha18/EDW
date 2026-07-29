@@ -61,7 +61,7 @@
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
     },
     {
-      "source": "/(favicon-eshaz-emblem-v2-2026-07-29.png|apple-touch-icon-eshaz-emblem-v2-2026-07-29.png|eshaz-dream-world-logo-2026-07.png|eshaz-dream-world-social-2026-07.jpg)",
+      "source": "/(favicon-eshaz-emblem-round-v3-2026-07-29.png|apple-touch-icon-eshaz-emblem-round-v3-2026-07-29.png|eshaz-dream-world-logo-2026-07.png|eshaz-dream-world-social-2026-07.jpg)",
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }]
     },
     {
