@@ -48,12 +48,13 @@ export async function forgotPassword(request, response) {
   const { email } = request.validatedBody
   const user = await User.findOne({ email, isActive: true }).select('+resetPasswordToken +resetPasswordExpire +resetPasswordOtpHash +resetPasswordOtpExpire +resetPasswordOtpAttempts +resetPasswordOtpRequestedAt')
   const message = 'If this email is registered, a 6-digit verification code has been sent.'
+  const publicRecoveryData = { expiresInMinutes: env.passwordRecovery.otpMinutes }
 
-  if (!user) return sendSuccess(response, { message })
+  if (!user) return sendSuccess(response, { message, data: publicRecoveryData })
 
   const resendCutoff = Date.now() - env.passwordRecovery.resendSeconds * 1000
   if (user.resetPasswordOtpRequestedAt?.getTime() > resendCutoff) {
-    return sendSuccess(response, { message })
+    return sendSuccess(response, { message, data: publicRecoveryData })
   }
 
   const { otp, hashedOtp } = createPasswordResetOtp(user.email, env.csrfSecret)
@@ -77,7 +78,7 @@ export async function forgotPassword(request, response) {
 
   return sendSuccess(response, {
     message,
-    data: env.nodeEnv === 'development' ? { developmentOnly: true, developmentOtp: otp } : {},
+    data: env.nodeEnv === 'development' ? { ...publicRecoveryData, developmentOnly: true, developmentOtp: otp } : publicRecoveryData,
   })
 }
 

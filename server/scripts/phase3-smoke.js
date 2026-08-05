@@ -142,6 +142,7 @@ try {
 
   result = await request('/auth/forgot-password', { method: 'POST', authenticated: false, body: { email } })
   assert.equal(result.status, 200, 'Forgot password must accept a registered email')
+  assert.equal(result.payload.data.expiresInMinutes, 10, 'OTP expiry information must be returned')
   assert.equal(result.payload.data.developmentOnly, true, 'Development OTP must be labelled')
   assert.match(result.payload.data.developmentOtp, /^\d{6}$/, 'A six-digit OTP must be generated')
   const resetOtp = result.payload.data.developmentOtp

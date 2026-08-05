@@ -1,45 +1,55 @@
 import { yupResolver } from '@hookform/resolvers/yup'
 import { useEffect, useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { FiArrowLeft, FiMail } from 'react-icons/fi'
+import { Controller, useForm } from 'react-hook-form'
+import { FiArrowLeft, FiCheckCircle, FiKey, FiMail, FiShield } from 'react-icons/fi'
 import { Link, useNavigate } from 'react-router-dom'
 import FormInput from '../components/common/FormInput.jsx'
 import LoadingButton from '../components/common/LoadingButton.jsx'
+import OtpInput from '../components/common/OtpInput.jsx'
+import RecoveryProgress from '../components/common/RecoveryProgress.jsx'
 import api, { getApiError } from '../services/api.js'
 import { forgotPasswordSchema, passwordResetOtpSchema } from '../utils/validationSchemas.js'
+
+const maskEmail = (email) => {
+  const [localPart = '', domain = ''] = String(email).split('@')
+  const visible = localPart.slice(0, Math.min(2, localPart.length))
+  return `${visible}${'•'.repeat(Math.max(3, localPart.length - visible.length))}@${domain}`
+}
+
+const formatTimer = (seconds) => `0:${String(seconds).padStart(2, '0')}`
 
 function ForgotPasswordPage() {
   const navigate = useNavigate()
   const [step, setStep] = useState('email')
   const [email, setEmail] = useState('')
-  const [state, setState] = useState({ loading: false, message: '', error: '', developmentOtp: '' })
+  const [state, setState] = useState({ loading: false, error: '', expiresInMinutes: 10 })
   const [cooldown, setCooldown] = useState(0)
   const emailForm = useForm({ resolver: yupResolver(forgotPasswordSchema) })
-  const otpForm = useForm({ resolver: yupResolver(passwordResetOtpSchema) })
+  const otpForm = useForm({ resolver: yupResolver(passwordResetOtpSchema), defaultValues: { otp: '' } })
 
   useEffect(() => {
     if (cooldown <= 0) return undefined
-    const timer = window.setInterval(() => setCooldown((value) => Math.max(0, value - 1)), 1000)
-    return () => window.clearInterval(timer)
+    const timer = window.setTimeout(() => setCooldown((value) => Math.max(0, value - 1)), 1000)
+    return () => window.clearTimeout(timer)
   }, [cooldown])
 
   const requestOtp = async ({ email: requestedEmail }) => {
-    setState({ loading: true, message: '', error: '', developmentOtp: '' })
+    setState((current) => ({ ...current, loading: true, error: '' }))
     try {
       const response = (await api.post('/auth/forgot-password', { email: requestedEmail }, { timeout: 30000 })).data
-      const developmentOtp = response.data?.developmentOtp || ''
       setEmail(requestedEmail)
       setStep('otp')
       setCooldown(60)
-      setState({ loading: false, message: response.message, error: '', developmentOtp })
-      if (developmentOtp) otpForm.setValue('otp', developmentOtp)
+      otpForm.reset({ otp: '' })
+      setState({ loading: false, error: '', expiresInMinutes: response.data?.expiresInMinutes || 10 })
     } catch (error) {
-      setState({ loading: false, message: '', error: getApiError(error).message, developmentOtp: '' })
+      setState((current) => ({ ...current, loading: false, error: getApiError(error).message }))
     }
   }
 
   const verifyOtp = async ({ otp }) => {
     setState((current) => ({ ...current, loading: true, error: '' }))
+    otpForm.clearErrors('otp')
     try {
       const response = (await api.post('/auth/verify-reset-otp', { email, otp })).data
       navigate(`/reset-password/${response.data.resetToken}`, {
@@ -47,7 +57,9 @@ function ForgotPasswordPage() {
         state: { verifiedEmail: email, expiresInMinutes: response.data.expiresInMinutes },
       })
     } catch (error) {
-      setState((current) => ({ ...current, loading: false, error: getApiError(error).message }))
+      const apiError = getApiError(error)
+      otpForm.setError('otp', { type: 'server', message: apiError.message })
+      setState((current) => ({ ...current, loading: false }))
     }
   }
 
@@ -55,32 +67,46 @@ function ForgotPasswordPage() {
     setStep('email')
     setEmail('')
     setCooldown(0)
-    otpForm.reset()
-    setState({ loading: false, message: '', error: '', developmentOtp: '' })
+    otpForm.reset({ otp: '' })
+    setState({ loading: false, error: '', expiresInMinutes: 10 })
   }
 
   return <>
-    <p className="text-xs font-semibold uppercase tracking-[.2em] text-gold">Account recovery</p>
-    <h1 className="mt-2 font-serif text-4xl font-semibold">{step === 'email' ? 'Forgot your password?' : 'Check your email'}</h1>
-    <p className="mt-2 text-sm leading-6 text-muted">{step === 'email' ? 'Enter the email address registered with your account.' : <>Enter the 6-digit verification code sent to <strong className="text-ink">{email}</strong>.</>}</p>
+    <RecoveryProgress currentStep={step === 'email' ? 1 : 2} />
 
-    {state.message && <div className="mt-5 flex gap-3 rounded-xl bg-green-50 p-4 text-sm text-green-800"><FiMail className="mt-0.5 shrink-0" /><p>{state.message}</p></div>}
-    {state.developmentOtp && <p className="mt-3 rounded-xl bg-amber-50 p-3 text-xs text-amber-800">Local development code: <strong>{state.developmentOtp}</strong></p>}
-    {state.error && <p role="alert" className="mt-5 rounded-xl bg-red-50 p-3 text-sm text-red-700">{state.error}</p>}
+    <div className="text-center">
+      <span className="mx-auto grid h-16 w-16 place-items-center rounded-2xl border border-rosewood/15 bg-gradient-to-br from-pink-light to-white text-2xl text-rosewood shadow-[0_14px_35px_-24px_rgba(169,79,115,0.7)]" aria-hidden="true">{step === 'email' ? <FiKey /> : <FiMail />}</span>
+      <p className="mt-5 text-[.68rem] font-semibold uppercase tracking-[.24em] text-gold">Secure account recovery</p>
+      <h1 className="mt-2 font-serif text-3xl font-semibold sm:text-4xl">{step === 'email' ? 'Reset your password' : 'Verify your email'}</h1>
+      <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-muted">{step === 'email' ? 'Enter your registered email address and we’ll send you a secure verification code.' : <>We sent a 6-digit code to <strong className="font-semibold text-ink">{maskEmail(email)}</strong></>}</p>
+    </div>
+
+    {state.error && <div role="alert" className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{state.error}</div>}
 
     {step === 'email' ? <form className="mt-7 space-y-5" onSubmit={emailForm.handleSubmit(requestOtp)}>
-      <FormInput label="Registered email address" type="email" placeholder="you@example.com" autoComplete="email" error={emailForm.formState.errors.email?.message} {...emailForm.register('email')} />
-      <LoadingButton type="submit" loading={state.loading}>Send Verification Code</LoadingButton>
+      <FormInput label="Email address" type="email" placeholder="Enter your registered email" autoComplete="email" error={emailForm.formState.errors.email?.message} {...emailForm.register('email')} />
+      <LoadingButton type="submit" loading={state.loading}><FiMail aria-hidden="true" /> Send Verification Code</LoadingButton>
+      <div className="flex items-start gap-2 rounded-2xl bg-blue-light/35 px-4 py-3 text-xs leading-5 text-muted"><FiShield className="mt-0.5 shrink-0 text-rosewood" aria-hidden="true" /><p>For your security, we only send codes to email addresses already registered with an active account.</p></div>
     </form> : <form className="mt-7 space-y-5" onSubmit={otpForm.handleSubmit(verifyOtp)}>
-      <FormInput label="Verification code" type="text" inputMode="numeric" pattern="[0-9]*" maxLength={6} placeholder="Enter 6-digit code" autoComplete="one-time-code" error={otpForm.formState.errors.otp?.message} {...otpForm.register('otp')} />
-      <LoadingButton type="submit" loading={state.loading}>Verify Code</LoadingButton>
-      <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
-        <button type="button" className="inline-flex items-center gap-1 font-semibold text-rosewood" onClick={changeEmail}><FiArrowLeft /> Change email</button>
-        <button type="button" disabled={state.loading || cooldown > 0} className="font-semibold text-rosewood disabled:cursor-not-allowed disabled:text-muted" onClick={() => requestOtp({ email })}>{cooldown > 0 ? `Resend code in ${cooldown}s` : 'Resend code'}</button>
+      <div aria-live="polite" className="flex items-center justify-center gap-2 text-xs font-medium text-green-700"><FiCheckCircle aria-hidden="true" /> Verification code sent securely</div>
+      <Controller
+        name="otp"
+        control={otpForm.control}
+        render={({ field, fieldState }) => <OtpInput {...field} disabled={state.loading} error={fieldState.error?.message} />}
+      />
+      <p className="text-center text-xs leading-5 text-muted">The code expires in {state.expiresInMinutes} minutes and can be used only once.</p>
+      <LoadingButton type="submit" loading={state.loading}><FiShield aria-hidden="true" /> Verify &amp; Continue</LoadingButton>
+
+      <div className="rounded-2xl border border-gold/15 bg-cream/70 px-4 py-3 text-center text-xs">
+        {cooldown > 0 ? <p className="text-muted">You can request a new code in <span className="font-semibold tabular-nums text-ink">{formatTimer(cooldown)}</span></p> : <button type="button" disabled={state.loading} className="font-semibold text-rosewood hover:underline disabled:opacity-50" onClick={() => requestOtp({ email })}>Didn’t receive it? Resend code</button>}
       </div>
+
+      <button type="button" className="mx-auto flex min-h-11 items-center justify-center gap-2 text-xs font-semibold text-muted transition-colors hover:text-rosewood" onClick={changeEmail}><FiArrowLeft aria-hidden="true" /> Use a different email</button>
     </form>}
 
-    <p className="mt-6 text-center text-sm"><Link className="font-semibold text-rosewood" to="/login">Back to login</Link></p>
+    <div className="mt-6 border-t border-gold/15 pt-5 text-center">
+      <Link className="inline-flex min-h-11 items-center justify-center gap-2 text-sm font-semibold text-rosewood hover:underline" to="/login"><FiArrowLeft aria-hidden="true" /> Back to login</Link>
+    </div>
   </>
 }
 
