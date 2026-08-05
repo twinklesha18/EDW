@@ -15,3 +15,12 @@ export function responsiveImageProps(url, widths = [320, 480, 640, 960], options
     srcSet: widths.map((width) => `${optimizedImageUrl(url, width, options)} ${width}w`).join(', '),
   }
 }
+
+export function applyImageFallback(event, fallbackUrl) {
+  const image = event.currentTarget
+  if (!fallbackUrl || image.dataset.fallbackApplied === 'true') return
+  image.dataset.fallbackApplied = 'true'
+  image.removeAttribute('srcset')
+  image.removeAttribute('sizes')
+  image.src = fallbackUrl
+}

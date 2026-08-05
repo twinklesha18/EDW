@@ -22,6 +22,10 @@ const productSchema = new mongoose.Schema({
 }, { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } })
 
 productSchema.index({ name: 'text', description: 'text' })
+productSchema.index(
+  { 'image.publicId': 1 },
+  { unique: true, partialFilterExpression: { 'image.publicId': { $type: 'string', $gt: '' } } },
+)
 
 const Product = mongoose.model('Product', productSchema)
 export default Product

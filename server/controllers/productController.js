@@ -1,6 +1,8 @@
+import { waitUntil } from '@vercel/functions'
 import Category from '../models/Category.js'
 import Product from '../models/Product.js'
 import Review from '../models/Review.js'
+import { env } from '../config/env.js'
 import { escapeRegex, paginationData, paginationFromQuery } from '../utils/queryUtils.js'
 import { AppError, sendSuccess } from '../utils/responseUtils.js'
 import { deleteImage } from '../utils/cloudinaryUtils.js'
@@ -8,6 +10,24 @@ import { announceNewProductSafely } from '../services/productAnnouncementService
 
 const publicPopulate = [{ path: 'category', select: 'name slug' }]
 const slugify = (value) => String(value).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'product'
+
+async function scheduleProductAnnouncement(product) {
+  const task = announceNewProductSafely(product)
+  if (!env.isProduction) return task
+  try { waitUntil(task) }
+  catch { await task }
+  return null
+}
+
+async function productUsingImage(publicId, excludedId = null) {
+  if (!publicId) return null
+  return Product.findOne({ 'image.publicId': publicId, ...(excludedId && { _id: { $ne: excludedId } }) })
+}
+
+async function deleteProductImageIfUnused(publicId, excludedId = null) {
+  if (!publicId || await productUsingImage(publicId, excludedId)) return
+  await deleteImage(publicId).catch(() => {})
+}
 
 async function uniqueSlug(name, excludedId) {
   const base = slugify(name)
@@ -68,9 +88,25 @@ export async function adminGetProduct(request, response) {
 }
 
 export async function createProduct(request, response) {
-  const product = await Product.create({ ...request.validatedBody, slug: await uniqueSlug(request.validatedBody.name) })
+  const publicId = request.validatedBody.image?.publicId
+  const existing = await productUsingImage(publicId)
+  if (existing) {
+    await existing.populate(publicPopulate)
+    return sendSuccess(response, { message: 'This uploaded image was already used to create the product', data: { product: existing } })
+  }
+
+  let product
+  try {
+    product = await Product.create({ ...request.validatedBody, slug: await uniqueSlug(request.validatedBody.name) })
+  } catch (error) {
+    if (error?.code !== 11000 || !publicId) throw error
+    product = await productUsingImage(publicId)
+    if (!product) throw error
+    await product.populate(publicPopulate)
+    return sendSuccess(response, { message: 'This uploaded image was already used to create the product', data: { product } })
+  }
   await product.populate(publicPopulate)
-  await announceNewProductSafely(product)
+  await scheduleProductAnnouncement(product)
   return sendSuccess(response, { statusCode: 201, message: 'Product created successfully', data: { product } })
 }
 
@@ -80,7 +116,7 @@ export async function updateProduct(request, response) {
   const previousImageId = product.image?.publicId
   Object.assign(product, request.validatedBody, { slug: await uniqueSlug(request.validatedBody.name, product._id) })
   await product.save()
-  if (previousImageId && previousImageId !== product.image?.publicId) await deleteImage(previousImageId).catch(() => {})
+  if (previousImageId && previousImageId !== product.image?.publicId) await deleteProductImageIfUnused(previousImageId, product._id)
   await product.populate(publicPopulate)
   return sendSuccess(response, { message: 'Product updated successfully', data: { product } })
 }
@@ -88,7 +124,7 @@ export async function updateProduct(request, response) {
 export async function deleteProduct(request, response) {
   const product = await Product.findById(request.params.id)
   if (!product) throw new AppError('Product not found', 404)
-  if (product.image?.publicId) await deleteImage(product.image.publicId).catch(() => {})
   await Promise.all([Review.deleteMany({ product: product._id }), Product.deleteOne({ _id: product._id })])
+  await deleteProductImageIfUnused(product.image?.publicId)
   return sendSuccess(response, { message: 'Product deleted successfully' })
 }

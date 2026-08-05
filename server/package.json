@@ -28,6 +28,7 @@
     "migrate:owner-email": "node scripts/migrate-owner-email.js",
     "migrate:payment-slips": "node scripts/migrate-local-payment-slips.js",
     "migrate:catalog-media": "node scripts/migrate-catalog-media.js",
+    "repair:product-image": "node scripts/repair-product-image.js",
     "test:invoice": "node scripts/invoice-logo-smoke.js",
     "test:security": "node scripts/security-smoke.js"
   },
@@ -40,6 +41,7 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
+    "@vercel/functions": "^3.7.7",
     "bcryptjs": "^3.0.3",
     "cloudinary": "^2.10.0",
     "cookie-parser": "^1.4.7",

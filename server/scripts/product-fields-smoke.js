@@ -72,12 +72,17 @@ try {
   assert.equal(result.status, 200)
   result = await request('/admin/products', { method: 'POST', body: { ...input, prices: { S: 1000, M: 1250 } } })
   assert.equal(result.status, 422, 'All three size prices are required')
-  result = await request('/admin/products', { method: 'POST', body: input })
+  const apiInput = { ...input, image: { ...input.image, publicId: `eshaz-dream-world/products/idempotency-${suffix}` } }
+  result = await request('/admin/products', { method: 'POST', body: apiInput })
   assert.equal(result.status, 201)
   const apiProduct = result.body.data.product
   productIds.push(apiProduct._id)
   assert.equal(apiProduct.stock, undefined)
   assert.deepEqual(apiProduct.prices, { S: 1000, M: 1250, L: 1500 })
+  result = await request('/admin/products', { method: 'POST', body: apiInput })
+  assert.equal(result.status, 200, 'Retrying a completed image submission is idempotent')
+  assert.equal(result.body.data.product._id, apiProduct._id)
+  assert.equal(await Product.countDocuments({ 'image.publicId': apiInput.image.publicId }), 1, 'A retry cannot create a duplicate record sharing one image')
   result = await request(`/products/${apiProduct.slug}`)
   assert.equal(result.status, 200)
   result = await request('/cart/items', { method: 'POST', body: { productId: apiProduct._id, size: 'L', quantity: 1, price: 1 } })

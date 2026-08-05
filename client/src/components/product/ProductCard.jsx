@@ -6,7 +6,7 @@ import { formatCurrency } from '../../utils/formatCurrency.js'
 import RatingStars from '../common/RatingStars.jsx'
 import { toggleWishlist } from '../../redux/slices/wishlistSlice.js'
 import { productToWishlistPayload } from '../../utils/productAdapters.js'
-import { responsiveImageProps } from '../../utils/imageUrl.js'
+import { applyImageFallback, responsiveImageProps } from '../../utils/imageUrl.js'
 
 function ProductCard({ product, view = 'grid' }) {
   const dispatch = useDispatch()
@@ -30,6 +30,7 @@ function ProductCard({ product, view = 'grid' }) {
             height="800"
             loading="lazy"
             decoding="async"
+            onError={(event) => applyImageFallback(event, product.fallbackImage)}
             className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
           />
         </Link>
