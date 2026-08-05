@@ -2,6 +2,7 @@ import User from '../models/User.js'
 import { AppError, sendSuccess } from '../utils/responseUtils.js'
 import { clearAuthCookie, setAuthCookie } from '../utils/generateToken.js'
 import { cascadeDeleteUser } from '../services/userDeletionService.js'
+import { notifyAdmins, notifySafely } from '../services/notificationService.js'
 
 export function getProfile(request, response) {
   return sendSuccess(response, { message: 'Profile retrieved', data: { user: request.user.toJSON() } })
@@ -42,7 +43,15 @@ export async function deleteOwnAccount(request, response) {
   }
   if (user.role === 'admin') throw new AppError('Administrator accounts cannot be deleted from customer settings', 409)
 
+  const customerName = `${user.firstName} ${user.lastName}`.trim()
+  const customerEmail = user.email
   const result = await cascadeDeleteUser({ user, performedBy: user })
+  await notifySafely(() => notifyAdmins({
+    type: 'customer_account_deleted',
+    title: 'Customer account deleted',
+    message: `${customerName} (${customerEmail}) permanently deleted their customer account. Audit reference: ${result.deletionLogId}.`,
+    link: '/admin/user-deletion-logs',
+  }))
   clearAuthCookie(response)
   return sendSuccess(response, { message: 'Your account and associated data were deleted permanently', data: result })
 }

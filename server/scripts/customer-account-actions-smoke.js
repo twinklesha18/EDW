@@ -4,6 +4,7 @@ import mongoose from 'mongoose'
 process.env.EDW_DISABLE_EMAIL = 'true'
 import app from '../app.js'
 import { env } from '../config/env.js'
+import Notification from '../models/Notification.js'
 import User from '../models/User.js'
 import UserDeletionLog from '../models/UserDeletionLog.js'
 
@@ -11,9 +12,11 @@ const port = 5120
 const base = `http://127.0.0.1:${port}/api`
 const suffix = Date.now()
 const email = `customer-actions-${suffix}@edw.test`
+const adminEmail = `customer-actions-admin-${suffix}@edw.test`
 const password = 'CustomerSecure1'
 let server
 let user
+let admin
 
 async function request(route, { method = 'GET', cookie, body } = {}) {
   const response = await fetch(`${base}${route}`, {
@@ -32,6 +35,7 @@ const login = () => request('/auth/login', { method: 'POST', body: { email, pass
 
 try {
   await mongoose.connect(env.mongoUri)
+  admin = await User.create({ firstName: 'Customer', lastName: 'Actions Admin', email: adminEmail, phone: '0756677888', password, role: 'admin' })
   user = await User.create({ firstName: 'Customer', lastName: 'Actions', email, phone: '0756677889', password, role: 'user' })
   server = app.listen(port)
   await new Promise((resolve) => server.once('listening', resolve))
@@ -70,11 +74,17 @@ try {
   assert.ok(log, 'The administrator-facing deletion audit record remains')
   assert.equal(log.status, 'Completed')
   assert.equal(log.deletedUser.email, email)
+  const adminNotification = await Notification.findOne({ recipient: admin._id, type: 'customer_account_deleted' })
+  assert.ok(adminNotification, 'An administrator dashboard notification is created')
+  assert.match(adminNotification.title, /account deleted/i)
+  assert.match(adminNotification.message, new RegExp(email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'))
+  assert.equal(adminNotification.link, '/admin/user-deletion-logs')
 
-  console.log('Customer account-actions smoke test passed: password confirmation, all-device session revocation, permanent deletion, login denial, and audit logging.')
+  console.log('Customer account-actions smoke test passed: password confirmation, all-device session revocation, permanent deletion, login denial, audit logging, and administrator notification.')
 } finally {
   if (server) await new Promise((resolve) => server.close(resolve))
   if (user?._id) await UserDeletionLog.deleteMany({ 'deletedUser.originalId': String(user._id) })
-  await User.deleteMany({ email })
+  if (admin?._id) await Notification.deleteMany({ recipient: admin._id })
+  await User.deleteMany({ email: { $in: [email, adminEmail] } })
   await mongoose.disconnect()
 }
