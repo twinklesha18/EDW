@@ -6,6 +6,7 @@ import CategoryCard from '../components/home/CategoryCard.jsx'
 import { brandLogo } from '../assets/images/index.js'
 import { useSeo } from '../hooks/useSeo.js'
 import { INDEX_ROBOTS, SITE_URL, absoluteUrl } from '../utils/seo.js'
+import { SEO_KEYWORDS } from '../utils/seoKeywords.js'
 
 function CategoriesPage() {
   const categories = useSelector((state) => state.catalog.categories)
@@ -16,8 +17,8 @@ function CategoriesPage() {
         '@type': 'CollectionPage',
         '@id': `${SITE_URL}/categories#collection`,
         url: `${SITE_URL}/categories`,
-        name: 'Gift and Bouquet Categories | Eshaz Dream World',
-        description: 'Browse custom bouquet and personalized gift categories for birthdays and special occasions in Sri Lanka.',
+        name: 'Custom Gift Categories Batticaloa | Eshaz Dream World',
+        description: 'Browse custom bouquets, personalized gifts, photo gifts and gift boxes in Batticaloa for special occasions.',
         isPartOf: { '@id': `${SITE_URL}/#website` },
         inLanguage: 'en-LK',
         mainEntity: {
@@ -42,8 +43,9 @@ function CategoriesPage() {
     ],
   }), [categories])
   useSeo({
-    title: 'Gift & Bouquet Categories in Sri Lanka | Eshaz Dream World',
-    description: 'Explore custom bouquet and personalized gift categories for birthdays, celebrations and meaningful moments across Sri Lanka.',
+    title: 'Custom Gift Categories Batticaloa | Eshaz Dream World',
+    description: 'Explore custom bouquets, personalized gifts, photo gifts and gift boxes in Batticaloa for birthdays, anniversaries and special occasions.',
+    keywords: SEO_KEYWORDS.categories,
     canonicalPath: '/categories',
     image: categories[0]?.image || brandLogo,
     imageAlt: 'Eshaz Dream World gift and bouquet categories',
@@ -53,7 +55,7 @@ function CategoriesPage() {
 
   return (
     <PageTransition>
-      <PageBanner eyebrow="Collections" title="Explore Every Category" description="From sweet surprises to personalized keepsakes, discover the style that speaks to your occasion." />
+      <PageBanner eyebrow="Gift Collections" title="Explore Every Category" description="Discover custom bouquets, personalized gifts, photo gifts and gift boxes for birthdays, anniversaries and surprises." />
       <section className="section-shell py-12 sm:py-16">
         <div className="grid grid-cols-1 justify-center gap-5 min-[520px]:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(260px,360px))] lg:gap-6">
           {categories.map((category) => <CategoryCard key={category.slug} category={category} />)}

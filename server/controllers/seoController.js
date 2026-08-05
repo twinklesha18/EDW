@@ -35,12 +35,12 @@ export async function getSitemap(_request, response) {
     ...categories.map((category) => urlEntry({
       path: `/category/${encodeURIComponent(category.slug)}`,
       lastModified: category.updatedAt,
-      image: { url: category.image?.url, title: `${category.name} gifts` },
+      image: { url: category.image?.url, title: `${category.name} in Batticaloa | Eshaz Dream World` },
     })),
     ...products.map((product) => urlEntry({
       path: `/product/${encodeURIComponent(product.slug)}`,
       lastModified: product.updatedAt,
-      image: { url: product.image?.url, title: product.name },
+      image: { url: product.image?.url, title: `${product.name} custom gift by Eshaz Dream World` },
     })),
   ]
   const sitemap = [
@@ -68,7 +68,7 @@ export async function getMerchantFeed(_request, response) {
     `      <g:id>${escapeXml(`${product._id}-${size}`)}</g:id>`,
     `      <g:item_group_id>${escapeXml(product._id)}</g:item_group_id>`,
     `      <title>${escapeXml(`${product.name} - Size ${size}`)}</title>`,
-    `      <description>${escapeXml(product.description)}</description>`,
+    `      <description>${escapeXml(`${product.description} Order online from Eshaz Dream World in Batticaloa, with delivery across Sri Lanka.`)}</description>`,
     `      <link>${escapeXml(`${storefrontUrl}/product/${encodeURIComponent(product.slug)}?size=${encodeURIComponent(size)}`)}</link>`,
     `      <g:image_link>${escapeXml(product.image?.url || '')}</g:image_link>`,
     '      <g:availability>in_stock</g:availability>',
@@ -91,7 +91,7 @@ export async function getMerchantFeed(_request, response) {
     '  <channel>',
     '    <title>Eshaz Dream World Products</title>',
     `    <link>${storefrontUrl}</link>`,
-    '    <description>Custom bouquets and personalized gifts in Sri Lanka.</description>',
+    '    <description>Custom gifts, personalized bouquets and gift hampers from Eshaz Dream World in Batticaloa, with delivery across Sri Lanka.</description>',
     ...items,
     '  </channel>',
     '</rss>',

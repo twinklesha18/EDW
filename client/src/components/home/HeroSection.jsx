@@ -29,7 +29,7 @@ function HeroSection() {
             Turning Your Ideas into <span className="text-rosewood">Beautiful Creations</span>
           </h1>
           <p className="mt-5 font-serif text-xl italic text-gold sm:text-2xl">{tagline}</p>
-          <p className="mx-auto mt-5 max-w-xl text-sm leading-7 text-muted sm:text-base lg:mx-0">Discover beautifully customized bouquets, thoughtful gifts and creative designs made with love for every special moment.</p>
+          <p className="mx-auto mt-5 max-w-xl text-sm leading-7 text-muted sm:text-base lg:mx-0">Discover custom gifts, personalized bouquets and handmade surprises from our online gift shop in Batticaloa, with delivery across Sri Lanka.</p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
             <Link to="/shop" className="primary-button px-7">Shop Now <FiArrowRight aria-hidden="true" /></Link>
             <Link to="/categories" className="secondary-button px-7">Explore Collections</Link>

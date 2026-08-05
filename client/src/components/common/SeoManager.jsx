@@ -4,23 +4,28 @@ import { brandLogo } from '../../assets/images/index.js'
 import { useBrand } from '../../hooks/useBrand.js'
 import { useSeo } from '../../hooks/useSeo.js'
 import { INDEX_ROBOTS, NO_INDEX_ROBOTS, SITE_URL, absoluteUrl } from '../../utils/seo.js'
+import { SEO_KEYWORDS } from '../../utils/seoKeywords.js'
 
 const publicPages = {
   '/': {
-    title: 'Custom Gifts & Bouquets in Sri Lanka | Eshaz Dream World',
-    description: 'Shop elegant custom bouquets and personalized gifts from Eshaz Dream World in Sri Lanka. Thoughtful creations for birthdays and special occasions.',
+    title: 'Custom Gifts Batticaloa & Sri Lanka | Eshaz Dream World',
+    description: 'Shop custom gifts, personalized bouquets and handmade surprises from Eshaz Dream World in Batticaloa, with gift delivery across Sri Lanka.',
+    keywords: SEO_KEYWORDS.home,
   },
   '/shop': {
-    title: 'Shop Custom Gifts & Bouquets | Eshaz Dream World',
-    description: 'Browse custom bouquets, chocolate gifts and personalized creations for birthdays and special occasions in Sri Lanka.',
+    title: 'Online Gift Shop Batticaloa | Eshaz Dream World',
+    description: 'Order custom gifts, personalized bouquets and gift hampers online in Batticaloa for birthdays, anniversaries and delivery across Sri Lanka.',
+    keywords: SEO_KEYWORDS.shop,
   },
   '/categories': {
-    title: 'Gift & Bouquet Categories | Eshaz Dream World',
-    description: 'Explore bouquet and personalized gift categories designed for birthdays, celebrations and meaningful moments.',
+    title: 'Custom Gift Categories Batticaloa | Eshaz Dream World',
+    description: 'Explore custom bouquets, personalized gifts, photo gifts and gift boxes in Batticaloa for birthdays, anniversaries and special occasions.',
+    keywords: SEO_KEYWORDS.categories,
   },
   '/contact': {
-    title: 'Contact Eshaz Dream World | Custom Gift Enquiries',
-    description: 'Contact Eshaz Dream World by phone, email or WhatsApp for custom bouquets, personalized gifts and order enquiries.',
+    title: 'Gift Delivery Batticaloa | Contact Eshaz Dream World',
+    description: 'Contact Eshaz Dream World in Batticaloa by phone, email or WhatsApp for custom gifts, personalized bouquets, delivery and order enquiries.',
+    keywords: SEO_KEYWORDS.contact,
   },
 }
 
@@ -44,11 +49,11 @@ function SeoManager() {
     '@context': 'https://schema.org',
     '@graph': [
       {
-        '@type': 'OnlineStore',
+        '@type': ['OnlineStore', 'Store'],
         '@id': `${SITE_URL}/#store`,
         name,
         url: `${SITE_URL}/`,
-        description: 'Custom bouquets and personalized gifts for birthdays and special occasions in Sri Lanka.',
+        description: 'Custom gifts, personalized bouquets and handmade surprises from Batticaloa, with gift delivery across Sri Lanka.',
         logo: absoluteUrl(managedLogo),
         image: absoluteUrl(searchImage),
         email: contact.email,
@@ -56,9 +61,23 @@ function SeoManager() {
         currenciesAccepted: 'LKR',
         paymentAccepted: ['Cash on Delivery', 'Bank Transfer'],
         priceRange: 'LKR',
-        areaServed: { '@type': 'Country', name: 'Sri Lanka' },
+        address: {
+          '@type': 'PostalAddress',
+          addressLocality: 'Batticaloa',
+          addressRegion: 'Eastern Province',
+          addressCountry: 'LK',
+        },
+        geo: {
+          '@type': 'GeoCoordinates',
+          latitude: 7.7289775,
+          longitude: 81.6929807,
+        },
+        areaServed: [
+          { '@type': 'City', name: 'Batticaloa' },
+          { '@type': 'Country', name: 'Sri Lanka' },
+        ],
         hasMap: contact.mapsHref,
-        knowsAbout: ['Custom bouquets', 'Personalized gifts', 'Birthday gifts', 'Chocolate bouquets', 'Custom gift design'],
+        knowsAbout: ['Custom gifts', 'Personalized gifts', 'Handmade gifts', 'Custom bouquets', 'Gift hampers', 'Birthday gifts', 'Anniversary gifts', 'Photo gifts'],
         sameAs: [contact.instagram, contact.facebook, contact.tiktok].filter(Boolean),
         contactPoint: {
           '@type': 'ContactPoint',
@@ -77,6 +96,11 @@ function SeoManager() {
         description: tagline,
         publisher: { '@id': `${SITE_URL}/#store` },
         inLanguage: 'en-LK',
+        potentialAction: {
+          '@type': 'SearchAction',
+          target: `${SITE_URL}/shop?search={search_term_string}`,
+          'query-input': 'required name=search_term_string',
+        },
       },
     ],
   }), [contact, managedLogo, name, tagline])
@@ -87,14 +111,16 @@ function SeoManager() {
   } else if (/^\/product\/[^/]+$/.test(pathname)) {
     seo = {
       title: 'Custom Gift Creation | Eshaz Dream World',
-      description: 'View this custom gift creation from Eshaz Dream World and choose the size that suits your special occasion.',
+      description: 'View this custom gift from Eshaz Dream World in Batticaloa and choose a size for delivery across Sri Lanka.',
+      keywords: SEO_KEYWORDS.shop,
       canonicalPath: pathname,
       robots: INDEX_ROBOTS,
     }
   } else if (/^\/category\/[^/]+$/.test(pathname)) {
     seo = {
       title: 'Gift Collection | Eshaz Dream World',
-      description: 'Explore a curated Eshaz Dream World gift collection with custom creations for special occasions in Sri Lanka.',
+      description: 'Explore custom and personalized gift collections from Eshaz Dream World in Batticaloa, with delivery across Sri Lanka.',
+      keywords: SEO_KEYWORDS.categories,
       canonicalPath: pathname,
       robots: INDEX_ROBOTS,
     }

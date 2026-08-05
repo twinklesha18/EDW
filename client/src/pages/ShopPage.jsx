@@ -10,6 +10,7 @@ import ProductGrid from '../components/product/ProductGrid.jsx'
 import { brandLogo } from '../assets/images/index.js'
 import { useSeo } from '../hooks/useSeo.js'
 import { INDEX_ROBOTS, NO_INDEX_ROBOTS, SITE_URL, absoluteUrl } from '../utils/seo.js'
+import { SEO_KEYWORDS } from '../utils/seoKeywords.js'
 
 const pageSize = 6
 
@@ -38,8 +39,8 @@ function ShopPage() {
         '@type': 'CollectionPage',
         '@id': `${SITE_URL}/shop#collection`,
         url: `${SITE_URL}/shop`,
-        name: 'Custom Gifts and Bouquets | Eshaz Dream World',
-        description: 'Shop custom bouquets, chocolate gifts and personalized creations for special occasions in Sri Lanka.',
+        name: 'Online Gift Shop Batticaloa | Eshaz Dream World',
+        description: 'Order custom gifts, personalized bouquets and gift hampers online in Batticaloa, with delivery across Sri Lanka.',
         isPartOf: { '@id': `${SITE_URL}/#website` },
         inLanguage: 'en-LK',
         mainEntity: {
@@ -64,8 +65,9 @@ function ShopPage() {
     ],
   }), [products])
   useSeo({
-    title: 'Shop Custom Gifts & Bouquets in Sri Lanka | Eshaz Dream World',
-    description: 'Shop custom bouquets, chocolate gifts and personalized creations for birthdays and special occasions in Sri Lanka.',
+    title: 'Online Gift Shop Batticaloa | Eshaz Dream World',
+    description: 'Order custom gifts, personalized bouquets and gift hampers online in Batticaloa for birthdays, anniversaries and delivery across Sri Lanka.',
+    keywords: SEO_KEYWORDS.shop,
     canonicalPath: '/shop',
     image: products[0]?.image || brandLogo,
     imageAlt: 'Custom gifts and bouquets from Eshaz Dream World',
@@ -122,7 +124,7 @@ function ShopPage() {
 
   return (
     <PageTransition>
-      <PageBanner eyebrow="Shop" title="Find Your Perfect Creation" description="Browse thoughtful gifts and filter the collection to match your moment." />
+      <PageBanner eyebrow="Online Gift Shop" title="Find Your Perfect Creation" description="Order custom gifts, personalized bouquets and gift hampers online in Batticaloa, with delivery across Sri Lanka." />
       <section className="section-shell py-12 sm:py-16">
         <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
           <aside className="hidden h-fit rounded-[1.75rem] border border-gold/15 bg-white p-6 lg:block">

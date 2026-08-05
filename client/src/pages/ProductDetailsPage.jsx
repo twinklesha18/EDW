@@ -18,6 +18,7 @@ import LoadingSkeleton from '../components/common/LoadingSkeleton.jsx'
 import ProductReviews from '../components/product/ProductReviews.jsx'
 import { brandLogo } from '../assets/images/index.js'
 import { INDEX_ROBOTS, NO_INDEX_ROBOTS, SITE_URL, absoluteUrl } from '../utils/seo.js'
+import { productSeoKeywords } from '../utils/seoKeywords.js'
 import { applyImageFallback, responsiveImageProps } from '../utils/imageUrl.js'
 import { useBrand } from '../hooks/useBrand.js'
 
@@ -56,6 +57,7 @@ function ProductDetailsPage() {
     const ratingValue = reviewCount ? reviews.reduce((total, review) => total + Number(review.rating || 0), 0) / reviewCount : 0
     const productUrl = absoluteUrl(canonicalPath)
     const shippingPolicyId = `${productUrl}#shipping-policy`
+    const searchDescription = `${product.name} is available to order online from Eshaz Dream World in Batticaloa, with gift delivery across Sri Lanka.`
     const variants = Object.entries(product.prices).map(([size, price]) => ({
       '@type': 'Product',
       '@id': `${productUrl}#size-${size.toLowerCase()}`,
@@ -86,6 +88,7 @@ function ProductDetailsPage() {
       productGroupID: product.id,
       variesBy: ['https://schema.org/size'],
       category: product.categoryLabel,
+      keywords: productSeoKeywords(product.name, product.categoryLabel),
       brand: { '@type': 'Brand', name: 'Eshaz Dream World' },
       hasVariant: variants,
       ...(reviewCount > 0 && {
@@ -136,7 +139,8 @@ function ProductDetailsPage() {
     const seoProductName = product.name.length > 42 ? `${product.name.slice(0, 39).trim()}...` : product.name
     return {
       title: `${seoProductName} | Eshaz Dream World`,
-      description: product.description.length > 155 ? `${product.description.slice(0, 152).trim()}...` : product.description,
+      description: searchDescription,
+      keywords: productSeoKeywords(product.name, product.categoryLabel),
       canonicalPath,
       image: product.image,
       imageAlt: product.name,
@@ -226,6 +230,7 @@ function ProductDetailsPage() {
               {product.discount > 0 && <span className="mb-1 rounded-full bg-pink-light px-2.5 py-1 text-xs font-semibold text-rosewood">Save {product.discount}%</span>}
             </div>
             <p className="mt-6 leading-7 text-muted">{product.description}</p>
+            <p className="mt-3 text-sm leading-6 text-muted">Made by Eshaz Dream World in Batticaloa and available for gift delivery across Sri Lanka.</p>
             <fieldset className="mt-6">
               <legend className="form-label">Size</legend>
               <div className="mt-2 flex flex-wrap gap-3">

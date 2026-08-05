@@ -10,7 +10,7 @@ function FeaturedProducts() {
     <section className="overflow-hidden bg-gradient-to-b from-white to-pink-light/40 py-16 sm:py-24">
       <div className="section-shell">
         <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
-          <SectionTitle align="left" eyebrow="Signature picks" title="Featured Creations" subtitle="Handpicked gifts made to make every moment memorable." />
+          <SectionTitle align="left" eyebrow="Signature picks" title="Featured Creations" subtitle="Handmade and customized gifts from Batticaloa, created to make every moment memorable." />
           <Link to="/shop" className="secondary-button shrink-0">View All Creations</Link>
         </div>
 

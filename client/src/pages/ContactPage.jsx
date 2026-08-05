@@ -12,6 +12,7 @@ import { brandLogo } from '../assets/images/index.js'
 import api from '../services/api.js'
 import { EMAIL_ERROR, PHONE_ERROR, emailPattern, normalizeEmailInput, normalizePhoneInput, phonePattern } from '../utils/inputValidation.js'
 import { INDEX_ROBOTS, SITE_URL } from '../utils/seo.js'
+import { SEO_KEYWORDS } from '../utils/seoKeywords.js'
 
 function ContactPage() {
   const { name, logo, contact } = useBrand()
@@ -29,7 +30,7 @@ function ContactPage() {
         '@id': `${SITE_URL}/contact#page`,
         url: `${SITE_URL}/contact`,
         name: `Contact ${name}`,
-        description: `Contact ${name} for custom bouquets, personalized gifts, delivery, and order enquiries in Sri Lanka.`,
+        description: `Contact ${name} in Batticaloa for custom gifts, personalized bouquets, delivery, and online order enquiries across Sri Lanka.`,
         isPartOf: { '@id': `${SITE_URL}/#website` },
         about: { '@id': `${SITE_URL}/#store` },
         inLanguage: 'en-LK',
@@ -38,7 +39,7 @@ function ContactPage() {
           telephone: contact.phoneHref?.replace('tel:', '') || contact.phone,
           email: contact.email,
           contactType: 'customer service',
-          areaServed: 'LK',
+          areaServed: ['Batticaloa', 'LK'],
         },
       },
       {
@@ -51,8 +52,9 @@ function ContactPage() {
     ],
   }), [contact, name])
   useSeo({
-    title: `Contact ${name} | Custom Gift Enquiries Sri Lanka`,
-    description: `Contact ${name} by phone, email or WhatsApp for custom bouquets, personalized gifts, delivery and order enquiries in Sri Lanka.`,
+    title: `Gift Delivery Batticaloa | Contact ${name}`,
+    description: `Contact ${name} in Batticaloa by phone, email or WhatsApp for custom gifts, personalized bouquets, delivery and order enquiries across Sri Lanka.`,
+    keywords: SEO_KEYWORDS.contact,
     canonicalPath: '/contact',
     image: logo?.url || brandLogo,
     imageAlt: `${name} logo`,
@@ -72,7 +74,7 @@ function ContactPage() {
 
   return (
     <PageTransition>
-      <PageBanner eyebrow="Contact" title="Let’s Create Something Beautiful" description="Call, email, or message us on WhatsApp. We would love to hear about the creation you have in mind." />
+      <PageBanner eyebrow="Contact Our Gift Shop" title="Let’s Create Something Beautiful" description="Contact our Batticaloa gift shop by phone, email or WhatsApp for custom gifts, personalized bouquets and delivery enquiries." />
       <section className="section-shell py-12 sm:py-16">
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {[

@@ -57,6 +57,7 @@ const setStructuredData = (structuredData) => {
 export function applySeo({
   title,
   description,
+  keywords,
   canonicalPath,
   image,
   imageAlt = '',
@@ -73,6 +74,7 @@ export function applySeo({
   document.documentElement.lang = 'en-LK'
   document.title = title
   upsertMeta('name', 'description', description)
+  setOptionalMeta('name', 'keywords', keywords)
   upsertMeta('name', 'robots', robots)
   upsertMeta('name', 'googlebot', robots)
   upsertMeta('property', 'og:type', type)

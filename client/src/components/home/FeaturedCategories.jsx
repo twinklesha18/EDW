@@ -8,7 +8,7 @@ function FeaturedCategories() {
   return (
     <section className="section-shell overflow-hidden py-16 sm:py-24">
       <div className="mx-auto flex justify-center">
-        <SectionTitle eyebrow="Curated for you" title="Shop by Category" subtitle="Find the perfect creation for every beautiful occasion." />
+        <SectionTitle eyebrow="Curated for you" title="Shop by Category" subtitle="Browse personalized bouquets, gift hampers and unique gift ideas for birthdays, anniversaries and every celebration." />
       </div>
 
       {!categories.length ? (

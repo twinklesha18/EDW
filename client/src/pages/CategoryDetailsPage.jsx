@@ -10,6 +10,7 @@ import ProductGrid from '../components/product/ProductGrid.jsx'
 import { brandLogo } from '../assets/images/index.js'
 import { useSeo } from '../hooks/useSeo.js'
 import { INDEX_ROBOTS, NO_INDEX_ROBOTS, SITE_URL, absoluteUrl } from '../utils/seo.js'
+import { categorySeoKeywords } from '../utils/seoKeywords.js'
 
 function CategoryDetailsPage() {
   const { slug } = useParams()
@@ -43,6 +44,7 @@ function CategoryDetailsPage() {
 
     const canonicalPath = `/category/${category.slug}`
     const categoryUrl = absoluteUrl(canonicalPath)
+    const searchDescription = `Shop ${category.name.toLowerCase()} in Batticaloa from Eshaz Dream World. Personalized gifts for special occasions, with delivery across Sri Lanka.`
     const itemList = {
       '@type': 'ItemList',
       name: `${category.name} products`,
@@ -60,7 +62,7 @@ function CategoryDetailsPage() {
       '@id': `${categoryUrl}#collection`,
       url: categoryUrl,
       name: `${category.name} | Eshaz Dream World`,
-      description,
+      description: searchDescription,
       isPartOf: { '@id': `${SITE_URL}/#website` },
       about: { '@type': 'Thing', name: category.name },
       primaryImageOfPage: category.image ? absoluteUrl(category.image) : undefined,
@@ -77,15 +79,16 @@ function CategoryDetailsPage() {
     }
 
     return {
-      title: `${category.name} Gifts in Sri Lanka | Eshaz Dream World`,
-      description: description.length > 155 ? `${description.slice(0, 152).trim()}...` : description,
+      title: `${category.name} in Batticaloa | Eshaz Dream World`,
+      description: searchDescription,
+      keywords: categorySeoKeywords(category.name),
       canonicalPath,
       image: category.image || brandLogo,
       imageAlt: `${category.name} collection from Eshaz Dream World`,
       robots: INDEX_ROBOTS,
       structuredData: { '@context': 'https://schema.org', '@graph': [collectionPage, breadcrumb] },
     }
-  }, [catalogLoaded, category, categoryProducts, description, slug])
+  }, [catalogLoaded, category, categoryProducts, slug])
   useSeo(seo)
 
   if (catalogLoading && !catalogLoaded) return <LoadingSkeleton />
@@ -117,7 +120,7 @@ function CategoryDetailsPage() {
         <div className="mb-8 max-w-3xl">
           <p className="text-sm leading-7 text-muted">
             Browse {categoryProducts.length} {categoryProducts.length === 1 ? 'creation' : 'creations'} in our {category.name} collection.
-            Each product is available in sizes S, M, and L with clear pricing.
+            Each product is available in sizes S, M, and L with clear pricing. Order online from Eshaz Dream World in Batticaloa for delivery across Sri Lanka.
           </p>
         </div>
 
