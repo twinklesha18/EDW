@@ -1,6 +1,7 @@
 import User from '../models/User.js'
 import { AppError, sendSuccess } from '../utils/responseUtils.js'
-import { setAuthCookie } from '../utils/generateToken.js'
+import { clearAuthCookie, setAuthCookie } from '../utils/generateToken.js'
+import { cascadeDeleteUser } from '../services/userDeletionService.js'
 
 export function getProfile(request, response) {
   return sendSuccess(response, { message: 'Profile retrieved', data: { user: request.user.toJSON() } })
@@ -21,6 +22,29 @@ export async function changePassword(request, response) {
   await user.save()
   setAuthCookie(response, user._id, request.authSession?.rem === true, Date.now(), user.sessionVersion)
   return sendSuccess(response, { message: 'Password changed successfully' })
+}
+
+export async function logoutAllDevices(request, response) {
+  const user = await User.findById(request.user._id).select('+password +sessionVersion')
+  if (!user || !(await user.comparePassword(request.validatedBody.currentPassword))) {
+    throw new AppError('Current password is incorrect', 400, [{ field: 'currentPassword', message: 'Current password is incorrect' }])
+  }
+  user.sessionVersion = Number(user.sessionVersion || 0) + 1
+  await user.save({ validateModifiedOnly: true })
+  clearAuthCookie(response)
+  return sendSuccess(response, { message: 'You have been logged out from all devices' })
+}
+
+export async function deleteOwnAccount(request, response) {
+  const user = await User.findById(request.user._id).select('+password')
+  if (!user || !(await user.comparePassword(request.validatedBody.currentPassword))) {
+    throw new AppError('Current password is incorrect', 400, [{ field: 'currentPassword', message: 'Current password is incorrect' }])
+  }
+  if (user.role === 'admin') throw new AppError('Administrator accounts cannot be deleted from customer settings', 409)
+
+  const result = await cascadeDeleteUser({ user, performedBy: user })
+  clearAuthCookie(response)
+  return sendSuccess(response, { message: 'Your account and associated data were deleted permanently', data: result })
 }
 
 export async function addAddress(request, response) {

@@ -148,6 +148,26 @@ export const changePasswordValidator = (body) => {
   )
 }
 
+export const currentPasswordValidator = (body) => {
+  const currentPassword = typeof body.currentPassword === 'string' ? body.currentPassword : ''
+  return validateFields(
+    { currentPassword },
+    [(!currentPassword || currentPassword.length > 72) && error('currentPassword', 'Enter your current password')],
+  )
+}
+
+export const accountDeletionValidator = (body) => {
+  const currentPassword = typeof body.currentPassword === 'string' ? body.currentPassword : ''
+  const confirmation = sanitizeText(body.confirmation, 20)
+  return validateFields(
+    { currentPassword, confirmation },
+    [
+      (!currentPassword || currentPassword.length > 72) && error('currentPassword', 'Enter your current password'),
+      confirmation !== 'DELETE' && error('confirmation', 'Type DELETE exactly to confirm permanent account deletion'),
+    ],
+  )
+}
+
 export const addressValidator = (body) => {
   const fields = [
     ['label', 'Label', 2, 40], ['fullName', 'Full name', 2, 120],

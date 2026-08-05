@@ -20,6 +20,7 @@
     "test:validation": "node scripts/session-validation-smoke.js",
     "test:notifications": "node scripts/notification-smoke.js",
     "test:user-deletion": "node scripts/user-cascade-deletion-smoke.js",
+    "test:customer-account-actions": "node scripts/customer-account-actions-smoke.js",
     "test:seo": "node scripts/seo-smoke.js",
     "test:analytics": "node scripts/analytics-smoke.js",
     "test:communications": "node scripts/communications-smoke.js",
