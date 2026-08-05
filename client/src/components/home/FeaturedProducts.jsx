@@ -19,8 +19,8 @@ function FeaturedProducts() {
             Creations will appear here when products are added.
           </p>
         ) : (
-          <div className="-mx-5 mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-5 min-[900px]:mx-0 min-[900px]:grid min-[900px]:grid-cols-3 min-[900px]:overflow-visible min-[900px]:px-0">
-            {products.map((product) => <div key={product.id} className="w-[82vw] max-w-[330px] shrink-0 snap-center min-[900px]:w-auto min-[900px]:max-w-none"><ProductCard product={product} autoRotateImages /></div>)}
+          <div className="-mx-5 mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-5 min-[900px]:mx-0 min-[900px]:px-0">
+            {products.map((product) => <div key={product.id} className="w-[82vw] max-w-[330px] shrink-0 snap-center min-[900px]:w-[calc(33.333%_-_.667rem)] min-[900px]:max-w-none"><ProductCard product={product} autoRotateImages /></div>)}
           </div>
         )}
       </div>

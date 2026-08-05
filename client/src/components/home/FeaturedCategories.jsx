@@ -16,8 +16,8 @@ function FeaturedCategories() {
           Collections will appear here after categories are published.
         </p>
       ) : (
-        <div className="-mx-5 mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-5 min-[900px]:mx-0 min-[900px]:grid min-[900px]:grid-cols-3 min-[900px]:overflow-visible min-[900px]:px-0">
-          {categories.map((category) => <div key={category.slug} className="w-[82vw] max-w-[330px] shrink-0 snap-center min-[900px]:w-auto min-[900px]:max-w-none"><CategoryCard category={category} /></div>)}
+        <div className="-mx-5 mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-5 min-[900px]:mx-0 min-[900px]:px-0">
+          {categories.map((category) => <div key={category.slug} className="w-[82vw] max-w-[330px] shrink-0 snap-center min-[900px]:w-[calc(33.333%_-_.667rem)] min-[900px]:max-w-none"><CategoryCard category={category} /></div>)}
         </div>
       )}
     </section>
