@@ -5,7 +5,6 @@ import HeroSection from '../components/home/HeroSection.jsx'
 import HowItWorks from '../components/home/HowItWorks.jsx'
 import NewArrivals from '../components/home/NewArrivals.jsx'
 import Newsletter from '../components/home/Newsletter.jsx'
-import OccasionsSection from '../components/home/OccasionsSection.jsx'
 import PromoBanner from '../components/home/PromoBanner.jsx'
 import TestimonialsSection from '../components/home/TestimonialsSection.jsx'
 import WhyChooseUs from '../components/home/WhyChooseUs.jsx'
@@ -17,7 +16,6 @@ function HomePage() {
       <HeroSection />
       <FeaturedCategories />
       <FeaturedProducts />
-      <OccasionsSection />
       <PromoBanner />
       <NewArrivals />
       <WhyChooseUs />
