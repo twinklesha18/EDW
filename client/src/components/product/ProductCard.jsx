@@ -23,7 +23,7 @@ function ProductCard({ product, view = 'grid' }) {
       <div className={`relative overflow-hidden bg-pink-light ${isList ? 'min-h-64' : 'aspect-square'}`}>
         <Link to={`/product/${product.slug}`} aria-label={`View ${product.name}`}>
           <img
-            {...responsiveImageProps(product.image, [320, 480, 640, 800])}
+            {...responsiveImageProps(product.image, [360, 540, 720, 1080, 1440])}
             sizes={isList ? '(min-width: 640px) 240px, 100vw' : '(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw'}
             alt={product.name}
             width="800"

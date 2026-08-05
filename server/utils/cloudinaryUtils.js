@@ -63,8 +63,8 @@ export async function prepareImageForUpload(file) {
   try {
     const buffer = await sharp(await sourceBuffer(file), { limitInputPixels: maximumInputPixels, failOn: 'warning' })
       .rotate()
-      .resize({ width: 1800, height: 1800, fit: 'inside', withoutEnlargement: true })
-      .webp({ quality: 82 })
+      .resize({ width: 2560, height: 2560, fit: 'inside', withoutEnlargement: true })
+      .webp({ quality: 90, effort: 4 })
       .toBuffer()
     const metadata = await sharp(buffer).metadata()
     return { buffer, width: metadata.width, height: metadata.height }
@@ -99,7 +99,9 @@ export async function uploadImage(file, folder = 'eshaz-dream-world/products') {
 
   const { buffer } = await prepareImageForUpload(file)
   return new Promise((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream({ folder, resource_type: 'image', format: 'webp', quality: 'auto:good' }, (error, result) => {
+    // The source has already been normalized to a quality-90 WebP. Avoid a
+    // second lossy transformation while Cloudinary stores the original asset.
+    const stream = cloudinary.uploader.upload_stream({ folder, resource_type: 'image' }, (error, result) => {
       if (error) reject(new AppError('Image upload failed', 502))
       else resolve({ url: result.secure_url, publicId: result.public_id, width: result.width, height: result.height, bytes: result.bytes, storage: 'cloudinary' })
     })

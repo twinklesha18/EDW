@@ -1,13 +1,13 @@
 const cloudinaryMarkers = ['/image/upload/', '/image/fetch/']
 
-export function optimizedImageUrl(url, width, { crop = 'limit', quality = 'auto:good' } = {}) {
+export function optimizedImageUrl(url, width, { crop = 'limit', quality = '90' } = {}) {
   const marker = cloudinaryMarkers.find((candidate) => String(url || '').includes(candidate))
   if (!url || !Number.isFinite(width) || !String(url).includes('res.cloudinary.com') || !marker) return url
   const transformation = `c_${crop},w_${Math.round(width)},f_auto,q_${quality}`
   return String(url).replace(marker, `${marker}${transformation}/`)
 }
 
-export function responsiveImageProps(url, widths = [320, 480, 640, 960], options) {
+export function responsiveImageProps(url, widths = [360, 540, 720, 1080, 1440], options) {
   if (!url || !String(url).includes('res.cloudinary.com')) return { src: url }
   const largest = widths.at(-1)
   return {

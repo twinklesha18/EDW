@@ -17,7 +17,7 @@ function GallerySection() {
       <div className="mt-10 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
         {images.length ? images.map((item) => (
           <figure key={item.id} className="group relative aspect-square overflow-hidden rounded-2xl bg-pink-light">
-            <img {...responsiveImageProps(item.image, [240, 360, 480])} sizes="(min-width: 1024px) 16vw, (min-width: 768px) 33vw, 50vw" alt={item.alt} width="480" height="480" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+            <img {...responsiveImageProps(item.image, [240, 360, 480, 720, 960])} sizes="(min-width: 1024px) 16vw, (min-width: 768px) 33vw, 50vw" alt={item.alt} width="960" height="960" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
             <div className="absolute inset-0 grid place-items-center bg-ink/0 text-white opacity-0 transition-all group-hover:bg-ink/35 group-hover:opacity-100"><FiInstagram size={24} aria-hidden="true" /></div>
           </figure>
         )) : Array.from({ length: 6 }, (_value, index) => <div key={index} className="aspect-square animate-pulse rounded-2xl bg-gradient-to-br from-pink-light to-blue-light" aria-hidden="true" />)}

@@ -20,7 +20,7 @@ function PromoBanner() {
           <Link to="/custom-orders" className="primary-button mt-7 self-center px-7 lg:self-start">Start a Custom Order <FiArrowRight aria-hidden="true" /></Link>
         </div>
         <div className="min-h-80 overflow-hidden lg:min-h-[450px]">
-          {promoImage ? <img {...responsiveImageProps(promoImage, [480, 720, 960, 1200])} sizes="(min-width: 1024px) 45vw, 100vw" alt={banner?.title || 'Customized pastel picture bouquet'} width="1200" height="900" loading="lazy" decoding="async" className="h-full w-full object-cover" /> : <div className="h-full min-h-80 animate-pulse bg-gradient-to-br from-pink-light via-white to-blue-light" aria-hidden="true" />}
+          {promoImage ? <img {...responsiveImageProps(promoImage, [480, 720, 1080, 1440, 1920])} sizes="(min-width: 1024px) 45vw, 100vw" alt={banner?.title || 'Customized pastel picture bouquet'} width="1920" height="1440" loading="lazy" decoding="async" className="h-full w-full object-cover" /> : <div className="h-full min-h-80 animate-pulse bg-gradient-to-br from-pink-light via-white to-blue-light" aria-hidden="true" />}
         </div>
       </div>
     </section>

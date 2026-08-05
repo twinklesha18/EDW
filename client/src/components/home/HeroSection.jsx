@@ -43,11 +43,11 @@ function HeroSection() {
           <div className="hero-float relative mx-auto aspect-square max-w-[520px] overflow-hidden rounded-[45%_55%_48%_52%/48%_46%_54%_52%] border-4 border-white bg-white shadow-[0_30px_80px_-30px_rgba(112,59,80,0.45)]">
             {heroImage ? (
               <img
-                {...responsiveImageProps(heroImage, [480, 640, 960, 1200])}
+                {...responsiveImageProps(heroImage, [480, 720, 1080, 1440, 1920])}
                 sizes="(min-width: 1024px) 45vw, 90vw"
                 alt={banner?.title || 'Pastel customized gift hamper'}
-                width="1200"
-                height="1200"
+                width="1920"
+                height="1920"
                 decoding="async"
                 className="h-full w-full object-cover"
                 fetchPriority="high"

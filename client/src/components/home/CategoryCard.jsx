@@ -12,7 +12,7 @@ function CategoryCard({ category }) {
       <Link to={`/category/${category.slug}`} className="block min-w-0" aria-label={`Explore ${category.name}`}>
         <div className="relative aspect-square overflow-hidden rounded-[1.55rem] bg-gradient-to-br from-pink-light to-blue-light">
           <img
-            {...responsiveImageProps(category.image, [320, 480, 640, 800])}
+            {...responsiveImageProps(category.image, [360, 540, 720, 1080, 1440])}
             alt={category.name}
             width="800"
             height="800"
