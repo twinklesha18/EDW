@@ -1,13 +1,10 @@
 import { useSelector } from 'react-redux'
 import { Link } from 'react-router-dom'
-import { useResponsivePagination } from '../../hooks/useResponsivePagination.js'
-import CarouselPagination from '../common/CarouselPagination.jsx'
 import SectionTitle from '../common/SectionTitle.jsx'
 import ProductCard from '../product/ProductCard.jsx'
 
 function FeaturedProducts() {
   const products = useSelector((state) => state.catalog.products).slice(0, 8)
-  const { page, setPage, itemsPerPage, totalPages, visibleItems, previousPage, nextPage } = useResponsivePagination(products)
 
   return (
     <section className="overflow-hidden bg-gradient-to-b from-white to-pink-light/40 py-16 sm:py-24">
@@ -22,18 +19,9 @@ function FeaturedProducts() {
             Creations will appear here when products are added.
           </p>
         ) : (
-          <>
-            <div className="relative mt-10 min-w-0">
-                <div
-                  key={`${page}-${itemsPerPage}`}
-                  className="carousel-enter grid grid-cols-1 gap-5 min-[520px]:grid-cols-2 lg:grid-cols-3"
-                >
-                  {visibleItems.map((product) => <ProductCard key={product.id} product={product} autoRotateImages />)}
-                </div>
-            </div>
-
-            <CarouselPagination page={page} totalPages={totalPages} onPage={setPage} onPrevious={previousPage} onNext={nextPage} label="featured products" />
-          </>
+          <div className="-mx-5 mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-5 min-[900px]:mx-0 min-[900px]:grid min-[900px]:grid-cols-3 min-[900px]:overflow-visible min-[900px]:px-0">
+            {products.map((product) => <div key={product.id} className="w-[82vw] max-w-[330px] shrink-0 snap-center min-[900px]:w-auto min-[900px]:max-w-none"><ProductCard product={product} autoRotateImages /></div>)}
+          </div>
         )}
       </div>
     </section>
