@@ -34,10 +34,14 @@ const userSchema = new mongoose.Schema(
     addresses: { type: [addressSchema], default: [] },
     resetPasswordToken: { type: String, select: false },
     resetPasswordExpire: { type: Date, select: false },
+    resetPasswordOtpHash: { type: String, select: false },
+    resetPasswordOtpExpire: { type: Date, select: false },
+    resetPasswordOtpAttempts: { type: Number, min: 0, default: 0, select: false },
+    resetPasswordOtpRequestedAt: { type: Date, select: false },
   },
   {
     timestamps: true,
-    toJSON: { virtuals: true, transform: (_document, result) => { delete result.password; delete result.resetPasswordToken; delete result.resetPasswordExpire; delete result.sessionVersion; return result } },
+    toJSON: { virtuals: true, transform: (_document, result) => { delete result.password; delete result.resetPasswordToken; delete result.resetPasswordExpire; delete result.resetPasswordOtpHash; delete result.resetPasswordOtpExpire; delete result.resetPasswordOtpAttempts; delete result.resetPasswordOtpRequestedAt; delete result.sessionVersion; return result } },
     toObject: { virtuals: true },
   },
 )

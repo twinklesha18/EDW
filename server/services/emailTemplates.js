@@ -5,7 +5,25 @@ const layout = (title, content, action) => `<!doctype html><html><head><meta nam
 const paragraph = (text) => `<p style="font-size:15px;line-height:1.7;color:#6f5b63">${escapeHtml(text)}</p>`
 
 export const welcomeEmail = (user, clientUrl) => ({ subject: 'Welcome to Eshaz Dream World', html: layout(`Welcome, ${user.firstName}!`, paragraph('Your account is ready. Discover thoughtful creations made to turn your ideas into something beautiful.'), { label: 'Explore Collections', url: `${clientUrl}/shop` }) })
-export const passwordResetEmail = (user, resetUrl) => ({ subject: 'Reset your Eshaz Dream World password', html: layout('Reset your password', `${paragraph(`Hello ${user.firstName}, use the secure button below to choose a new password.`)}${paragraph('This link expires in 30 minutes. If you did not request it, you can safely ignore this email.')}`, { label: 'Reset Password', url: resetUrl }) })
+export const passwordResetOtpEmail = (user, otp, expiresInMinutes) => ({
+  subject: 'Your Eshaz Dream World password reset code',
+  html: layout(
+    'Verify your password reset',
+    `${paragraph(`Hello ${user.firstName}, enter the verification code below to continue resetting your password.`)}<div style="margin:24px 0;padding:18px;border-radius:16px;background:#fff2f7;text-align:center;font-size:32px;font-weight:bold;letter-spacing:8px;color:#7d2948">${escapeHtml(otp)}</div>${paragraph(`This code expires in ${expiresInMinutes} minutes and can be used only once. Never share this code with anyone.`)}${paragraph('If you did not request a password reset, you can safely ignore this email.')}`,
+  ),
+})
+export const passwordResetEmail = (user, resetUrl) => ({
+  subject: 'Reset your Eshaz Dream World password',
+  html: layout('Reset your password', `${paragraph(`Hello ${user.firstName}, use the secure button below to choose a new password.`)}${paragraph('This link expires shortly. If you did not request it, you can safely ignore this email.')}`, { label: 'Reset Password', url: resetUrl }),
+})
+export const passwordChangedEmail = (user, clientUrl) => ({
+  subject: 'Your Eshaz Dream World password was changed',
+  html: layout(
+    'Password changed successfully',
+    `${paragraph(`Hello ${user.firstName}, your account password has just been changed.`)}${paragraph('If you did not make this change, contact Eshaz Dream World immediately and secure your email account.')}`,
+    { label: 'Open My Account', url: `${clientUrl}/profile` },
+  ),
+})
 export const orderConfirmationEmail = (user, order, clientUrl) => ({ subject: `Order ${order.orderNumber} confirmed`, html: layout('Thank you for your order', `${paragraph(`Hello ${user.firstName}, we received order ${order.orderNumber}.`)}${paragraph(`Total: ${money(order.total)} · Payment: ${order.paymentMethod === 'COD' ? 'Cash on Delivery' : order.paymentStatus}`)}`, { label: 'View Order', url: `${clientUrl}/orders/${order.orderNumber}` }) })
 export const paymentSuccessEmail = (user, order, clientUrl) => ({ subject: `Payment received for ${order.orderNumber}`, html: layout('Payment successful', `${paragraph(`We securely received ${money(order.total)} for order ${order.orderNumber}.`)}${paragraph('Your creation will now move into preparation.')}`, { label: 'View Order', url: `${clientUrl}/orders/${order.orderNumber}` }) })
 export const paymentFailedEmail = (user, clientUrl) => ({ subject: 'Your Eshaz Dream World payment needs attention', html: layout('Payment was not completed', paragraph('Your card was not charged successfully. Your cart is still available, so you can safely try again.'), { label: 'Return to Checkout', url: `${clientUrl}/checkout` }) })

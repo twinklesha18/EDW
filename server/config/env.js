@@ -74,6 +74,12 @@ export const env = Object.freeze({
     absoluteHours: positiveInteger(process.env.SESSION_ABSOLUTE_TIMEOUT_HOURS, 8, 'SESSION_ABSOLUTE_TIMEOUT_HOURS'),
     rememberDays: positiveInteger(process.env.SESSION_REMEMBER_TIMEOUT_DAYS, 7, 'SESSION_REMEMBER_TIMEOUT_DAYS'),
   }),
+  passwordRecovery: Object.freeze({
+    otpMinutes: positiveInteger(process.env.PASSWORD_RESET_OTP_MINUTES, 10, 'PASSWORD_RESET_OTP_MINUTES'),
+    tokenMinutes: positiveInteger(process.env.PASSWORD_RESET_TOKEN_MINUTES, 15, 'PASSWORD_RESET_TOKEN_MINUTES'),
+    resendSeconds: positiveInteger(process.env.PASSWORD_RESET_OTP_RESEND_SECONDS, 60, 'PASSWORD_RESET_OTP_RESEND_SECONDS'),
+    maxAttempts: positiveInteger(process.env.PASSWORD_RESET_OTP_MAX_ATTEMPTS, 5, 'PASSWORD_RESET_OTP_MAX_ATTEMPTS'),
+  }),
   clientUrl,
   clientOrigins: allClientOrigins,
   cloudinary: Object.freeze({

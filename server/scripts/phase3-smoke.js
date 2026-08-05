@@ -136,12 +136,35 @@ try {
   result = await request('/wishlist', { method: 'DELETE' })
   assert.equal(result.payload.data.wishlist.count, 0, 'Wishlist clear must succeed')
 
+  result = await request('/auth/forgot-password', { method: 'POST', authenticated: false, body: { email: `missing-${email}` } })
+  assert.equal(result.status, 200, 'Forgot password must not expose whether an account exists')
+  assert.equal(result.payload.data.developmentOtp, undefined, 'An unregistered email must never receive an OTP')
+
   result = await request('/auth/forgot-password', { method: 'POST', authenticated: false, body: { email } })
-  assert.equal(result.status, 200, 'Forgot password must return a safe response')
-  assert.equal(result.payload.data.developmentOnly, true, 'Development reset URL must be labelled')
-  const resetToken = result.payload.data.resetUrl.split('/').at(-1)
+  assert.equal(result.status, 200, 'Forgot password must accept a registered email')
+  assert.equal(result.payload.data.developmentOnly, true, 'Development OTP must be labelled')
+  assert.match(result.payload.data.developmentOtp, /^\d{6}$/, 'A six-digit OTP must be generated')
+  const resetOtp = result.payload.data.developmentOtp
+
+  result = await request('/auth/verify-reset-otp', { method: 'POST', authenticated: false, body: { email, otp: '000000' } })
+  assert.equal(result.status, 400, 'An incorrect OTP must be rejected')
+
+  result = await request('/auth/verify-reset-otp', { method: 'POST', authenticated: false, body: { email, otp: resetOtp } })
+  assert.equal(result.status, 200, 'The correct OTP must be accepted')
+  assert.ok(result.payload.data.resetToken, 'OTP verification must issue a short-lived reset token')
+  const resetToken = result.payload.data.resetToken
+
+  result = await request('/auth/verify-reset-otp', { method: 'POST', authenticated: false, body: { email, otp: resetOtp } })
+  assert.equal(result.status, 400, 'A verified OTP must not be reusable')
+
+  result = await request(`/auth/reset-password/${resetToken}`, { method: 'POST', authenticated: false, body: { password: 'NewSecure2', confirmPassword: 'NewSecure2' } })
+  assert.equal(result.status, 422, 'The existing password must not be accepted as the new password')
+
   result = await request(`/auth/reset-password/${resetToken}`, { method: 'POST', authenticated: false, body: { password: 'ResetSecure3', confirmPassword: 'ResetSecure3' } })
   assert.equal(result.status, 200, 'Password reset must succeed')
+
+  result = await request(`/auth/reset-password/${resetToken}`, { method: 'POST', authenticated: false, body: { password: 'AnotherSecure4', confirmPassword: 'AnotherSecure4' } })
+  assert.equal(result.status, 400, 'A password reset token must be single-use')
   result = await request('/auth/me')
   assert.equal(result.status, 200, 'Reset must log the user in')
 

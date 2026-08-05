@@ -22,6 +22,9 @@ export const registerSchema = yup.object({
 })
 
 export const forgotPasswordSchema = yup.object({ email })
+export const passwordResetOtpSchema = yup.object({
+  otp: yup.string().required('Verification code is required.').matches(/^\d{6}$/, 'Enter the 6-digit verification code.'),
+})
 export const resetPasswordSchema = yup.object({ password, confirmPassword: yup.string().required('Confirm your password.').oneOf([yup.ref('password')], 'Passwords do not match.') })
 
 export const profileSchema = yup.object({

@@ -1,9 +1,9 @@
 import User from '../models/User.js'
 import { env } from '../config/env.js'
 import { clearAuthCookie, setAuthCookie } from '../utils/generateToken.js'
-import { createPasswordResetToken, hashResetToken } from '../utils/passwordUtils.js'
+import { createPasswordResetOtp, createPasswordResetToken, hashPasswordResetOtp, hashResetToken } from '../utils/passwordUtils.js'
 import { AppError, sendSuccess } from '../utils/responseUtils.js'
-import { passwordResetEmail, welcomeEmail } from '../services/emailTemplates.js'
+import { passwordChangedEmail, passwordResetOtpEmail, welcomeEmail } from '../services/emailTemplates.js'
 import { sendEmailSafely } from '../services/emailService.js'
 import { notifyAdmins, notifySafely } from '../services/notificationService.js'
 
@@ -45,35 +45,100 @@ export function getCurrentUser(request, response) {
 }
 
 export async function forgotPassword(request, response) {
-  const user = await User.findOne({ email: request.validatedBody.email }).select('+resetPasswordToken +resetPasswordExpire')
-  let developmentResetUrl
+  const { email } = request.validatedBody
+  const user = await User.findOne({ email, isActive: true }).select('+resetPasswordToken +resetPasswordExpire +resetPasswordOtpHash +resetPasswordOtpExpire +resetPasswordOtpAttempts +resetPasswordOtpRequestedAt')
+  const message = 'If this email is registered, a 6-digit verification code has been sent.'
 
-  if (user) {
-    const { token, hashedToken } = createPasswordResetToken()
-    user.resetPasswordToken = hashedToken
-    user.resetPasswordExpire = new Date(Date.now() + 30 * 60 * 1000)
+  if (!user) return sendSuccess(response, { message })
+
+  const resendCutoff = Date.now() - env.passwordRecovery.resendSeconds * 1000
+  if (user.resetPasswordOtpRequestedAt?.getTime() > resendCutoff) {
+    return sendSuccess(response, { message })
+  }
+
+  const { otp, hashedOtp } = createPasswordResetOtp(user.email, env.csrfSecret)
+  user.resetPasswordOtpHash = hashedOtp
+  user.resetPasswordOtpExpire = new Date(Date.now() + env.passwordRecovery.otpMinutes * 60 * 1000)
+  user.resetPasswordOtpAttempts = 0
+  user.resetPasswordOtpRequestedAt = new Date()
+  user.resetPasswordToken = undefined
+  user.resetPasswordExpire = undefined
+  await user.save({ validateModifiedOnly: true })
+
+  const delivery = await sendEmailSafely({ to: user.email, ...passwordResetOtpEmail(user, otp, env.passwordRecovery.otpMinutes) })
+  if (env.isProduction && (delivery?.failed || delivery?.skipped)) {
+    user.resetPasswordOtpHash = undefined
+    user.resetPasswordOtpExpire = undefined
+    user.resetPasswordOtpAttempts = 0
+    user.resetPasswordOtpRequestedAt = undefined
     await user.save({ validateModifiedOnly: true })
-    const resetUrl = `${env.clientUrl}/reset-password/${token}`
-    await sendEmailSafely({ to: user.email, ...passwordResetEmail(user, resetUrl) })
-    if (env.nodeEnv === 'development') developmentResetUrl = resetUrl
+    throw new AppError('We could not send the verification email. Please try again shortly.', 503)
   }
 
   return sendSuccess(response, {
-    message: 'If an account matches that email, password reset instructions have been prepared',
-    data: developmentResetUrl ? { developmentOnly: true, resetUrl: developmentResetUrl } : {},
+    message,
+    data: env.nodeEnv === 'development' ? { developmentOnly: true, developmentOtp: otp } : {},
+  })
+}
+
+export async function verifyPasswordResetOtp(request, response) {
+  const { email, otp } = request.validatedBody
+  const now = new Date()
+  const hashedOtp = hashPasswordResetOtp(email, otp, env.csrfSecret)
+  const user = await User.findOne({
+    email,
+    isActive: true,
+    resetPasswordOtpHash: hashedOtp,
+    resetPasswordOtpExpire: { $gt: now },
+    resetPasswordOtpAttempts: { $lt: env.passwordRecovery.maxAttempts },
+  }).select('+resetPasswordToken +resetPasswordExpire +resetPasswordOtpHash +resetPasswordOtpExpire +resetPasswordOtpAttempts +resetPasswordOtpRequestedAt')
+
+  if (!user) {
+    await User.updateOne(
+      {
+        email,
+        isActive: true,
+        resetPasswordOtpExpire: { $gt: now },
+        resetPasswordOtpAttempts: { $lt: env.passwordRecovery.maxAttempts },
+      },
+      { $inc: { resetPasswordOtpAttempts: 1 } },
+    )
+    throw new AppError('Verification code is invalid or has expired', 400, [{ field: 'otp', message: 'Check the code and try again' }])
+  }
+
+  const { token, hashedToken } = createPasswordResetToken()
+  user.resetPasswordToken = hashedToken
+  user.resetPasswordExpire = new Date(Date.now() + env.passwordRecovery.tokenMinutes * 60 * 1000)
+  user.resetPasswordOtpHash = undefined
+  user.resetPasswordOtpExpire = undefined
+  user.resetPasswordOtpAttempts = 0
+  user.resetPasswordOtpRequestedAt = undefined
+  await user.save({ validateModifiedOnly: true })
+
+  return sendSuccess(response, {
+    message: 'Email verified. You can now create a new password.',
+    data: { resetToken: token, expiresInMinutes: env.passwordRecovery.tokenMinutes },
   })
 }
 
 export async function resetPassword(request, response) {
   const hashedToken = hashResetToken(request.params.token)
-  const user = await User.findOne({ resetPasswordToken: hashedToken, resetPasswordExpire: { $gt: new Date() } }).select('+password +resetPasswordToken +resetPasswordExpire +sessionVersion')
-  if (!user) throw new AppError('Password reset link is invalid or has expired', 400)
+  const user = await User.findOne({ isActive: true, resetPasswordToken: hashedToken, resetPasswordExpire: { $gt: new Date() } }).select('+password +resetPasswordToken +resetPasswordExpire +resetPasswordOtpHash +resetPasswordOtpExpire +resetPasswordOtpAttempts +resetPasswordOtpRequestedAt +sessionVersion')
+  if (!user) throw new AppError('Password reset session is invalid or has expired', 400)
+  if (await user.comparePassword(request.validatedBody.password)) {
+    throw new AppError('New password must be different from your current password', 422, [{ field: 'password', message: 'Choose a password you have not used for this account' }])
+  }
 
   user.password = request.validatedBody.password
   user.resetPasswordToken = undefined
   user.resetPasswordExpire = undefined
+  user.resetPasswordOtpHash = undefined
+  user.resetPasswordOtpExpire = undefined
+  user.resetPasswordOtpAttempts = 0
+  user.resetPasswordOtpRequestedAt = undefined
   user.sessionVersion = Number(user.sessionVersion || 0) + 1
   await user.save()
   setAuthCookie(response, user._id, false, Date.now(), user.sessionVersion)
+  await sendEmailSafely({ to: user.email, ...passwordChangedEmail(user, env.clientUrl) })
   return sendSuccess(response, { message: 'Password reset successful', data: { user: user.toJSON() } })
 }

@@ -15,3 +15,15 @@ export function createPasswordResetToken() {
 export function hashResetToken(token) {
   return crypto.createHash('sha256').update(token).digest('hex')
 }
+
+export function createPasswordResetOtp(email, secret) {
+  const otp = String(crypto.randomInt(100000, 1000000))
+  return { otp, hashedOtp: hashPasswordResetOtp(email, otp, secret) }
+}
+
+export function hashPasswordResetOtp(email, otp, secret) {
+  return crypto
+    .createHmac('sha256', secret)
+    .update(`${String(email).trim().toLowerCase()}:${String(otp).trim()}`)
+    .digest('hex')
+}

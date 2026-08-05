@@ -1,9 +1,9 @@
 import { Router } from 'express'
-import { forgotPassword, getCurrentUser, login, logout, register, resetPassword } from '../controllers/authController.js'
+import { forgotPassword, getCurrentUser, login, logout, register, resetPassword, verifyPasswordResetOtp } from '../controllers/authController.js'
 import { protect } from '../middleware/authMiddleware.js'
-import { emailValidator, loginValidator, registrationValidator, resetPasswordValidator, validate } from '../middleware/validateMiddleware.js'
+import { emailValidator, loginValidator, otpVerificationValidator, registrationValidator, resetPasswordValidator, validate } from '../middleware/validateMiddleware.js'
 import { getCsrfToken } from '../middleware/csrfMiddleware.js'
-import { authenticationRateLimiter, recoveryRateLimiter, registrationRateLimiter } from '../middleware/rateLimitMiddleware.js'
+import { authenticationRateLimiter, otpVerificationRateLimiter, recoveryCompletionRateLimiter, recoveryRequestRateLimiter, registrationRateLimiter } from '../middleware/rateLimitMiddleware.js'
 
 const router = Router()
 
@@ -12,7 +12,8 @@ router.post('/register', registrationRateLimiter, validate(registrationValidator
 router.post('/login', authenticationRateLimiter, validate(loginValidator), login)
 router.post('/logout', logout)
 router.get('/me', protect, getCurrentUser)
-router.post('/forgot-password', recoveryRateLimiter, validate(emailValidator), forgotPassword)
-router.post('/reset-password/:token', recoveryRateLimiter, validate(resetPasswordValidator), resetPassword)
+router.post('/forgot-password', recoveryRequestRateLimiter, validate(emailValidator), forgotPassword)
+router.post('/verify-reset-otp', otpVerificationRateLimiter, validate(otpVerificationValidator), verifyPasswordResetOtp)
+router.post('/reset-password/:token', recoveryCompletionRateLimiter, validate(resetPasswordValidator), resetPassword)
 
 export default router

@@ -82,6 +82,15 @@ export const emailValidator = (body) => {
   return validateFields({ email: email.value }, [email.error])
 }
 
+export const otpVerificationValidator = (body) => {
+  const email = readEmail(body)
+  const otp = typeof body.otp === 'string' ? body.otp.trim() : ''
+  return validateFields(
+    { email: email.value, otp },
+    [email.error, !/^\d{6}$/.test(otp) && error('otp', 'Enter the 6-digit verification code')],
+  )
+}
+
 export const newsletterSubscriptionValidator = emailValidator
 
 export const contactMessageValidator = (body) => {

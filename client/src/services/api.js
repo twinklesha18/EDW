@@ -52,7 +52,7 @@ api.interceptors.response.use(
     return response
   },
   (error) => {
-    const isExpectedAuthRequest = ['/auth/login', '/auth/register', '/auth/me', '/auth/forgot-password', '/auth/reset-password'].some((path) => error.config?.url?.includes(path))
+    const isExpectedAuthRequest = ['/auth/login', '/auth/register', '/auth/me', '/auth/forgot-password', '/auth/verify-reset-otp', '/auth/reset-password'].some((path) => error.config?.url?.includes(path))
     if (error.response?.status === 401 && !isExpectedAuthRequest && typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('edw:unauthorized'))
     if (error.response?.status === 403 && /security token/i.test(error.response?.data?.message || '')) csrfToken = ''
     return Promise.reject(error)
