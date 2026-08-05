@@ -61,6 +61,27 @@ try {
   })
   assert.equal(response.status, 422, 'A valid CSRF token must allow the request to reach normal validation')
 
+  response = await fetch(`${baseUrl}/api/auth/me`, {
+    headers: { Origin: clientOrigin, Cookie: csrfCookie },
+  })
+  assert.equal(response.status, 401, 'An anonymous session must remain unauthenticated')
+  const rotatedCsrfCookie = response.headers.getSetCookie().find((cookie) => cookie.startsWith('edw_csrf='))?.split(';')[0]
+  const rotatedCsrfToken = response.headers.get('x-csrf-token')
+  assert.ok(rotatedCsrfCookie, 'An expired or missing login session must receive a fresh CSRF cookie')
+  assert.ok(rotatedCsrfToken && rotatedCsrfToken !== csrfToken, 'The stale CSRF token must be rotated')
+
+  response = await fetch(`${baseUrl}/api/auth/login`, {
+    method: 'POST',
+    headers: {
+      Origin: clientOrigin,
+      Cookie: rotatedCsrfCookie,
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': rotatedCsrfToken,
+    },
+    body: JSON.stringify({ email: 'not-an-email', password: 'Password1' }),
+  })
+  assert.equal(response.status, 422, 'The refreshed CSRF token must immediately allow a login attempt')
+
   response = await fetch(`${baseUrl}/api/auth/login`, {
     method: 'POST',
     headers: {
@@ -121,6 +142,10 @@ try {
   assert.match(contentSecurityPolicy, /default-src 'self'/)
   assert.match(contentSecurityPolicy, /object-src 'none'/)
   assert.match(contentSecurityPolicy, /frame-ancestors 'none'/)
+
+  const apiClientSource = await readFile(path.join(clientRoot, 'src', 'services', 'api.js'), 'utf8')
+  assert.match(apiClientSource, /_csrfRetried/, 'The API client must prevent infinite CSRF retry loops')
+  assert.match(apiClientSource, /obtainCsrfToken\(\{ force: true \}\)/, 'The API client must refresh a rejected CSRF token before retrying')
 
   for (const filename of await sourceFiles(path.join(clientRoot, 'src'))) {
     const source = await readFile(filename, 'utf8')

@@ -1,5 +1,5 @@
 import { yupResolver } from '@hookform/resolvers/yup'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { FiArrowLeft, FiCheckCircle, FiKey, FiMail, FiShield } from 'react-icons/fi'
 import { Link, useNavigate } from 'react-router-dom'
@@ -24,6 +24,7 @@ function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
   const [state, setState] = useState({ loading: false, error: '', expiresInMinutes: 10 })
   const [cooldown, setCooldown] = useState(0)
+  const actionInFlight = useRef(false)
   const emailForm = useForm({ resolver: yupResolver(forgotPasswordSchema) })
   const otpForm = useForm({ resolver: yupResolver(passwordResetOtpSchema), defaultValues: { otp: '' } })
 
@@ -34,6 +35,9 @@ function ForgotPasswordPage() {
   }, [cooldown])
 
   const requestOtp = async ({ email: requestedEmail }) => {
+    if (actionInFlight.current) return
+    actionInFlight.current = true
+    emailForm.clearErrors('email')
     setState((current) => ({ ...current, loading: true, error: '' }))
     try {
       const response = (await api.post('/auth/forgot-password', { email: requestedEmail }, { timeout: 30000 })).data
@@ -43,11 +47,18 @@ function ForgotPasswordPage() {
       otpForm.reset({ otp: '' })
       setState({ loading: false, error: '', expiresInMinutes: response.data?.expiresInMinutes || 10 })
     } catch (error) {
-      setState((current) => ({ ...current, loading: false, error: getApiError(error).message }))
+      const apiError = getApiError(error)
+      const emailError = apiError.errors.find((entry) => entry.field === 'email')?.message
+      if (emailError) emailForm.setError('email', { type: 'server', message: emailError })
+      setState((current) => ({ ...current, loading: false, error: emailError ? '' : apiError.message }))
+    } finally {
+      actionInFlight.current = false
     }
   }
 
   const verifyOtp = async ({ otp }) => {
+    if (actionInFlight.current) return
+    actionInFlight.current = true
     setState((current) => ({ ...current, loading: true, error: '' }))
     otpForm.clearErrors('otp')
     try {
@@ -60,6 +71,8 @@ function ForgotPasswordPage() {
       const apiError = getApiError(error)
       otpForm.setError('otp', { type: 'server', message: apiError.message })
       setState((current) => ({ ...current, loading: false }))
+    } finally {
+      actionInFlight.current = false
     }
   }
 
@@ -67,6 +80,7 @@ function ForgotPasswordPage() {
     setStep('email')
     setEmail('')
     setCooldown(0)
+    actionInFlight.current = false
     otpForm.reset({ otp: '' })
     setState({ loading: false, error: '', expiresInMinutes: 10 })
   }

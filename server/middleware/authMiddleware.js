@@ -6,7 +6,10 @@ import { clearAuthCookie, refreshAuthCookie } from '../utils/generateToken.js'
 
 export async function protect(request, response, next) {
   const token = request.cookies?.edw_token
-  if (!token) return next(new AppError('Authentication required', 401))
+  if (!token) {
+    clearAuthCookie(response)
+    return next(new AppError('Authentication required', 401))
+  }
 
   let payload
   try {

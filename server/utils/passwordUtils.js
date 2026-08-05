@@ -1,3 +1,4 @@
+import bcrypt from 'bcryptjs'
 import crypto from 'node:crypto'
 
 export const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,72}$/
@@ -16,14 +17,13 @@ export function hashResetToken(token) {
   return crypto.createHash('sha256').update(token).digest('hex')
 }
 
-export function createPasswordResetOtp(email, secret) {
+export async function createPasswordResetOtp() {
   const otp = String(crypto.randomInt(100000, 1000000))
-  return { otp, hashedOtp: hashPasswordResetOtp(email, otp, secret) }
+  const hashedOtp = await bcrypt.hash(otp, 10)
+  return { otp, hashedOtp }
 }
 
-export function hashPasswordResetOtp(email, otp, secret) {
-  return crypto
-    .createHmac('sha256', secret)
-    .update(`${String(email).trim().toLowerCase()}:${String(otp).trim()}`)
-    .digest('hex')
+export function verifyPasswordResetOtpHash(otp, hashedOtp) {
+  if (typeof otp !== 'string' || !/^\d{6}$/.test(otp) || typeof hashedOtp !== 'string' || !/^\$2[aby]\$/.test(hashedOtp)) return false
+  return bcrypt.compare(otp, hashedOtp)
 }

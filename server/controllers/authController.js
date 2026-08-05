@@ -1,7 +1,7 @@
 import User from '../models/User.js'
 import { env } from '../config/env.js'
 import { clearAuthCookie, setAuthCookie } from '../utils/generateToken.js'
-import { createPasswordResetOtp, createPasswordResetToken, hashPasswordResetOtp, hashResetToken } from '../utils/passwordUtils.js'
+import { createPasswordResetOtp, createPasswordResetToken, hashResetToken, verifyPasswordResetOtpHash } from '../utils/passwordUtils.js'
 import { AppError, sendSuccess } from '../utils/responseUtils.js'
 import { passwordChangedEmail, passwordResetOtpEmail, welcomeEmail } from '../services/emailTemplates.js'
 import { sendEmailSafely } from '../services/emailService.js'
@@ -47,17 +47,17 @@ export function getCurrentUser(request, response) {
 export async function forgotPassword(request, response) {
   const { email } = request.validatedBody
   const user = await User.findOne({ email, isActive: true }).select('+resetPasswordToken +resetPasswordExpire +resetPasswordOtpHash +resetPasswordOtpExpire +resetPasswordOtpAttempts +resetPasswordOtpRequestedAt')
-  const message = 'If this email is registered, a 6-digit verification code has been sent.'
+  const message = 'A 6-digit verification code has been sent to your registered email address.'
   const publicRecoveryData = { expiresInMinutes: env.passwordRecovery.otpMinutes }
 
-  if (!user) return sendSuccess(response, { message, data: publicRecoveryData })
+  if (!user) throw new AppError('No active account is registered with this email address', 404, [{ field: 'email', message: 'Check the email or create a new account' }])
 
   const resendCutoff = Date.now() - env.passwordRecovery.resendSeconds * 1000
   if (user.resetPasswordOtpRequestedAt?.getTime() > resendCutoff) {
-    return sendSuccess(response, { message, data: publicRecoveryData })
+    throw new AppError(`Please wait ${env.passwordRecovery.resendSeconds} seconds before requesting another verification code`, 429)
   }
 
-  const { otp, hashedOtp } = createPasswordResetOtp(user.email, env.csrfSecret)
+  const { otp, hashedOtp } = await createPasswordResetOtp()
   user.resetPasswordOtpHash = hashedOtp
   user.resetPasswordOtpExpire = new Date(Date.now() + env.passwordRecovery.otpMinutes * 60 * 1000)
   user.resetPasswordOtpAttempts = 0
@@ -85,36 +85,56 @@ export async function forgotPassword(request, response) {
 export async function verifyPasswordResetOtp(request, response) {
   const { email, otp } = request.validatedBody
   const now = new Date()
-  const hashedOtp = hashPasswordResetOtp(email, otp, env.csrfSecret)
   const user = await User.findOne({
     email,
     isActive: true,
-    resetPasswordOtpHash: hashedOtp,
     resetPasswordOtpExpire: { $gt: now },
     resetPasswordOtpAttempts: { $lt: env.passwordRecovery.maxAttempts },
   }).select('+resetPasswordToken +resetPasswordExpire +resetPasswordOtpHash +resetPasswordOtpExpire +resetPasswordOtpAttempts +resetPasswordOtpRequestedAt')
 
-  if (!user) {
-    await User.updateOne(
+  if (!user || !(await verifyPasswordResetOtpHash(otp, user.resetPasswordOtpHash))) {
+    const attemptedUser = user ? await User.findOneAndUpdate(
       {
-        email,
-        isActive: true,
+        _id: user._id,
+        resetPasswordOtpHash: user.resetPasswordOtpHash,
         resetPasswordOtpExpire: { $gt: now },
         resetPasswordOtpAttempts: { $lt: env.passwordRecovery.maxAttempts },
       },
       { $inc: { resetPasswordOtpAttempts: 1 } },
-    )
-    throw new AppError('Verification code is invalid or has expired', 400, [{ field: 'otp', message: 'Check the code and try again' }])
+      { returnDocument: 'after' },
+    ).select('+resetPasswordOtpAttempts +resetPasswordOtpHash') : null
+    const remainingAttempts = attemptedUser ? Math.max(0, env.passwordRecovery.maxAttempts - attemptedUser.resetPasswordOtpAttempts) : 0
+    if (attemptedUser && remainingAttempts === 0) {
+      await User.updateOne(
+        { _id: attemptedUser._id, resetPasswordOtpHash: attemptedUser.resetPasswordOtpHash },
+        { $unset: { resetPasswordOtpHash: '', resetPasswordOtpExpire: '', resetPasswordOtpRequestedAt: '' }, $set: { resetPasswordOtpAttempts: 0 } },
+      )
+    }
+    const message = remainingAttempts > 0
+      ? `Incorrect verification code. ${remainingAttempts} attempt${remainingAttempts === 1 ? '' : 's'} remaining.`
+      : 'Verification code is invalid, expired, or has reached the attempt limit. Request a new code.'
+    throw new AppError(message, 400, [{ field: 'otp', message }])
   }
 
   const { token, hashedToken } = createPasswordResetToken()
-  user.resetPasswordToken = hashedToken
-  user.resetPasswordExpire = new Date(Date.now() + env.passwordRecovery.tokenMinutes * 60 * 1000)
-  user.resetPasswordOtpHash = undefined
-  user.resetPasswordOtpExpire = undefined
-  user.resetPasswordOtpAttempts = 0
-  user.resetPasswordOtpRequestedAt = undefined
-  await user.save({ validateModifiedOnly: true })
+  const verifiedUser = await User.findOneAndUpdate(
+    {
+      _id: user._id,
+      resetPasswordOtpHash: user.resetPasswordOtpHash,
+      resetPasswordOtpExpire: { $gt: now },
+      resetPasswordOtpAttempts: { $lt: env.passwordRecovery.maxAttempts },
+    },
+    {
+      $set: {
+        resetPasswordToken: hashedToken,
+        resetPasswordExpire: new Date(Date.now() + env.passwordRecovery.tokenMinutes * 60 * 1000),
+        resetPasswordOtpAttempts: 0,
+      },
+      $unset: { resetPasswordOtpHash: '', resetPasswordOtpExpire: '', resetPasswordOtpRequestedAt: '' },
+    },
+    { returnDocument: 'after' },
+  )
+  if (!verifiedUser) throw new AppError('This verification code has already been used. Request a new code if necessary.', 409)
 
   return sendSuccess(response, {
     message: 'Email verified. You can now create a new password.',

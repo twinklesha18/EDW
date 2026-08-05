@@ -26,9 +26,14 @@ const readCsrfCookie = () => {
   return ''
 }
 
-const obtainCsrfToken = async () => {
-  const cookieToken = readCsrfCookie()
-  if (cookieToken) return cookieToken
+const obtainCsrfToken = async ({ force = false } = {}) => {
+  if (!force) {
+    const cookieToken = readCsrfCookie()
+    if (cookieToken) return cookieToken
+  } else {
+    csrfToken = ''
+    csrfRequest = undefined
+  }
   if (!csrfRequest) {
     csrfRequest = api.get('/auth/csrf-token')
       .then((response) => response.data.data.csrfToken)
@@ -51,10 +56,23 @@ api.interceptors.response.use(
     if (rotatedToken) csrfToken = rotatedToken
     return response
   },
-  (error) => {
+  async (error) => {
+    const rotatedToken = error.response?.headers?.['x-csrf-token']
+    if (rotatedToken) csrfToken = rotatedToken
     const isExpectedAuthRequest = ['/auth/login', '/auth/register', '/auth/me', '/auth/forgot-password', '/auth/verify-reset-otp', '/auth/reset-password'].some((path) => error.config?.url?.includes(path))
     if (error.response?.status === 401 && !isExpectedAuthRequest && typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('edw:unauthorized'))
-    if (error.response?.status === 403 && /security token/i.test(error.response?.data?.message || '')) csrfToken = ''
+    const csrfRejected = error.response?.status === 403 && /security token/i.test(error.response?.data?.message || '')
+    if (csrfRejected && error.config && !error.config._csrfRetried) {
+      error.config._csrfRetried = true
+      try {
+        const freshToken = await obtainCsrfToken({ force: true })
+        if (typeof error.config.headers?.set === 'function') error.config.headers.set('X-CSRF-Token', freshToken)
+        else error.config.headers = { ...error.config.headers, 'X-CSRF-Token': freshToken }
+        return api.request(error.config)
+      } catch {
+        csrfToken = ''
+      }
+    }
     return Promise.reject(error)
   },
 )

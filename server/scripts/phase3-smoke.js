@@ -137,8 +137,8 @@ try {
   assert.equal(result.payload.data.wishlist.count, 0, 'Wishlist clear must succeed')
 
   result = await request('/auth/forgot-password', { method: 'POST', authenticated: false, body: { email: `missing-${email}` } })
-  assert.equal(result.status, 200, 'Forgot password must not expose whether an account exists')
-  assert.equal(result.payload.data.developmentOtp, undefined, 'An unregistered email must never receive an OTP')
+  assert.equal(result.status, 404, 'An unregistered email must not enter password recovery')
+  assert.equal(result.payload.errors[0].field, 'email', 'The email field must explain that the account is not registered')
 
   result = await request('/auth/forgot-password', { method: 'POST', authenticated: false, body: { email } })
   assert.equal(result.status, 200, 'Forgot password must accept a registered email')
@@ -146,6 +146,10 @@ try {
   assert.equal(result.payload.data.developmentOnly, true, 'Development OTP must be labelled')
   assert.match(result.payload.data.developmentOtp, /^\d{6}$/, 'A six-digit OTP must be generated')
   const resetOtp = result.payload.data.developmentOtp
+  const recoveryState = await User.findById(userId).select('+resetPasswordOtpHash +resetPasswordOtpExpire +resetPasswordOtpAttempts')
+  assert.match(recoveryState.resetPasswordOtpHash, /^\$2[aby]\$/, 'The OTP must be stored as a bcrypt hash')
+  assert.notEqual(recoveryState.resetPasswordOtpHash, resetOtp, 'The plain OTP must never be stored')
+  assert.ok(recoveryState.resetPasswordOtpExpire > new Date(), 'The stored OTP must have a future expiry')
 
   result = await request('/auth/verify-reset-otp', { method: 'POST', authenticated: false, body: { email, otp: '000000' } })
   assert.equal(result.status, 400, 'An incorrect OTP must be rejected')

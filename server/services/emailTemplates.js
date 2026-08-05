@@ -9,7 +9,7 @@ export const passwordResetOtpEmail = (user, otp, expiresInMinutes) => ({
   subject: 'Your Eshaz Dream World password reset code',
   html: layout(
     'Verify your password reset',
-    `${paragraph(`Hello ${user.firstName}, enter the verification code below to continue resetting your password.`)}<div style="margin:24px 0;padding:18px;border-radius:16px;background:#fff2f7;text-align:center;font-size:32px;font-weight:bold;letter-spacing:8px;color:#7d2948">${escapeHtml(otp)}</div>${paragraph(`This code expires in ${expiresInMinutes} minutes and can be used only once. Never share this code with anyone.`)}${paragraph('If you did not request a password reset, you can safely ignore this email.')}`,
+    `${paragraph(`Hello ${user.firstName}, enter the verification code below to continue resetting your password.`)}<div style="margin:24px 0;padding:18px;border-radius:16px;background:#fff2f7;text-align:center;font-size:32px;font-weight:bold;letter-spacing:8px;color:#7d2948">${escapeHtml(otp)}</div>${paragraph(`This code expires in ${expiresInMinutes} minutes and can be used only once. If you requested more than one code, use the most recent email. Never share this code with anyone.`)}${paragraph('If you did not request a password reset, you can safely ignore this email.')}`,
   ),
 })
 export const passwordResetEmail = (user, resetUrl) => ({
