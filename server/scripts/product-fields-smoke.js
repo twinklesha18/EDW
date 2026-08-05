@@ -8,6 +8,8 @@ import Cart from '../models/Cart.js'
 import { productValidator } from '../middleware/adminValidateMiddleware.js'
 import app from '../app.js'
 
+process.env.EDW_DISABLE_EMAIL = 'true'
+
 dotenv.config()
 
 let productIds = []

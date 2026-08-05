@@ -30,3 +30,16 @@ export const paymentFailedEmail = (user, clientUrl) => ({ subject: 'Your Eshaz D
 export const orderStatusEmail = (user, order, clientUrl) => ({ subject: `Order ${order.orderNumber} is ${order.orderStatus.toLowerCase()}`, html: layout(`Order ${order.orderStatus}`, `${paragraph(`Hello ${user.firstName}, your order ${order.orderNumber} is now ${order.orderStatus.toLowerCase()}.`)}${order.trackingNumber ? paragraph(`Tracking number: ${order.trackingNumber}`) : ''}`, { label: 'Track Order', url: `${clientUrl}/orders/${order.orderNumber}` }) })
 export const deliveredInvoiceEmail = (user, order, clientUrl) => ({ subject: `Your invoice for delivered order ${order.orderNumber}`, html: layout('Your order has been delivered', `${paragraph(`Hello ${user.firstName}, your order ${order.orderNumber} has been delivered.`)}${paragraph('Your invoice is attached to this email as a PDF. You can also open it from your customer dashboard.')}`, { label: 'View Delivered Order', url: `${clientUrl}/orders/${order.orderNumber}` }) })
 export const notificationEmail = (user, title, message, url) => ({ subject: title, html: layout(title, `${paragraph(`Hello ${user.firstName},`)}${paragraph(message)}`, { label: 'View Update', url }) })
+export const newProductAnnouncementEmail = (product, clientUrl) => {
+  const categoryName = product.category?.name || 'Eshaz Dream World collection'
+  const prices = Object.values(product.prices || {}).map(Number).filter((price) => Number.isFinite(price) && price > 0)
+  const startingPrice = prices.length ? Math.min(...prices) : 0
+  return {
+    subject: `New arrival: ${product.name}`,
+    html: layout(
+      'A new creation has arrived',
+      `${paragraph(`${product.name} is now available in our ${categoryName} collection.`)}${startingPrice ? paragraph(`Prices start from ${money(startingPrice)}.`) : ''}${paragraph('Visit the product page to view the available sizes and complete details.')}`,
+      { label: 'View New Product', url: `${clientUrl}/product/${product.slug}` },
+    ),
+  }
+}

@@ -12,6 +12,7 @@
     "import:catalog": "node scripts/import-phase2-catalog.js",
     "check": "node scripts/check-syntax.js",
     "test:products": "node scripts/product-fields-smoke.js",
+    "test:product-announcements": "node scripts/product-announcement-smoke.js",
     "test:custom-orders": "node scripts/custom-order-smoke.js",
     "test:bank-transfer": "node scripts/normal-order-bank-transfer-smoke.js",
     "test:site-settings": "node scripts/site-settings-smoke.js",

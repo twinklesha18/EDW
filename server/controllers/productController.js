@@ -4,6 +4,7 @@ import Review from '../models/Review.js'
 import { escapeRegex, paginationData, paginationFromQuery } from '../utils/queryUtils.js'
 import { AppError, sendSuccess } from '../utils/responseUtils.js'
 import { deleteImage } from '../utils/cloudinaryUtils.js'
+import { announceNewProductSafely } from '../services/productAnnouncementService.js'
 
 const publicPopulate = [{ path: 'category', select: 'name slug' }]
 const slugify = (value) => String(value).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'product'
@@ -69,6 +70,7 @@ export async function adminGetProduct(request, response) {
 export async function createProduct(request, response) {
   const product = await Product.create({ ...request.validatedBody, slug: await uniqueSlug(request.validatedBody.name) })
   await product.populate(publicPopulate)
+  await announceNewProductSafely(product)
   return sendSuccess(response, { statusCode: 201, message: 'Product created successfully', data: { product } })
 }
 

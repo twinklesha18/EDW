@@ -17,11 +17,11 @@ export const canDeliverEmail = (to) => process.env.EDW_DISABLE_EMAIL !== 'true'
   && !String(to || '').trim().toLowerCase().endsWith('@edw.test')
   && isEmailConfigured
 
-export async function sendEmail({ to, subject, html, attachments = [] }) {
+export async function sendEmail({ to, bcc = [], subject, html, attachments = [] }) {
   if (process.env.EDW_DISABLE_EMAIL === 'true') return { skipped: true, reason: 'disabled' }
   if (String(to || '').trim().toLowerCase().endsWith('@edw.test')) return { skipped: true, reason: 'test-recipient' }
   if (!isEmailConfigured) return { skipped: true }
-  return transporter.sendMail({ from: env.email.from, to, subject, html, attachments })
+  return transporter.sendMail({ from: env.email.from, to, bcc, subject, html, attachments })
 }
 
 export function sendEmailSafely(message) {
