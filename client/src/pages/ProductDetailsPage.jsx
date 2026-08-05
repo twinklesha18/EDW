@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { FiChevronRight, FiHeart, FiMinus, FiPackage, FiPlus, FiShare2, FiShoppingBag, FiTruck } from 'react-icons/fi'
+import { FiChevronRight, FiHeart, FiMinus, FiPlus, FiShoppingBag } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import { useDispatch, useSelector } from 'react-redux'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -175,15 +175,6 @@ function ProductDetailsPage() {
     )
   }
 
-  const shareProduct = async () => {
-    const shareData = { title: product.name, text: product.description, url: window.location.href }
-    try {
-      if (navigator.share) await navigator.share(shareData)
-      else { await navigator.clipboard.writeText(window.location.href); toast.success('Product link copied.') }
-    } catch (error) {
-      if (error.name !== 'AbortError') toast.error('Unable to share this product right now.')
-    }
-  }
   const addProduct = async () => { try { await dispatch(addToCart(productToCartPayload(product, selectedSize, quantity, customization))).unwrap(); toast.success(`Size ${selectedSize} added to your cart.`) } catch (error) { toast.error(error?.message || 'Unable to add this item.') } }
   const buyNow = async () => {
     try {
@@ -255,16 +246,6 @@ function ProductDetailsPage() {
             </div>
             <button type="button" onClick={buyNow} disabled={cartPending} className="secondary-button mt-3 w-full">{cartPending ? 'Preparing Checkout…' : 'Buy Now'}</button>
 
-            <div className="mt-7 grid gap-3 sm:grid-cols-2">
-              <div className="flex gap-3 rounded-2xl bg-blue-light/45 p-4"><FiTruck className="mt-1 shrink-0 text-rosewood" aria-hidden="true" /><div><p className="text-sm font-semibold text-ink">Delivery information</p><p className="mt-1 text-xs leading-5 text-muted">Timing and charges will be confirmed with your order.</p></div></div>
-              <div className="flex gap-3 rounded-2xl bg-pink-light p-4"><FiPackage className="mt-1 shrink-0 text-rosewood" aria-hidden="true" /><div><p className="text-sm font-semibold text-ink">Careful presentation</p><p className="mt-1 text-xs leading-5 text-muted">Designed and packed with attention to detail.</p></div></div>
-            </div>
-
-            <div className="mt-7 divide-y divide-gold/15 border-y border-gold/15">
-              <details className="group py-4" open><summary className="cursor-pointer text-sm font-semibold text-ink">Product details</summary><p className="mt-3 text-sm leading-7 text-muted">{product.description}</p></details>
-              <details className="group py-4"><summary className="cursor-pointer text-sm font-semibold text-ink">Customization information</summary><p className="mt-3 text-sm leading-7 text-muted">Colors, message, contents and presentation can be discussed through the custom order request.</p></details>
-            </div>
-            <button type="button" onClick={shareProduct} className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-rosewood"><FiShare2 aria-hidden="true" /> Share this creation</button>
           </div>
         </div>
       </section>
