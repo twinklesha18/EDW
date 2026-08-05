@@ -8,7 +8,7 @@ import { formatCurrency } from '../../utils/formatCurrency.js'
 import RatingStars from '../common/RatingStars.jsx'
 import { toggleWishlist } from '../../redux/slices/wishlistSlice.js'
 import { productToWishlistPayload } from '../../utils/productAdapters.js'
-import { applyImageFallback, responsiveImageProps } from '../../utils/imageUrl.js'
+import { optimizedImageUrl, responsiveImageProps } from '../../utils/imageUrl.js'
 
 function ProductCard({ product, view = 'grid', autoRotateImages = false }) {
   const dispatch = useDispatch()
@@ -21,14 +21,34 @@ function ProductCard({ product, view = 'grid', autoRotateImages = false }) {
     return [...new Set(candidates.filter(Boolean))].slice(0, 3)
   }, [product.image, product.images])
   const [activeImage, setActiveImage] = useState(0)
-  const [rotationPaused, setRotationPaused] = useState(false)
+  const [failedImages, setFailedImages] = useState([])
+  const imageSignature = images.join('|')
 
-  useEffect(() => setActiveImage(0), [product.id])
+  useEffect(() => { setActiveImage(0); setFailedImages([]) }, [imageSignature, product.id])
   useEffect(() => {
-    if (!autoRotateImages || images.length < 2 || rotationPaused || prefersReducedMotion) return undefined
-    const timer = window.setInterval(() => setActiveImage((current) => (current + 1) % images.length), 4000)
+    const availableIndexes = images.map((_, index) => index).filter((index) => !failedImages.includes(images[index]))
+    if (!autoRotateImages || availableIndexes.length < 2 || prefersReducedMotion) return undefined
+    const timer = window.setInterval(() => setActiveImage((current) => {
+      const position = availableIndexes.indexOf(current)
+      return availableIndexes[(position + 1) % availableIndexes.length]
+    }), 3000)
     return () => window.clearInterval(timer)
-  }, [autoRotateImages, images.length, prefersReducedMotion, rotationPaused])
+  }, [autoRotateImages, failedImages, images, prefersReducedMotion])
+  useEffect(() => {
+    if (!autoRotateImages || images.length < 2) return
+    const nextIndex = (activeImage + 1) % images.length
+    const preloader = new window.Image()
+    preloader.src = optimizedImageUrl(images[nextIndex], 720)
+  }, [activeImage, autoRotateImages, images])
+
+  const handleImageError = (event) => {
+    const failedUrl = images[activeImage]
+    const nextFailedImages = [...new Set([...failedImages, failedUrl])]
+    const nextIndex = images.findIndex((image, index) => index !== activeImage && !nextFailedImages.includes(image))
+    setFailedImages(nextFailedImages)
+    if (nextIndex >= 0) setActiveImage(nextIndex)
+    else event.currentTarget.style.visibility = 'hidden'
+  }
 
   const handleWishlist = async () => { try { await dispatch(toggleWishlist(productToWishlistPayload(product))).unwrap(); toast.success(isWishlisted ? 'Removed from your wishlist.' : 'Added to your wishlist.') } catch (error) { toast.error(error?.message || 'Unable to update your wishlist.') } }
 
@@ -36,13 +56,7 @@ function ProductCard({ product, view = 'grid', autoRotateImages = false }) {
     <article
       className={`group overflow-hidden rounded-[1.75rem] border border-gold/15 bg-white shadow-[0_14px_45px_-30px_rgba(59,47,54,0.45)] transition-all duration-300 hover:-translate-y-1 hover:shadow-luxury ${isList ? 'sm:grid sm:grid-cols-[240px_1fr]' : 'flex h-full flex-col'}`}
     >
-      <div
-        className={`relative overflow-hidden bg-pink-light ${isList ? 'min-h-64' : 'aspect-square'}`}
-        onMouseEnter={() => setRotationPaused(true)}
-        onMouseLeave={() => setRotationPaused(false)}
-        onFocusCapture={() => setRotationPaused(true)}
-        onBlurCapture={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setRotationPaused(false) }}
-      >
+      <div className={`relative overflow-hidden bg-pink-light ${isList ? 'min-h-64' : 'aspect-square'}`}>
         <Link to={`/product/${product.slug}`} aria-label={`View ${product.name}`} className="block h-full w-full">
           <AnimatePresence initial={false} mode="popLayout">
             <motion.img
@@ -54,7 +68,7 @@ function ProductCard({ product, view = 'grid', autoRotateImages = false }) {
               height="1440"
               loading="lazy"
               decoding="async"
-              onError={(event) => applyImageFallback(event, product.fallbackImage)}
+              onError={handleImageError}
               initial={prefersReducedMotion ? false : { opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={prefersReducedMotion ? undefined : { opacity: 0 }}
@@ -76,7 +90,7 @@ function ProductCard({ product, view = 'grid', autoRotateImages = false }) {
         </button>
         {images.length > 1 && (
           <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5 rounded-full bg-white/85 px-2.5 py-2 shadow-sm backdrop-blur-sm" aria-label={`${product.name} image selector`}>
-            {images.map((image, index) => (
+            {images.map((image, index) => !failedImages.includes(image) && (
               <button
                 key={image}
                 type="button"

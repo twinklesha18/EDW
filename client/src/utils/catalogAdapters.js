@@ -21,7 +21,9 @@ export function normalizeCatalogProduct(product) {
     ...product,
     id: product.id || product._id,
     image: productImage,
-    fallbackImage: productFallbacks[product.slug] || heroFallbackImage,
+    // Never replace a managed upload with an unrelated bundled product photo.
+    // The bundled fallback is reserved for products that have no saved image.
+    fallbackImage: productImage ? '' : (productFallbacks[product.slug] || heroFallbackImage),
     images: productImagesList.slice(0, 3),
     prices,
     price: prices.S,

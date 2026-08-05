@@ -25,7 +25,10 @@ export async function getStorefrontBootstrapData() {
   const countMap = new Map(categoryCounts.map((entry) => [String(entry._id), entry.count]))
   return {
     settings: publicSiteSettings(settings),
-    products,
+    products: products.map((product) => ({
+      ...product,
+      images: Array.isArray(product.images) && product.images.length ? product.images.slice(0, 3) : [product.image].filter((image) => image?.url),
+    })),
     categories: categories.map((category) => ({
       ...category,
       id: String(category._id),
