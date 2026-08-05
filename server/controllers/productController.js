@@ -21,8 +21,16 @@ async function scheduleProductAnnouncement(product) {
 
 async function productUsingImage(publicId, excludedId = null) {
   if (!publicId) return null
-  return Product.findOne({ 'image.publicId': publicId, ...(excludedId && { _id: { $ne: excludedId } }) })
+  return Product.findOne({
+    $or: [{ 'image.publicId': publicId }, { 'images.publicId': publicId }],
+    ...(excludedId && { _id: { $ne: excludedId } }),
+  })
 }
+
+const productImageIds = (product) => [...new Set([
+  product?.image?.publicId,
+  ...(Array.isArray(product?.images) ? product.images.map((item) => item?.publicId) : []),
+].filter(Boolean))]
 
 async function deleteProductImageIfUnused(publicId, excludedId = null) {
   if (!publicId || await productUsingImage(publicId, excludedId)) return
@@ -113,10 +121,11 @@ export async function createProduct(request, response) {
 export async function updateProduct(request, response) {
   const product = await Product.findById(request.params.id)
   if (!product) throw new AppError('Product not found', 404)
-  const previousImageId = product.image?.publicId
+  const previousImageIds = productImageIds(product)
   Object.assign(product, request.validatedBody, { slug: await uniqueSlug(request.validatedBody.name, product._id) })
   await product.save()
-  if (previousImageId && previousImageId !== product.image?.publicId) await deleteProductImageIfUnused(previousImageId, product._id)
+  const currentImageIds = new Set(productImageIds(product))
+  await Promise.all(previousImageIds.filter((publicId) => !currentImageIds.has(publicId)).map((publicId) => deleteProductImageIfUnused(publicId, product._id)))
   await product.populate(publicPopulate)
   return sendSuccess(response, { message: 'Product updated successfully', data: { product } })
 }
@@ -125,6 +134,6 @@ export async function deleteProduct(request, response) {
   const product = await Product.findById(request.params.id)
   if (!product) throw new AppError('Product not found', 404)
   await Promise.all([Review.deleteMany({ product: product._id }), Product.deleteOne({ _id: product._id })])
-  await deleteProductImageIfUnused(product.image?.publicId)
+  await Promise.all(productImageIds(product).map((publicId) => deleteProductImageIfUnused(publicId)))
   return sendSuccess(response, { message: 'Product deleted successfully' })
 }

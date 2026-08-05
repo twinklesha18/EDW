@@ -28,7 +28,7 @@ function FeaturedProducts() {
                   key={`${page}-${itemsPerPage}`}
                   className="carousel-enter grid grid-cols-1 gap-5 min-[520px]:grid-cols-2 lg:grid-cols-3"
                 >
-                  {visibleItems.map((product) => <ProductCard key={product.id} product={product} />)}
+                  {visibleItems.map((product) => <ProductCard key={product.id} product={product} autoRotateImages />)}
                 </div>
             </div>
 

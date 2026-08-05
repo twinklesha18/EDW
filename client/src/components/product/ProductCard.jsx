@@ -1,3 +1,5 @@
+import { useEffect, useMemo, useState } from 'react'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { FiEye, FiHeart, FiShoppingBag } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import { useDispatch, useSelector } from 'react-redux'
@@ -8,11 +10,25 @@ import { toggleWishlist } from '../../redux/slices/wishlistSlice.js'
 import { productToWishlistPayload } from '../../utils/productAdapters.js'
 import { applyImageFallback, responsiveImageProps } from '../../utils/imageUrl.js'
 
-function ProductCard({ product, view = 'grid' }) {
+function ProductCard({ product, view = 'grid', autoRotateImages = false }) {
   const dispatch = useDispatch()
   const isWishlisted = useSelector((state) => state.wishlist.items.some((item) => item.productId === product.id))
   const wishlistPending = useSelector((state) => state.wishlist.pendingProductIds.includes(product.id))
   const isList = view === 'list'
+  const prefersReducedMotion = useReducedMotion()
+  const images = useMemo(() => {
+    const candidates = Array.isArray(product.images) && product.images.length ? product.images : [product.image]
+    return [...new Set(candidates.filter(Boolean))].slice(0, 3)
+  }, [product.image, product.images])
+  const [activeImage, setActiveImage] = useState(0)
+  const [rotationPaused, setRotationPaused] = useState(false)
+
+  useEffect(() => setActiveImage(0), [product.id])
+  useEffect(() => {
+    if (!autoRotateImages || images.length < 2 || rotationPaused || prefersReducedMotion) return undefined
+    const timer = window.setInterval(() => setActiveImage((current) => (current + 1) % images.length), 4000)
+    return () => window.clearInterval(timer)
+  }, [autoRotateImages, images.length, prefersReducedMotion, rotationPaused])
 
   const handleWishlist = async () => { try { await dispatch(toggleWishlist(productToWishlistPayload(product))).unwrap(); toast.success(isWishlisted ? 'Removed from your wishlist.' : 'Added to your wishlist.') } catch (error) { toast.error(error?.message || 'Unable to update your wishlist.') } }
 
@@ -20,19 +36,32 @@ function ProductCard({ product, view = 'grid' }) {
     <article
       className={`group overflow-hidden rounded-[1.75rem] border border-gold/15 bg-white shadow-[0_14px_45px_-30px_rgba(59,47,54,0.45)] transition-all duration-300 hover:-translate-y-1 hover:shadow-luxury ${isList ? 'sm:grid sm:grid-cols-[240px_1fr]' : 'flex h-full flex-col'}`}
     >
-      <div className={`relative overflow-hidden bg-pink-light ${isList ? 'min-h-64' : 'aspect-square'}`}>
-        <Link to={`/product/${product.slug}`} aria-label={`View ${product.name}`}>
-          <img
-            {...responsiveImageProps(product.image, [360, 540, 720, 1080, 1440])}
-            sizes={isList ? '(min-width: 640px) 240px, 100vw' : '(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw'}
-            alt={product.name}
-            width="800"
-            height="800"
-            loading="lazy"
-            decoding="async"
-            onError={(event) => applyImageFallback(event, product.fallbackImage)}
-            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-          />
+      <div
+        className={`relative overflow-hidden bg-pink-light ${isList ? 'min-h-64' : 'aspect-square'}`}
+        onMouseEnter={() => setRotationPaused(true)}
+        onMouseLeave={() => setRotationPaused(false)}
+        onFocusCapture={() => setRotationPaused(true)}
+        onBlurCapture={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setRotationPaused(false) }}
+      >
+        <Link to={`/product/${product.slug}`} aria-label={`View ${product.name}`} className="block h-full w-full">
+          <AnimatePresence initial={false} mode="popLayout">
+            <motion.img
+              key={`${product.id}-${activeImage}-${images[activeImage]}`}
+              {...responsiveImageProps(images[activeImage] || product.image, [360, 540, 720, 1080, 1440])}
+              sizes={isList ? '(min-width: 640px) 240px, 100vw' : '(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw'}
+              alt={images.length > 1 ? `${product.name} – image ${activeImage + 1} of ${images.length}` : product.name}
+              width="1440"
+              height="1440"
+              loading="lazy"
+              decoding="async"
+              onError={(event) => applyImageFallback(event, product.fallbackImage)}
+              initial={prefersReducedMotion ? false : { opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={prefersReducedMotion ? undefined : { opacity: 0 }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.45, ease: 'easeOut' }}
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+            />
+          </AnimatePresence>
         </Link>
         {product.badge && <span className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1.5 text-[0.65rem] font-bold uppercase tracking-wider text-rosewood shadow-sm backdrop-blur-sm">{product.badge}</span>}
         <button
@@ -45,6 +74,20 @@ function ProductCard({ product, view = 'grid' }) {
         >
           <FiHeart className={isWishlisted ? 'fill-current' : ''} aria-hidden="true" />
         </button>
+        {images.length > 1 && (
+          <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5 rounded-full bg-white/85 px-2.5 py-2 shadow-sm backdrop-blur-sm" aria-label={`${product.name} image selector`}>
+            {images.map((image, index) => (
+              <button
+                key={image}
+                type="button"
+                onClick={() => setActiveImage(index)}
+                className={`h-2 rounded-full transition-all ${activeImage === index ? 'w-5 bg-rosewood' : 'w-2 bg-ink/30 hover:bg-rosewood/60'}`}
+                aria-label={`Show image ${index + 1} of ${images.length}`}
+                aria-current={activeImage === index ? 'true' : undefined}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="flex flex-1 flex-col p-5 sm:p-6">

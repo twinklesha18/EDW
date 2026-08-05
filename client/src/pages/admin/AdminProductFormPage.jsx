@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { FiArrowLeft, FiUploadCloud } from 'react-icons/fi'
+import { FiArrowLeft, FiTrash2, FiUploadCloud } from 'react-icons/fi'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { Link, useNavigate, useParams } from 'react-router-dom'
@@ -19,9 +19,9 @@ function AdminProductFormPage() {
   const [loading, setLoading] = useState(editing)
   const [saving, setSaving] = useState(false)
   const [apiError, setApiError] = useState('')
-  const [image, setImage] = useState(null)
-  const [imageFile, setImageFile] = useState(null)
-  const [previewUrl, setPreviewUrl] = useState('')
+  const [images, setImages] = useState([])
+  const [imageFiles, setImageFiles] = useState([])
+  const [previewUrls, setPreviewUrls] = useState([])
   const [imageError, setImageError] = useState('')
   const { register, reset, handleSubmit, setError, setFocus, clearErrors, formState: { errors } } = useForm({ defaultValues: defaults })
 
@@ -39,7 +39,8 @@ function AdminProductFormPage() {
             priceM: product.prices?.M ?? '',
             priceL: product.prices?.L ?? '',
           })
-          setImage(product.image)
+          const savedImages = Array.isArray(product.images) && product.images.length ? product.images : [product.image].filter((item) => item?.url)
+          setImages(savedImages.slice(0, 3))
         }
       })
       .catch((error) => setApiError(getApiError(error).message))
@@ -47,19 +48,27 @@ function AdminProductFormPage() {
   }, [editing, id, reset])
 
   useEffect(() => {
-    if (!imageFile) {
-      setPreviewUrl('')
-      return undefined
+    const urls = imageFiles.map((file) => URL.createObjectURL(file))
+    setPreviewUrls(urls)
+    return () => urls.forEach((url) => URL.revokeObjectURL(url))
+  }, [imageFiles])
+
+  const selectImages = (event) => {
+    const selected = Array.from(event.target.files || [])
+    const remaining = Math.max(0, 3 - images.length - imageFiles.length)
+    if (selected.length > remaining) toast.error(`You can add only ${remaining} more ${remaining === 1 ? 'image' : 'images'}.`)
+    if (remaining > 0) {
+      setImageFiles((current) => [...current, ...selected.slice(0, remaining)])
+      setImageError('')
+      setApiError('')
     }
-    const url = URL.createObjectURL(imageFile)
-    setPreviewUrl(url)
-    return () => URL.revokeObjectURL(url)
-  }, [imageFile])
+    event.target.value = ''
+  }
 
   const submit = async (values) => {
-    if (!imageFile && !image?.url) {
-      setImageError('Product image is required.')
-      setApiError('Please upload a product image.')
+    if (images.length + imageFiles.length < 1) {
+      setImageError('At least one product image is required.')
+      setApiError('Please upload at least one product image.')
       document.querySelector('#product-image')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       return
     }
@@ -68,17 +77,16 @@ function AdminProductFormPage() {
     setImageError('')
     clearErrors()
     try {
-      const uploadedImage = imageFile ? await uploadSingleImage(imageFile, 'products') : image
-      if (imageFile) {
-        setImage(uploadedImage)
-        setImageFile(null)
-      }
+      const uploadedImages = []
+      for (const file of imageFiles) uploadedImages.push(await uploadSingleImage(file, 'products'))
+      const productImages = [...images, ...uploadedImages].slice(0, 3).map((item) => ({ ...item, alt: values.name }))
       const payload = {
         name: values.name,
         category: values.category,
         description: values.description,
         prices: { S: Number(values.priceS), M: Number(values.priceM), L: Number(values.priceL) },
-        image: { ...uploadedImage, alt: values.name },
+        image: productImages[0],
+        images: productImages,
       }
       if (editing) await adminApi.update('products', id, payload)
       else await adminApi.create('products', payload)
@@ -90,7 +98,7 @@ function AdminProductFormPage() {
       apiErrorDetails.errors.forEach((issue) => {
         const field = fieldMap[issue.field]
         if (field) setError(field, { type: 'server', message: issue.message })
-        if (issue.field === 'image' || issue.field?.startsWith('image.')) setImageError(issue.message)
+        if (issue.field === 'image' || issue.field === 'images' || issue.field?.startsWith('image.') || issue.field?.startsWith('images.')) setImageError(issue.message)
       })
       const messages = [...new Set(apiErrorDetails.errors.map((issue) => issue.message).filter(Boolean))]
       setApiError(messages.length ? messages.join(' ') : apiErrorDetails.message)
@@ -115,7 +123,7 @@ function AdminProductFormPage() {
     <div className="space-y-6">
       <AdminPageHeader
         title={editing ? 'Edit Product' : 'Create Product'}
-        description="Add the product details, prices for each size, and one image."
+        description="Add the product details, prices for each size, and up to three images."
         action={<Link to="/admin/products" className="secondary-button"><FiArrowLeft /> Products</Link>}
       />
       {apiError && <p className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{apiError}</p>}
@@ -152,15 +160,37 @@ function AdminProductFormPage() {
         </section>
 
         <section className="form-section">
-          <h2 className="font-serif text-2xl font-semibold">Image</h2>
-          <label className="mt-5 grid max-w-xs cursor-pointer place-items-center overflow-hidden rounded-2xl border-2 border-dashed border-gold/30 bg-cream">
-            {previewUrl || image?.url
-              ? <img src={previewUrl || image.url} alt="Product preview" className="aspect-square w-full object-cover" />
-              : <span className="grid aspect-square w-full place-items-center text-center text-sm text-muted"><span><FiUploadCloud className="mx-auto mb-2 text-2xl" />Upload image</span></span>}
-            <input type="file" accept="image/*,.heic,.heif" className="sr-only" onChange={(event) => { const file = event.target.files?.[0] || null; setImageFile(file); if (file) { setImageError(''); setApiError('') } }} />
-          </label>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div><h2 className="font-serif text-2xl font-semibold">Product Images</h2><p className="mt-1 text-sm text-muted">The first image is the main product image. Add a maximum of three.</p></div>
+            <span className="rounded-full bg-pink-light px-3 py-1 text-xs font-semibold text-rosewood">{images.length + imageFiles.length}/3 images</span>
+          </div>
+          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {images.map((item, index) => (
+              <div key={item.publicId || item.url} className="relative overflow-hidden rounded-2xl border border-gold/20 bg-cream">
+                <img src={item.url} alt={`Saved product preview ${index + 1}`} className="aspect-square w-full object-cover" />
+                <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[.65rem] font-bold uppercase text-rosewood shadow-sm">{index === 0 ? 'Main image' : `Image ${index + 1}`}</span>
+                <button type="button" onClick={() => setImages((current) => current.filter((_, itemIndex) => itemIndex !== index))} className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-white/95 text-red-600 shadow-sm" aria-label={`Remove saved image ${index + 1}`}><FiTrash2 aria-hidden="true" /></button>
+              </div>
+            ))}
+            {previewUrls.map((url, index) => {
+              const position = images.length + index
+              return (
+                <div key={url} className="relative overflow-hidden rounded-2xl border border-rosewood/30 bg-cream">
+                  <img src={url} alt={`New product preview ${position + 1}`} className="aspect-square w-full object-cover" />
+                  <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[.65rem] font-bold uppercase text-rosewood shadow-sm">{position === 0 ? 'Main image' : `New image ${position + 1}`}</span>
+                  <button type="button" onClick={() => setImageFiles((current) => current.filter((_, itemIndex) => itemIndex !== index))} className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-white/95 text-red-600 shadow-sm" aria-label={`Remove selected image ${position + 1}`}><FiTrash2 aria-hidden="true" /></button>
+                </div>
+              )
+            })}
+            {images.length + imageFiles.length < 3 && (
+              <label className="grid aspect-square cursor-pointer place-items-center rounded-2xl border-2 border-dashed border-gold/30 bg-cream text-center text-sm text-muted transition hover:border-rosewood hover:bg-pink-light/30">
+                <span><FiUploadCloud className="mx-auto mb-2 text-3xl text-rosewood" /><strong className="text-ink">Choose images</strong><span className="mt-1 block text-xs">Phone or computer</span></span>
+                <input type="file" accept="image/*,.heic,.heif" multiple className="sr-only" onChange={selectImages} />
+              </label>
+            )}
+          </div>
           {imageError && <p className="mt-2 text-sm text-red-600">{imageError}</p>}
-          <p className="mt-3 text-sm text-muted">Choose a photo from your phone gallery, phone camera, or computer. JPEG, PNG, WebP, AVIF, HEIC, and HEIF are supported up to 12 MB.</p>
+          <p className="mt-3 text-sm text-muted">Choose one or multiple photos from your phone gallery or computer. JPEG, PNG, WebP, AVIF, HEIC, and HEIF are supported up to 12 MB per image.</p>
         </section>
 
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">

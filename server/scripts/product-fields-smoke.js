@@ -32,21 +32,28 @@ try {
     description: 'A product created to verify the simplified product fields.',
     prices: { S: 1000, M: 1250, L: 1500 },
     image: { url: 'https://example.com/product.webp', publicId: '', alt: 'Verification product' },
+    images: [
+      { url: 'https://example.com/product.webp', publicId: '', alt: 'Verification product' },
+      { url: 'https://example.com/product-two.webp', publicId: '', alt: 'Verification product two' },
+      { url: 'https://example.com/product-three.webp', publicId: '', alt: 'Verification product three' },
+    ],
     sku: 'THIS-MUST-BE-IGNORED',
     stock: 99,
     isFeatured: true,
   }
   const validated = productValidator(input)
   assert.equal(validated.errors.length, 0)
-  assert.deepEqual(Object.keys(validated.values).sort(), ['category', 'description', 'image', 'name', 'prices'])
+  assert.deepEqual(Object.keys(validated.values).sort(), ['category', 'description', 'image', 'images', 'name', 'prices'])
+  assert.equal(validated.values.images.length, 3)
 
   for (const number of [1, 2]) {
     const product = await Product.create({ ...validated.values, name: `${validated.values.name} ${number}`, slug: `size-price-verification-${Date.now()}-${number}` })
     productIds.push(product._id)
     const stored = await Product.collection.findOne({ _id: product._id })
-    for (const removedField of ['sku', 'stock', 'discountPrice', 'costPrice', 'shortDescription', 'thumbnail', 'images', 'tags', 'isFeatured', 'isTrending', 'isActive', 'isDeleted']) {
+    for (const removedField of ['sku', 'stock', 'discountPrice', 'costPrice', 'shortDescription', 'thumbnail', 'tags', 'isFeatured', 'isTrending', 'isActive', 'isDeleted']) {
       assert.equal(Object.hasOwn(stored, removedField), false, `${removedField} must not be stored`)
     }
+    assert.equal(stored.images.length, 3)
     assert.deepEqual(stored.prices, { S: 1000, M: 1250, L: 1500 })
   }
 
@@ -72,12 +79,16 @@ try {
   assert.equal(result.status, 200)
   result = await request('/admin/products', { method: 'POST', body: { ...input, prices: { S: 1000, M: 1250 } } })
   assert.equal(result.status, 422, 'All three size prices are required')
-  const apiInput = { ...input, image: { ...input.image, publicId: `eshaz-dream-world/products/idempotency-${suffix}` } }
+  result = await request('/admin/products', { method: 'POST', body: { ...input, images: [...input.images, { url: 'https://example.com/product-four.webp', publicId: '', alt: 'Fourth product image' }] } })
+  assert.equal(result.status, 422, 'More than three product images must be rejected')
+  const primaryPublicId = `eshaz-dream-world/products/idempotency-${suffix}`
+  const apiInput = { ...input, image: { ...input.image, publicId: primaryPublicId }, images: input.images.map((item, index) => index === 0 ? { ...item, publicId: primaryPublicId } : item) }
   result = await request('/admin/products', { method: 'POST', body: apiInput })
   assert.equal(result.status, 201)
   const apiProduct = result.body.data.product
   productIds.push(apiProduct._id)
   assert.equal(apiProduct.stock, undefined)
+  assert.equal(apiProduct.images.length, 3)
   assert.deepEqual(apiProduct.prices, { S: 1000, M: 1250, L: 1500 })
   result = await request('/admin/products', { method: 'POST', body: apiInput })
   assert.equal(result.status, 200, 'Retrying a completed image submission is idempotent')

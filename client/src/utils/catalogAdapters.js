@@ -14,13 +14,15 @@ const productFallbacks = Object.freeze({
 export function normalizeCatalogProduct(product) {
   const category = product.category || {}
   const prices = { S: Number(product.prices?.S || 0), M: Number(product.prices?.M || 0), L: Number(product.prices?.L || 0) }
-  const productImage = product.image?.url || product.image || ''
+  const managedImages = Array.isArray(product.images) ? product.images.map((item) => item?.url || item).filter(Boolean) : []
+  const productImage = managedImages[0] || product.image?.url || product.image || ''
+  const productImagesList = managedImages.length ? managedImages : [productImage].filter(Boolean)
   return {
     ...product,
     id: product.id || product._id,
     image: productImage,
     fallbackImage: productFallbacks[product.slug] || heroFallbackImage,
-    images: [productImage].filter(Boolean),
+    images: productImagesList.slice(0, 3),
     prices,
     price: prices.S,
     oldPrice: null,

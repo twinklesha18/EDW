@@ -19,7 +19,20 @@ const productSchema = new mongoose.Schema({
   description: { type: String, required: true, trim: true, minlength: 10, maxlength: 5000 },
   prices: { type: pricesSchema, required: true },
   image: { type: imageSchema, required: true },
+  images: {
+    type: [imageSchema],
+    default: [],
+    validate: {
+      validator: (value) => Array.isArray(value) && value.length >= 1 && value.length <= 3,
+      message: 'A product must have between 1 and 3 images',
+    },
+  },
 }, { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } })
+
+productSchema.pre('validate', function synchronizeProductImages() {
+  if ((!this.images || this.images.length === 0) && this.image?.url) this.images = [this.image]
+  if (this.images?.length) this.image = this.images[0]
+})
 
 productSchema.index({ name: 'text', description: 'text' })
 productSchema.index(

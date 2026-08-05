@@ -33,8 +33,13 @@ export const productValidator = (body) => {
     if (!Number.isFinite(value) || value < 0.01) errors.push(issue(`prices.${size}`, `${size} price must be at least 0.01`))
     return [size, value]
   }))
-  const productImage = image(body.image, 'image', errors, true)
-  return { values: { name, category: body.category, description, prices, image: productImage }, errors }
+  const submittedImages = Array.isArray(body.images) ? body.images : (body.image ? [body.image] : [])
+  if (submittedImages.length < 1) errors.push(issue('images', 'At least one product image is required'))
+  if (submittedImages.length > 3) errors.push(issue('images', 'A maximum of 3 product images is allowed'))
+  const productImages = submittedImages.slice(0, 3).map((value, index) => image(value, `images.${index}`, errors, true))
+  const imageKeys = productImages.map((item) => item.publicId || item.url).filter(Boolean)
+  if (new Set(imageKeys).size !== imageKeys.length) errors.push(issue('images', 'Select different images for each product image'))
+  return { values: { name, category: body.category, description, prices, image: productImages[0] || image({}, 'image', [], false), images: productImages }, errors }
 }
 
 export const categoryValidator = (body) => { const errors = []; const name = clean(body.name, 80), slug = slugify(body.slug || body.name), description = clean(body.description, 500), sortOrder = Number(body.sortOrder) || 0; if (name.length < 2) errors.push(issue('name', 'Name must contain at least 2 characters')); if (!slug) errors.push(issue('slug', 'A valid slug is required')); if (body.parentCategory && !validId(body.parentCategory)) errors.push(issue('parentCategory', 'Parent category is invalid')); if (sortOrder < 0) errors.push(issue('sortOrder', 'Sort order cannot be negative')); return { values: { name, slug, description, image: image(body.image, 'image', errors), parentCategory: body.parentCategory || null, isActive: body.isActive !== false, sortOrder }, errors } }
