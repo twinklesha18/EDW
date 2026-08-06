@@ -28,3 +28,11 @@ export async function markAllNotificationsRead(request, response) {
   const result = await Notification.updateMany({ recipient: request.user._id, readAt: null }, { $set: { readAt: new Date() } })
   return sendSuccess(response, { message: 'All notifications marked as read', data: { updated: result.modifiedCount } })
 }
+
+export async function clearAdminNotifications(request, response) {
+  const result = await Notification.deleteMany({ recipient: request.user._id, audience: 'admin' })
+  return sendSuccess(response, {
+    message: result.deletedCount === 1 ? '1 notification cleared' : `${result.deletedCount} notifications cleared`,
+    data: { deleted: result.deletedCount },
+  })
+}

@@ -1,9 +1,10 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { FiBell, FiCheck, FiPackage, FiX } from 'react-icons/fi'
+import { FiBell, FiCheck, FiPackage, FiTrash2, FiX } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import { useNavigate } from 'react-router-dom'
 import api from '../../services/api.js'
+import ConfirmModal from './ConfirmModal.jsx'
 
 const dateLabel = (value) => {
   const date = new Date(value)
@@ -17,11 +18,13 @@ const dateLabel = (value) => {
   return date.toLocaleDateString()
 }
 
-function NotificationBell({ stackedMobile = false }) {
+function NotificationBell({ stackedMobile = false, allowClear = false }) {
   const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [confirmingClear, setConfirmingClear] = useState(false)
+  const [clearing, setClearing] = useState(false)
   const latestId = useRef('')
   const initialized = useRef(false)
   const panelRef = useRef(null)
@@ -32,7 +35,7 @@ function NotificationBell({ stackedMobile = false }) {
       const response = await api.get('/notifications', { params: { limit: 12 } })
       const data = response.data.data
       const newest = data.notifications?.[0]
-      if (announce && initialized.current && newest?.id && latestId.current && newest.id !== latestId.current) toast(newest.title, { icon: '🔔' })
+      if (announce && initialized.current && newest?.id && newest.id !== latestId.current) toast(newest.title, { icon: '🔔' })
       latestId.current = newest?.id || latestId.current
       initialized.current = true
       setNotifications(data.notifications || [])
@@ -75,6 +78,23 @@ function NotificationBell({ stackedMobile = false }) {
     catch { toast.error('Unable to mark notifications as read.'); void load() }
   }
 
+  const clearNotifications = async () => {
+    setClearing(true)
+    try {
+      const response = await api.delete('/notifications')
+      setNotifications([])
+      setUnreadCount(0)
+      latestId.current = ''
+      setConfirmingClear(false)
+      setOpen(false)
+      toast.success(response.data.message || 'Notifications cleared.')
+    } catch {
+      toast.error('Unable to clear notifications.')
+    } finally {
+      setClearing(false)
+    }
+  }
+
   return <div ref={panelRef} className="relative">
     <button type="button" className="icon-button" aria-label={`Notifications, ${unreadCount} unread`} aria-expanded={open} onClick={() => setOpen((value) => !value)}>
       <FiBell />
@@ -82,10 +102,12 @@ function NotificationBell({ stackedMobile = false }) {
     </button>
     <AnimatePresence>{open && <motion.section initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className={`fixed inset-x-3 z-[80] max-h-[min(75dvh,36rem)] overflow-hidden rounded-2xl border border-gold/15 bg-white shadow-2xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-3 sm:w-[25rem] ${stackedMobile ? 'top-[8.75rem]' : 'top-[4.5rem]'}`} aria-label="Notifications">
       <header className="flex items-center justify-between border-b border-gold/10 p-4"><div><h2 className="font-serif text-xl font-semibold">Notifications</h2><p className="text-xs text-muted">{unreadCount ? `${unreadCount} unread` : 'You are all caught up'}</p></div><div className="flex gap-1">{unreadCount > 0 && <button type="button" className="icon-button" title="Mark all as read" aria-label="Mark all notifications as read" onClick={markAllRead}><FiCheck /></button>}<button type="button" className="icon-button sm:hidden" aria-label="Close notifications" onClick={() => setOpen(false)}><FiX /></button></div></header>
-      <div className="max-h-[calc(min(75dvh,36rem)-5rem)] overflow-y-auto overscroll-contain">
+      <div className="max-h-[calc(min(75dvh,36rem)-9rem)] overflow-y-auto overscroll-contain">
         {loading ? <p className="p-6 text-center text-sm text-muted">Loading notifications…</p> : notifications.length === 0 ? <div className="p-8 text-center"><FiBell className="mx-auto text-2xl text-rosewood" /><p className="mt-3 font-semibold">No notifications yet</p><p className="mt-1 text-xs text-muted">Important order updates will appear here.</p></div> : notifications.map((notification) => <button key={notification.id} type="button" onClick={() => openNotification(notification)} className={`flex w-full gap-3 border-b border-gold/10 p-4 text-left transition hover:bg-pink-light/35 ${notification.readAt ? 'bg-white' : 'bg-pink-light/25'}`}><span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white text-rosewood shadow-sm"><FiPackage /></span><span className="min-w-0 flex-1"><span className="flex items-start justify-between gap-2"><strong className="text-sm leading-5">{notification.title}</strong>{!notification.readAt && <i className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-rosewood" />}</span><span className="mt-1 block text-xs leading-5 text-muted">{notification.message}</span><time className="mt-1 block text-[.68rem] font-semibold text-gold">{dateLabel(notification.createdAt)}</time></span></button>)}
       </div>
+      {allowClear && notifications.length > 0 && <footer className="border-t border-gold/10 p-3"><button type="button" onClick={() => setConfirmingClear(true)} className="flex min-h-10 w-full items-center justify-center gap-2 rounded-full text-sm font-semibold text-red-600 transition hover:bg-red-50"><FiTrash2 aria-hidden="true" /> Clear Notifications</button></footer>}
     </motion.section>}</AnimatePresence>
+    <ConfirmModal open={confirmingClear} title="Clear all notifications?" message="This permanently removes every notification currently shown in your admin account. This action cannot be undone." confirmLabel="Clear Notifications" onConfirm={clearNotifications} onClose={() => !clearing && setConfirmingClear(false)} loading={clearing} />
   </div>
 }
 

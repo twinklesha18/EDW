@@ -88,7 +88,18 @@ try {
   result = await request('/notifications', { cookie: adminCookie })
   assert.ok(result.body.data.notifications.some((entry) => entry.title === `Order ${order.orderNumber} cancelled`))
 
-  console.log('Notification smoke test passed: placement, delivery, tracking, cancellation, admin/customer delivery, isolation, and read state.')
+  const customerTotalBeforeClear = (await request('/notifications', { cookie: customerCookie })).body.data.pagination.total
+  result = await request('/notifications', { method: 'DELETE', cookie: customerCookie })
+  assert.equal(result.status, 403, 'Customers cannot use the admin clear-notifications endpoint')
+  result = await request('/notifications', { method: 'DELETE', cookie: adminCookie })
+  assert.equal(result.status, 200)
+  assert.ok(result.body.data.deleted >= 1, 'The administrator can clear their own notifications')
+  result = await request('/notifications', { cookie: adminCookie })
+  assert.equal(result.body.data.pagination.total, 0, 'The administrator notification list is empty after clearing')
+  result = await request('/notifications', { cookie: customerCookie })
+  assert.equal(result.body.data.pagination.total, customerTotalBeforeClear, 'Clearing admin notifications does not delete customer notifications')
+
+  console.log('Notification smoke test passed: placement, delivery, tracking, cancellation, read state, and admin-only clearing with customer isolation.')
 } finally {
   if (server) await new Promise((resolve) => server.close(resolve))
   if (admin || customer || testOrderId) await Notification.deleteMany({ $or: [{ recipient: { $in: [admin?._id, customer?._id].filter(Boolean) } }, ...(testOrderId ? [{ order: testOrderId }] : [])] })

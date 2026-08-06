@@ -55,7 +55,7 @@ function AdminLayout() {
           </button>
           <AdminGlobalSearch />
           <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
-            <NotificationBell />
+            <NotificationBell allowClear />
             <div className="hidden items-center gap-2 rounded-full border border-gold/20 px-3 py-2 sm:flex">
               <FiUser className="text-rosewood" />
               <span className="text-xs font-semibold">{user?.firstName} · Admin</span>
