@@ -120,10 +120,8 @@ try {
   assert.equal(response.status, 200, `Administrator slip restoration failed: ${JSON.stringify(responseBody)}`)
   assert.ok(responseBody.data.paymentSlip.url, 'Restored payment slip must have a usable URL')
   response = await fetch(`${base}/admin/orders/${createdOrder._id}/invoice`, { headers: { Cookie: adminCookie } })
-  assert.equal(response.status, 200, 'Administrator invoice access must remain available before delivery')
-  assert.match(response.headers.get('content-type') || '', /application\/pdf/)
-  assert.match(response.headers.get('content-disposition') || '', /^inline;/, 'Admin invoices must open in the browser')
-  await response.arrayBuffer()
+  assert.equal(response.status, 409, 'Administrator invoice must remain unavailable before confirmation')
+  await response.json()
 
   result = await jsonRequest(`/admin/orders/${createdOrder._id}/payment`, { method: 'PUT', cookie: adminCookie, body: { action: 'reject', note: 'The transfer amount is not readable.' } })
   assert.equal(result.status, 200)
@@ -149,6 +147,12 @@ try {
   result = await jsonRequest(`/admin/orders/${createdOrder._id}`, { method: 'PUT', cookie: adminCookie, body: { orderStatus: 'Confirmed', trackingNumber: '', notes: 'Payment confirmed and order accepted.' } })
   assert.equal(result.status, 200)
   assert.equal(result.body.data.order.orderStatus, 'Confirmed')
+
+  response = await fetch(`${base}/admin/orders/${createdOrder._id}/invoice`, { headers: { Cookie: adminCookie } })
+  assert.equal(response.status, 200, 'Administrator invoice must become available after confirmation')
+  assert.match(response.headers.get('content-type') || '', /application\/pdf/)
+  assert.match(response.headers.get('content-disposition') || '', /^inline;/, 'Admin invoices must open in the browser')
+  await response.arrayBuffer()
 
   result = await jsonRequest(`/orders/${createdOrder.orderNumber}`, { cookie: customerCookie })
   assert.equal(result.status, 200)

@@ -13,6 +13,7 @@ import { formatCurrency } from '../../utils/formatCurrency.js'
 import { openPdfPreview } from '../../utils/openPdfPreview.js'
 
 const statuses = ['Pending', 'Confirmed', 'Processing', 'Packed', 'Shipped', 'Delivered', 'Cancelled']
+const invoiceStatuses = new Set(['Confirmed', 'Processing', 'Packed', 'Shipped', 'Delivered'])
 
 function AdminOrderDetailsPage() {
   const { id } = useParams()
@@ -69,7 +70,7 @@ function AdminOrderDetailsPage() {
 
   return (
     <div className="space-y-6">
-      <AdminPageHeader title={order.orderNumber} description={`Placed ${new Date(order.createdAt).toLocaleString()}`} action={<div className="flex gap-2">{order.orderStatus !== 'Cancelled' && <button type="button" className="secondary-button" onClick={invoice}><FiExternalLink /> Open Invoice</button>}<Link to="/admin/orders" className="secondary-button"><FiArrowLeft /> Orders</Link></div>} />
+      <AdminPageHeader title={order.orderNumber} description={`Placed ${new Date(order.createdAt).toLocaleString()}`} action={<div className="flex gap-2">{invoiceStatuses.has(order.orderStatus) && <button type="button" className="secondary-button" onClick={invoice}><FiExternalLink /> Open Invoice</button>}<Link to="/admin/orders" className="secondary-button"><FiArrowLeft /> Orders</Link></div>} />
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-6">
           <section className="form-section">
