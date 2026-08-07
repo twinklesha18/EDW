@@ -67,7 +67,7 @@ export async function updateOrder(request, response) {
   }
   if (nextStatus === 'Delivered' && order.paymentMethod === 'COD') { order.paymentStatus = 'Paid'; order.payment.paidAt = new Date() }
   if (request.validatedBody.trackingNumber) order.trackingNumber = request.validatedBody.trackingNumber
-  order.notes = request.validatedBody.notes
+  if (request.validatedBody.notes !== undefined) order.notes = request.validatedBody.notes
   await order.save()
   if (order.user && order.orderStatus !== previousStatus) await notifyNormalOrderStatus(order, order.user)
   if (order.user && order.paymentStatus !== previousPaymentStatus && !(order.orderStatus === 'Delivered' && order.paymentMethod === 'COD')) await notifyNormalOrderPayment(order, order.user)
