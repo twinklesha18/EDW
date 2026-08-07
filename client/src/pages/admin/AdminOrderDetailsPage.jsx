@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { FiArrowLeft, FiCheckCircle, FiExternalLink, FiMapPin, FiPackage, FiTruck, FiUser, FiXCircle } from 'react-icons/fi'
+import { FiArrowLeft, FiCheckCircle, FiExternalLink, FiLock, FiMapPin, FiPackage, FiTruck, FiUser, FiXCircle } from 'react-icons/fi'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { Link, useParams } from 'react-router-dom'
@@ -86,7 +86,13 @@ function AdminOrderDetailsPage() {
           {(order.payment?.slip?.url || order.payment?.slip?.publicId) && <PaymentSlipViewer resource="orders" id={id} reference={order.orderNumber} status={order.paymentStatus} originalUrl={order.payment?.slip?.url} />}
         </div>
         <aside className="space-y-6">
-          <form onSubmit={handleSubmit(save)} className="form-section">
+          {order.orderStatus === 'Delivered' ? <section className="form-section">
+            <h2 className="font-serif text-2xl font-semibold">Manage Order</h2>
+            <div className="mt-6 flex gap-3 rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-emerald-900">
+              <FiLock className="mt-0.5 shrink-0 text-lg" aria-hidden="true" />
+              <div><p className="font-semibold">Order completed</p><p className="mt-1 text-sm leading-6">This delivered order is locked and can no longer be edited.</p></div>
+            </div>
+          </section> : <form onSubmit={handleSubmit(save)} className="form-section">
             <h2 className="font-serif text-2xl font-semibold">Manage Order</h2>
             <div className="mt-6 grid gap-5">
               <label className="block">
@@ -103,7 +109,7 @@ function AdminOrderDetailsPage() {
               </label>}
               <LoadingButton type="submit" loading={saving} className="primary-button mt-1 w-full">Save Order</LoadingButton>
             </div>
-          </form>
+          </form>}
           <section className="form-section">
             <h2 className="font-serif text-2xl font-semibold">Payment</h2>
             <dl className="mt-4 space-y-3 text-sm">

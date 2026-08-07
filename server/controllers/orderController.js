@@ -45,6 +45,7 @@ const trackingNumber = () => `EDW-TRK-${Date.now().toString(36).toUpperCase()}-$
 export async function updateOrder(request, response) {
   const order = await Order.findById(request.params.id).populate('user', 'firstName lastName email phone')
   if (!order) throw new AppError('Order not found', 404)
+  if (order.orderStatus === 'Delivered') throw new AppError('Delivered orders are locked and cannot be edited', 409)
   const previousStatus = order.orderStatus
   const previousPaymentStatus = order.paymentStatus
   const previousTrackingNumber = order.trackingNumber
@@ -78,6 +79,7 @@ export async function updateOrder(request, response) {
 export async function reviewOrderPayment(request, response) {
   const order = await Order.findById(request.params.id).populate('user', 'firstName lastName email phone')
   if (!order) throw new AppError('Order not found', 404)
+  if (order.orderStatus === 'Delivered') throw new AppError('Delivered orders are locked and cannot be edited', 409)
   const { action, note } = request.validatedBody
   if (action === 'collect-cod') {
     if (order.paymentMethod !== 'COD' || order.paymentStatus !== 'Pending') throw new AppError('This order is not awaiting Cash on Delivery collection', 409)
