@@ -126,10 +126,13 @@ try {
   assert.equal(isAllowedImageMetadata({ originalname: '../photo.jpg', mimetype: 'image/jpeg' }), false)
   assert.equal(detectImageSignature(Buffer.from('not an image')), '')
 
-  const png = await sharp({ create: { width: 32, height: 32, channels: 4, background: '#f4bfd2' } }).png().toBuffer()
+  const png = await sharp({ create: { width: 3000, height: 200, channels: 4, background: '#f4bfd2' } }).png().toBuffer()
   const prepared = await prepareImageForUpload({ buffer: png, originalname: 'safe.png', mimetype: 'image/png' })
-  assert.equal(detectImageSignature(prepared.buffer), 'webp')
-  assert.ok(prepared.width <= 2560 && prepared.height <= 2560)
+  assert.equal(detectImageSignature(prepared.buffer), 'png')
+  assert.equal(prepared.width, 3000)
+  assert.equal(prepared.height, 200)
+  assert.equal(prepared.extension, '.png')
+  assert.ok(prepared.buffer.equals(png), 'Validated non-HEIC uploads must retain their exact original bytes')
   await assert.rejects(
     prepareImageForUpload({ buffer: Buffer.from('<script>alert(1)</script>'), originalname: 'attack.jpg', mimetype: 'image/jpeg' }),
     /does not match its image type/,

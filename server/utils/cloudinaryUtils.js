@@ -13,6 +13,12 @@ const uploadsRoot = path.resolve(currentDirectory, '..', 'uploads')
 const allowedFolders = new Set(['products', 'categories', 'banners', 'settings', 'custom-orders', 'payment-slips'])
 const heicTypes = new Set(['image/heic', 'image/heif', 'image/heic-sequence', 'image/heif-sequence', 'image/x-heic', 'image/x-heif'])
 const maximumInputPixels = 40_000_000
+const storableFormats = new Map([
+  ['jpeg', { extension: '.jpg', mimetype: 'image/jpeg' }],
+  ['png', { extension: '.png', mimetype: 'image/png' }],
+  ['webp', { extension: '.webp', mimetype: 'image/webp' }],
+  ['avif', { extension: '.avif', mimetype: 'image/avif' }],
+])
 
 export const detectImageSignature = (buffer) => {
   if (!Buffer.isBuffer(buffer) || buffer.length < 12) return ''
@@ -53,7 +59,9 @@ async function sourceBuffer(file) {
   const isHeic = heicTypes.has(file.mimetype) || ['.heic', '.heif'].includes(extension)
   if (!isHeic) return file.buffer
   try {
-    return Buffer.from(await heicConvert({ buffer: file.buffer, format: 'JPEG', quality: 0.9 }))
+    // HEIC/HEIF is not consistently supported by browsers. This is the only
+    // upload format that needs conversion, and it is converted at full quality.
+    return Buffer.from(await heicConvert({ buffer: file.buffer, format: 'JPEG', quality: 1 }))
   } catch {
     throw new AppError('This phone photo could not be converted. Please select a different photo or save it as JPEG.', 422)
   }
@@ -61,13 +69,17 @@ async function sourceBuffer(file) {
 
 export async function prepareImageForUpload(file) {
   try {
-    const buffer = await sharp(await sourceBuffer(file), { limitInputPixels: maximumInputPixels, failOn: 'warning' })
-      .rotate()
-      .resize({ width: 2560, height: 2560, fit: 'inside', withoutEnlargement: true })
-      .webp({ quality: 90, effort: 4 })
-      .toBuffer()
-    const metadata = await sharp(buffer).metadata()
-    return { buffer, width: metadata.width, height: metadata.height }
+    const buffer = await sourceBuffer(file)
+    const imageOptions = { limitInputPixels: maximumInputPixels, failOn: 'warning' }
+    const metadata = await sharp(buffer, imageOptions).metadata()
+    const storage = storableFormats.get(metadata.format)
+    if (!storage || !metadata.width || !metadata.height) throw new Error('Unsupported decoded image')
+
+    // Fully decode the file before accepting it. The validated original bytes
+    // are then stored unchanged, avoiding resizing, format conversion, and a
+    // lossy encode during upload.
+    await sharp(buffer, imageOptions).stats()
+    return { buffer, width: metadata.width, height: metadata.height, format: metadata.format, ...storage }
   } catch (error) {
     if (error instanceof AppError) throw error
     throw new AppError('The selected file is not a readable image', 422)
@@ -78,8 +90,9 @@ async function uploadLocally(file, folder) {
   const targetFolder = uploadFolder(folder)
   const directory = path.join(uploadsRoot, targetFolder)
   await mkdir(directory, { recursive: true })
-  const filename = `${Date.now()}-${randomUUID()}.webp`
-  const { buffer, width, height } = await prepareImageForUpload(file)
+  const prepared = await prepareImageForUpload(file)
+  const filename = `${Date.now()}-${randomUUID()}${prepared.extension}`
+  const { buffer, width, height } = prepared
   await writeFile(path.join(directory, filename), buffer, { flag: 'wx' })
   return {
     url: `/uploads/${targetFolder}/${filename}`,
@@ -99,8 +112,8 @@ export async function uploadImage(file, folder = 'eshaz-dream-world/products') {
 
   const { buffer } = await prepareImageForUpload(file)
   return new Promise((resolve, reject) => {
-    // The source has already been normalized to a quality-90 WebP. Avoid a
-    // second lossy transformation while Cloudinary stores the original asset.
+    // No eager transformation is applied: Cloudinary stores the validated
+    // source at its original dimensions and quality.
     const stream = cloudinary.uploader.upload_stream({ folder, resource_type: 'image' }, (error, result) => {
       if (error) reject(new AppError('Image upload failed', 502))
       else resolve({ url: result.secure_url, publicId: result.public_id, width: result.width, height: result.height, bytes: result.bytes, storage: 'cloudinary' })
@@ -111,7 +124,7 @@ export async function uploadImage(file, folder = 'eshaz-dream-world/products') {
 
 async function deleteLocalImage(publicId) {
   const relativePath = publicId.slice('local:'.length).replaceAll('\\', '/')
-  if (!/^(products|categories|banners|settings|custom-orders|payment-slips)\/[a-zA-Z0-9-]+\.webp$/.test(relativePath)) throw new AppError('Invalid local image identifier', 400)
+  if (!/^(products|categories|banners|settings|custom-orders|payment-slips)\/[a-zA-Z0-9-]+\.(?:jpe?g|png|webp|avif)$/.test(relativePath)) throw new AppError('Invalid local image identifier', 400)
   const target = path.resolve(uploadsRoot, ...relativePath.split('/'))
   if (!target.startsWith(`${uploadsRoot}${path.sep}`)) throw new AppError('Invalid local image identifier', 400)
   try { await unlink(target) } catch (error) { if (error.code !== 'ENOENT') throw error }

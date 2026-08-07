@@ -12,7 +12,14 @@ const applyChanges = process.argv.includes('--apply')
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url))
 const uploadsRoot = path.resolve(currentDirectory, '..', 'uploads')
 const connectionUri = process.env.MONGODB_MIGRATION_URI?.trim() || env.mongoUri
-const localImagePattern = /^local:(products|categories)\/([a-zA-Z0-9-]+\.webp)$/
+const localImagePattern = /^local:(products|categories)\/([a-zA-Z0-9-]+\.(?:jpe?g|png|webp|avif))$/
+const imageMimeType = (filename) => ({
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.webp': 'image/webp',
+  '.avif': 'image/avif',
+}[path.extname(filename).toLowerCase()] || '')
 
 if (!/^mongodb\+srv:\/\//i.test(connectionUri)) {
   throw new Error('Catalog media migration is restricted to a MongoDB Atlas SRV connection')
@@ -27,14 +34,14 @@ async function sourceFile(image, targetFolder) {
     const sourcePath = path.resolve(uploadsRoot, localMatch[1], localMatch[2])
     if (!sourcePath.startsWith(`${uploadsRoot}${path.sep}`)) throw new Error('Invalid legacy catalog image path')
     try {
-      return { buffer: await readFile(sourcePath), originalname: localMatch[2], mimetype: 'image/webp' }
+      return { buffer: await readFile(sourcePath), originalname: localMatch[2], mimetype: imageMimeType(localMatch[2]) }
     } catch (error) {
       if (error.code !== 'ENOENT') throw error
     }
   }
 
   const url = String(image?.url || '')
-  if (!/^https:\/\/edw-jvpw\.vercel\.app\/uploads\/(products|categories)\/[a-zA-Z0-9-]+\.webp$/i.test(url)) {
+  if (!/^https:\/\/edw-jvpw\.vercel\.app\/uploads\/(products|categories)\/[a-zA-Z0-9-]+\.(?:jpe?g|png|webp|avif)$/i.test(url)) {
     throw new Error(`No safe legacy source is available for ${targetFolder}`)
   }
   const response = await fetch(url, { signal: AbortSignal.timeout(20_000) })
@@ -94,4 +101,3 @@ try {
 } finally {
   await mongoose.disconnect()
 }
-

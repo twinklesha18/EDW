@@ -201,7 +201,7 @@ function AdminProductFormPage() {
             )}
           </div>
           {imageError && <p className="mt-2 text-sm text-red-600">{imageError}</p>}
-          <p className="mt-3 text-sm text-muted">Choose one or multiple photos from your phone gallery or computer. JPEG, PNG, WebP, AVIF, HEIC, and HEIF are supported up to 12 MB per image.</p>
+          <p className="mt-3 text-sm text-muted">Choose one or multiple photos from your phone gallery or computer. Original dimensions and quality are preserved; HEIC/HEIF photos are converted to a full-quality JPEG for browser compatibility. Maximum 12 MB per image.</p>
         </section>
 
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">

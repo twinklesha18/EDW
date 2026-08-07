@@ -11,7 +11,14 @@ import { deleteImage, uploadImage } from '../utils/cloudinaryUtils.js'
 const applyChanges = process.argv.includes('--apply')
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url))
 const paymentSlipDirectory = path.resolve(currentDirectory, '..', 'uploads', 'payment-slips')
-const localIdPattern = /^local:payment-slips\/([a-zA-Z0-9-]+\.webp)$/
+const localIdPattern = /^local:payment-slips\/([a-zA-Z0-9-]+\.(?:jpe?g|png|webp|avif))$/
+const imageMimeType = (filename) => ({
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.webp': 'image/webp',
+  '.avif': 'image/avif',
+}[path.extname(filename).toLowerCase()] || '')
 const connectionUri = process.env.MONGODB_MIGRATION_URI?.trim() || env.mongoUri
 
 const atlasHosts = (() => {
@@ -45,7 +52,7 @@ const migrate = async ({ model, document, field, reference, publicId }) => {
   }
 
   const buffer = await readFile(sourcePath)
-  const uploaded = await uploadImage({ buffer, originalname: filename, mimetype: 'image/webp' }, 'eshaz-dream-world/payment-slips')
+  const uploaded = await uploadImage({ buffer, originalname: filename, mimetype: imageMimeType(filename) }, 'eshaz-dream-world/payment-slips')
   const result = await model.updateOne(
     { _id: document._id, [`${field}.publicId`]: publicId },
     { $set: { [field]: uploaded } },
