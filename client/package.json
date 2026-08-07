@@ -12,6 +12,7 @@
     "lint": "oxlint",
     "test:phase3": "node scripts/phase3-state-smoke.js",
     "test:cart": "node scripts/cart-flow-smoke.js",
+    "test:product-image-order": "node scripts/product-image-order-smoke.js",
     "test:responsive": "node scripts/responsive-browser-smoke.js",
     "test:seo": "node scripts/seo-smoke.js",
     "preview": "vite preview"

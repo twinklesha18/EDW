@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { FiArrowLeft, FiTrash2, FiUploadCloud } from 'react-icons/fi'
+import { FiArrowLeft, FiCheckCircle, FiCircle, FiTrash2, FiUploadCloud } from 'react-icons/fi'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { Link, useNavigate, useParams } from 'react-router-dom'
@@ -8,6 +8,7 @@ import FormInput from '../../components/common/FormInput.jsx'
 import LoadingButton from '../../components/common/LoadingButton.jsx'
 import api, { getApiError } from '../../services/api.js'
 import { adminApi, uploadSingleImage } from '../../services/adminApi.js'
+import { orderProductImages } from '../../utils/productImageOrder.js'
 
 const defaults = { name: '', category: '', description: '', priceS: '', priceM: '', priceL: '' }
 
@@ -21,6 +22,7 @@ function AdminProductFormPage() {
   const [apiError, setApiError] = useState('')
   const [images, setImages] = useState([])
   const [imageFiles, setImageFiles] = useState([])
+  const [mainImage, setMainImage] = useState(null)
   const [previewUrls, setPreviewUrls] = useState([])
   const [imageError, setImageError] = useState('')
   const { register, reset, handleSubmit, setError, setFocus, clearErrors, formState: { errors } } = useForm({ defaultValues: defaults })
@@ -40,7 +42,9 @@ function AdminProductFormPage() {
             priceL: product.prices?.L ?? '',
           })
           const savedImages = Array.isArray(product.images) && product.images.length ? product.images : [product.image].filter((item) => item?.url)
-          setImages(savedImages.slice(0, 3))
+          const visibleImages = savedImages.slice(0, 3)
+          setImages(visibleImages)
+          setMainImage(visibleImages[0] || null)
         }
       })
       .catch((error) => setApiError(getApiError(error).message))
@@ -58,7 +62,9 @@ function AdminProductFormPage() {
     const remaining = Math.max(0, 3 - images.length - imageFiles.length)
     if (selected.length > remaining) toast.error(`You can add only ${remaining} more ${remaining === 1 ? 'image' : 'images'}.`)
     if (remaining > 0) {
-      setImageFiles((current) => [...current, ...selected.slice(0, remaining)])
+      const accepted = selected.slice(0, remaining)
+      setImageFiles((current) => [...current, ...accepted])
+      if (!mainImage && accepted[0]) setMainImage(accepted[0])
       setImageError('')
       setApiError('')
     }
@@ -79,7 +85,8 @@ function AdminProductFormPage() {
     try {
       const uploadedImages = []
       for (const file of imageFiles) uploadedImages.push(await uploadSingleImage(file, 'products'))
-      const productImages = [...images, ...uploadedImages].slice(0, 3).map((item) => ({ ...item, alt: values.name }))
+      const orderedImages = orderProductImages({ savedImages: images, uploadedImages, selectedFiles: imageFiles, selectedImage: mainImage })
+      const productImages = orderedImages.map((item) => ({ ...item, alt: values.name }))
       const payload = {
         name: values.name,
         category: values.category,
@@ -161,24 +168,28 @@ function AdminProductFormPage() {
 
         <section className="form-section">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div><h2 className="font-serif text-2xl font-semibold">Product Images</h2><p className="mt-1 text-sm text-muted">The first image is the main product image. Add a maximum of three.</p></div>
+            <div><h2 className="font-serif text-2xl font-semibold">Product Images</h2><p className="mt-1 text-sm text-muted">Add up to three images, then tick the one you want to use as the main image.</p></div>
             <span className="rounded-full bg-pink-light px-3 py-1 text-xs font-semibold text-rosewood">{images.length + imageFiles.length}/3 images</span>
           </div>
           <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {images.map((item, index) => (
-              <div key={item.publicId || item.url} className="relative overflow-hidden rounded-2xl border border-gold/20 bg-cream">
+            {images.map((item, index) => {
+              const isMain = mainImage === item
+              return (
+              <div key={item.publicId || item.url} className={`relative overflow-hidden rounded-2xl border-2 bg-cream transition ${isMain ? 'border-rosewood ring-4 ring-pink-light' : 'border-gold/20'}`}>
                 <img src={item.url} alt={`Saved product preview ${index + 1}`} className="aspect-square w-full object-cover" />
-                <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[.65rem] font-bold uppercase text-rosewood shadow-sm">{index === 0 ? 'Main image' : `Image ${index + 1}`}</span>
-                <button type="button" onClick={() => setImages((current) => current.filter((_, itemIndex) => itemIndex !== index))} className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-white/95 text-red-600 shadow-sm" aria-label={`Remove saved image ${index + 1}`}><FiTrash2 aria-hidden="true" /></button>
+                <span className={`absolute left-3 top-3 rounded-full px-2.5 py-1 text-[.65rem] font-bold uppercase shadow-sm ${isMain ? 'bg-rosewood text-white' : 'bg-white/90 text-rosewood'}`}>{isMain ? 'Main image' : `Image ${index + 1}`}</span>
+                <button type="button" onClick={() => { const remainingImages = images.filter((_, itemIndex) => itemIndex !== index); setImages(remainingImages); if (isMain) setMainImage(remainingImages[0] || imageFiles[0] || null) }} className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-white/95 text-red-600 shadow-sm" aria-label={`Remove saved image ${index + 1}`}><FiTrash2 aria-hidden="true" /></button>
+                <button type="button" onClick={() => setMainImage(item)} aria-pressed={isMain} className={`flex min-h-12 w-full items-center justify-center gap-2 px-4 text-sm font-semibold transition ${isMain ? 'bg-rosewood text-white' : 'bg-white text-ink hover:bg-pink-light'}`}>{isMain ? <FiCheckCircle aria-hidden="true" /> : <FiCircle aria-hidden="true" />}{isMain ? 'Selected as Main' : 'Set as Main Image'}</button>
               </div>
-            ))}
+            )})}
             {previewUrls.map((url, index) => {
               const position = images.length + index
               return (
-                <div key={url} className="relative overflow-hidden rounded-2xl border border-rosewood/30 bg-cream">
+                <div key={url} className={`relative overflow-hidden rounded-2xl border-2 bg-cream transition ${mainImage === imageFiles[index] ? 'border-rosewood ring-4 ring-pink-light' : 'border-rosewood/30'}`}>
                   <img src={url} alt={`New product preview ${position + 1}`} className="aspect-square w-full object-cover" />
-                  <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[.65rem] font-bold uppercase text-rosewood shadow-sm">{position === 0 ? 'Main image' : `New image ${position + 1}`}</span>
-                  <button type="button" onClick={() => setImageFiles((current) => current.filter((_, itemIndex) => itemIndex !== index))} className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-white/95 text-red-600 shadow-sm" aria-label={`Remove selected image ${position + 1}`}><FiTrash2 aria-hidden="true" /></button>
+                  <span className={`absolute left-3 top-3 rounded-full px-2.5 py-1 text-[.65rem] font-bold uppercase shadow-sm ${mainImage === imageFiles[index] ? 'bg-rosewood text-white' : 'bg-white/90 text-rosewood'}`}>{mainImage === imageFiles[index] ? 'Main image' : `New image ${position + 1}`}</span>
+                  <button type="button" onClick={() => { const selectedFile = imageFiles[index]; const remainingFiles = imageFiles.filter((_, itemIndex) => itemIndex !== index); setImageFiles(remainingFiles); if (mainImage === selectedFile) setMainImage(images[0] || remainingFiles[0] || null) }} className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-white/95 text-red-600 shadow-sm" aria-label={`Remove selected image ${position + 1}`}><FiTrash2 aria-hidden="true" /></button>
+                  <button type="button" onClick={() => setMainImage(imageFiles[index])} aria-pressed={mainImage === imageFiles[index]} className={`flex min-h-12 w-full items-center justify-center gap-2 px-4 text-sm font-semibold transition ${mainImage === imageFiles[index] ? 'bg-rosewood text-white' : 'bg-white text-ink hover:bg-pink-light'}`}>{mainImage === imageFiles[index] ? <FiCheckCircle aria-hidden="true" /> : <FiCircle aria-hidden="true" />}{mainImage === imageFiles[index] ? 'Selected as Main' : 'Set as Main Image'}</button>
                 </div>
               )
             })}
