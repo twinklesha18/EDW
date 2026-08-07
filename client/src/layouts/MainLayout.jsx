@@ -15,7 +15,8 @@ function DeferredCartDrawer() {
 
 function MainLayout() {
   const { pathname } = useLocation()
-  const isCustomerDashboard = /^\/profile(?:\/|$)/i.test(pathname)
+  const isDashboardPage = /^\/(?:admin|profile)(?:\/|$)/i.test(pathname)
+    || /^\/orders?\/EDW-\d{4}-\d{6}\/?$/i.test(pathname)
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
@@ -25,7 +26,7 @@ function MainLayout() {
     <div className="flex min-h-screen flex-col overflow-x-clip">
       <Navbar />
       <main className="flex-1 pt-[4.75rem]"><Outlet /></main>
-      {!isCustomerDashboard && <Footer />}
+      {!isDashboardPage && <Footer />}
       <DeferredCartDrawer />
       <BackToTop />
       <WhatsAppButton />
