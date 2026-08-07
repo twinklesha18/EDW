@@ -1,19 +1,16 @@
 import bcrypt from 'bcryptjs'
 import mongoose from 'mongoose'
+import { SRI_LANKA_PROVINCE_NAMES, isSriLankanProvinceDistrict, normalizeSriLankaDistrict, normalizeSriLankaProvince } from '../constants/sriLankaLocations.js'
 import { EMAIL_VALIDATION_MESSAGE, PHONE_VALIDATION_MESSAGE, isValidEmail, isValidPhone, normalizeEmail, normalizePhone } from '../utils/inputValidation.js'
 
 const addressSchema = new mongoose.Schema(
   {
-    label: { type: String, required: true, trim: true, maxlength: 40 },
     fullName: { type: String, required: true, trim: true, maxlength: 120 },
     phone: { type: String, required: true, trim: true, maxlength: 10, set: normalizePhone, validate: [isValidPhone, PHONE_VALIDATION_MESSAGE] },
     addressLine1: { type: String, required: true, trim: true, maxlength: 150 },
-    addressLine2: { type: String, trim: true, maxlength: 150, default: '' },
     city: { type: String, required: true, trim: true, maxlength: 80 },
-    district: { type: String, required: true, trim: true, maxlength: 80 },
-    province: { type: String, required: true, trim: true, maxlength: 80 },
-    postalCode: { type: String, trim: true, maxlength: 20, default: '' },
-    country: { type: String, required: true, trim: true, maxlength: 80, default: 'Sri Lanka' },
+    district: { type: String, required: true, trim: true, maxlength: 80, set: normalizeSriLankaDistrict, validate: { validator(value) { return isSriLankanProvinceDistrict(this.province, value) }, message: 'District must belong to the selected province' } },
+    province: { type: String, required: true, trim: true, enum: SRI_LANKA_PROVINCE_NAMES, set: normalizeSriLankaProvince },
     isDefault: { type: Boolean, default: false },
   },
   { timestamps: true },

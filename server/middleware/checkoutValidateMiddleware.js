@@ -1,5 +1,6 @@
 import { AppError } from '../utils/responseUtils.js'
 import { EMAIL_VALIDATION_MESSAGE, PHONE_VALIDATION_MESSAGE, isValidEmail, isValidPhone, normalizeEmail, normalizePhone } from '../utils/inputValidation.js'
+import { SRI_LANKA_PROVINCE_NAMES, isSriLankanProvinceDistrict, normalizeSriLankaDistrict, normalizeSriLankaProvince } from '../constants/sriLankaLocations.js'
 
 const clean = (value, max = 250) => String(value ?? '').replace(/[<>\u0000-\u001F\u007F]/g, '').trim().slice(0, max)
 const issue = (field, message) => ({ field, message })
@@ -14,8 +15,13 @@ const address = (source, prefix, errors) => {
   values.addressLine2 = clean(source?.addressLine2, 150)
   values.postalCode = clean(source?.postalCode, 20)
   values.country = clean(source?.country, 80) || 'Sri Lanka'
+  values.province = normalizeSriLankaProvince(values.province)
+  values.district = normalizeSriLankaDistrict(values.district)
   values.phone = normalizePhone(values.phone)
   if (values.phone && !isValidPhone(values.phone)) errors.push(issue(`${prefix}.phone`, PHONE_VALIDATION_MESSAGE))
+  if (!SRI_LANKA_PROVINCE_NAMES.includes(values.province) && !errors.some((entry) => entry.field === `${prefix}.province`)) errors.push(issue(`${prefix}.province`, 'Select a valid Sri Lankan province'))
+  if (!values.district && !errors.some((entry) => entry.field === `${prefix}.district`)) errors.push(issue(`${prefix}.district`, 'Select a valid Sri Lankan district'))
+  else if (!isSriLankanProvinceDistrict(values.province, values.district)) errors.push(issue(`${prefix}.district`, 'Select a district belonging to the selected province'))
   if (values.country.toLowerCase() !== 'sri lanka') errors.push(issue(`${prefix}.country`, 'Delivery is currently available only in Sri Lanka'))
   values.country = 'Sri Lanka'
   return values

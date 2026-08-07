@@ -1,6 +1,7 @@
 import { AppError } from '../utils/responseUtils.js'
 import { isStrongPassword } from '../utils/passwordUtils.js'
 import { EMAIL_VALIDATION_MESSAGE, PHONE_VALIDATION_MESSAGE, isValidEmail, isValidPhone, normalizeEmail, normalizePhone } from '../utils/inputValidation.js'
+import { SRI_LANKA_PROVINCE_NAMES, isSriLankanProvinceDistrict, normalizeSriLankaDistrict, normalizeSriLankaProvince } from '../constants/sriLankaLocations.js'
 
 const objectIdPattern = /^[a-f\d]{24}$/i
 
@@ -170,9 +171,7 @@ export const accountDeletionValidator = (body) => {
 
 export const addressValidator = (body) => {
   const fields = [
-    ['label', 'Label', 2, 40], ['fullName', 'Full name', 2, 120],
-    ['addressLine1', 'Address line 1', 3, 150], ['city', 'City', 2, 80], ['district', 'District', 2, 80],
-    ['province', 'Province', 2, 80],
+    ['fullName', 'Full name', 2, 120], ['addressLine1', 'Address line', 3, 150], ['city', 'City', 2, 80],
   ]
   const values = {}
   const errors = []
@@ -184,10 +183,11 @@ export const addressValidator = (body) => {
   const phone = readPhone(body)
   values.phone = phone.value
   if (phone.error) errors.push(phone.error)
-  values.addressLine2 = optionalText(body, 'addressLine2', 150)
-  values.postalCode = optionalText(body, 'postalCode', 20)
-  values.country = optionalText(body, 'country', 80) || 'Sri Lanka'
-  values.isDefault = body.isDefault === true
+  values.province = normalizeSriLankaProvince(sanitizeText(body.province, 80))
+  values.district = normalizeSriLankaDistrict(sanitizeText(body.district, 80))
+  if (!SRI_LANKA_PROVINCE_NAMES.includes(values.province)) errors.push(error('province', 'Select a valid Sri Lankan province'))
+  if (!values.district) errors.push(error('district', 'District is required'))
+  else if (!isSriLankanProvinceDistrict(values.province, values.district)) errors.push(error('district', 'Select a district belonging to the selected province'))
   return validateFields(values, errors)
 }
 

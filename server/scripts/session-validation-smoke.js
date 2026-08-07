@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import jwt from 'jsonwebtoken'
 import { env } from '../config/env.js'
 import { checkoutValidator, trackingValidator } from '../middleware/checkoutValidateMiddleware.js'
-import { registrationValidator } from '../middleware/validateMiddleware.js'
+import { addressValidator, registrationValidator } from '../middleware/validateMiddleware.js'
 import { refreshAuthCookie, setAuthCookie } from '../utils/generateToken.js'
 
 const validRegistration = {
@@ -29,8 +29,15 @@ result = trackingValidator({ orderNumber: 'EDW-2026-000001', email: 'invalid@dom
 assert.ok(result.errors.some((entry) => entry.field === 'email'))
 
 const address = { fullName: 'Session Tester', phone: '0750894221', addressLine1: '1 Dream Lane', city: 'Colombo', district: 'Colombo', province: 'Western', country: 'Sri Lanka' }
+result = addressValidator(address)
+assert.equal(result.errors.length, 0)
+assert.deepEqual(Object.keys(result.values).sort(), ['addressLine1', 'city', 'district', 'fullName', 'phone', 'province'])
+result = addressValidator({ ...address, district: 'Kandy' })
+assert.ok(result.errors.some((entry) => entry.field === 'district'), 'District must belong to the selected province')
 result = checkoutValidator({ shippingAddress: { ...address, phone: '123' }, billingSameAsShipping: true, shippingMethod: 'standard' })
 assert.ok(result.errors.some((entry) => entry.field === 'shippingAddress.phone'))
+result = checkoutValidator({ shippingAddress: { ...address, district: 'Kandy' }, billingSameAsShipping: true, shippingMethod: 'standard' })
+assert.ok(result.errors.some((entry) => entry.field === 'shippingAddress.district'), 'Checkout must reject a province and district mismatch')
 
 const response = {
   cookieValue: null,

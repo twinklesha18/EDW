@@ -113,7 +113,7 @@ function AdminCustomOrderDetailsPage() {
 
           {(customOrder.paymentSlip?.url || customOrder.paymentSlip?.publicId) && <PaymentSlipViewer resource="custom-orders" id={id} reference={customOrder.requestNumber} status={customOrder.paymentStatus} originalUrl={customOrder.paymentSlip?.url} />}
 
-          {customOrder.deliveryAddress?.addressLine1 && <section className="form-section"><h2 className="form-section-title"><span><FiMapPin /></span> Delivery Address</h2><p className="mt-4 text-sm leading-7 text-muted"><strong className="text-ink">{customOrder.deliveryAddress.fullName}</strong><br />{customOrder.deliveryAddress.addressLine1}{customOrder.deliveryAddress.addressLine2 && `, ${customOrder.deliveryAddress.addressLine2}`}<br />{customOrder.deliveryAddress.city}, {customOrder.deliveryAddress.district}, {customOrder.deliveryAddress.province}<br />{customOrder.deliveryAddress.country} · {customOrder.deliveryAddress.phone}</p></section>}
+          {customOrder.deliveryAddress?.addressLine1 && <section className="form-section"><h2 className="form-section-title"><span><FiMapPin /></span> Delivery Address</h2><p className="mt-4 text-sm leading-7 text-muted"><strong className="text-ink">{customOrder.deliveryAddress.fullName}</strong><br />{customOrder.deliveryAddress.addressLine1}<br />{customOrder.deliveryAddress.city}, {customOrder.deliveryAddress.district}<br />{customOrder.deliveryAddress.province} Province<br />{customOrder.deliveryAddress.phone}</p></section>}
 
           <section className="form-section">
             <h2 className="font-serif text-2xl font-semibold">Status History</h2>

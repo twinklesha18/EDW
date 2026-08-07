@@ -1,20 +1,35 @@
 import { yupResolver } from '@hookform/resolvers/yup'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { FiX } from 'react-icons/fi'
+import { SRI_LANKA_PROVINCE_NAMES, districtsForProvince, normalizeSriLankaDistrict, normalizeSriLankaProvince } from '../../data/sriLankaLocations.js'
 import { addressSchema } from '../../utils/validationSchemas.js'
 import FormInput from '../common/FormInput.jsx'
 import LoadingButton from '../common/LoadingButton.jsx'
 
-const blank = { label: '', fullName: '', phone: '', addressLine1: '', addressLine2: '', city: '', district: '', province: '', postalCode: '', country: 'Sri Lanka', isDefault: false }
+const blank = { fullName: '', phone: '', addressLine1: '', city: '', district: '', province: '' }
 
 function AddressFormModal({ open, address, onClose, onSubmit, loading, apiError }) {
-  const { register, reset, handleSubmit, formState: { errors } } = useForm({ resolver: yupResolver(addressSchema), defaultValues: blank })
+  const { control, register, reset, setValue, handleSubmit, formState: { errors } } = useForm({ resolver: yupResolver(addressSchema), defaultValues: blank })
+  const province = useWatch({ control, name: 'province' })
+  const district = useWatch({ control, name: 'district' })
+  const districts = districtsForProvince(province)
 
   useEffect(() => {
-    if (open) reset(address ? { ...blank, ...address } : blank)
+    if (open) reset(address ? {
+      fullName: address.fullName || '',
+      phone: address.phone || '',
+      addressLine1: address.addressLine1 || '',
+      city: address.city || '',
+      district: normalizeSriLankaDistrict(address.district),
+      province: normalizeSriLankaProvince(address.province),
+    } : blank)
   }, [address, open, reset])
+
+  useEffect(() => {
+    if (district && !districts.includes(district)) setValue('district', '', { shouldValidate: true })
+  }, [district, districts, setValue])
 
   useEffect(() => {
     if (!open) return undefined
@@ -34,17 +49,12 @@ function AddressFormModal({ open, address, onClose, onSubmit, loading, apiError 
             </div>
             {apiError && <p className="mt-4 break-words rounded-xl bg-red-50 p-3 text-sm text-red-700">{apiError}</p>}
             <form onSubmit={handleSubmit(onSubmit)} className="mt-5 grid gap-4 sm:mt-6 sm:grid-cols-2">
-              <FormInput label="Label" placeholder="e.g. Home or Work" error={errors.label?.message} {...register('label')} />
               <FormInput label="Full name" placeholder="Enter the recipient's full name" error={errors.fullName?.message} {...register('fullName')} />
               <FormInput label="Phone" type="tel" inputMode="numeric" maxLength={10} autoComplete="tel" placeholder="Enter a 10-digit phone number" error={errors.phone?.message} {...register('phone')} />
-              <FormInput label="Address line 1" placeholder="House number and street name" error={errors.addressLine1?.message} {...register('addressLine1')} />
-              <FormInput label="Address line 2 (optional)" placeholder="Apartment, suite, or landmark" error={errors.addressLine2?.message} {...register('addressLine2')} />
+              <div className="sm:col-span-2"><FormInput label="Address line" placeholder="House number and street name" autoComplete="street-address" error={errors.addressLine1?.message} {...register('addressLine1')} /></div>
               <FormInput label="City" placeholder="Enter the city or town" error={errors.city?.message} {...register('city')} />
-              <FormInput label="District" placeholder="Enter the district" error={errors.district?.message} {...register('district')} />
-              <FormInput label="Province" placeholder="Enter the province" error={errors.province?.message} {...register('province')} />
-              <FormInput label="Postal code (optional)" placeholder="Enter the postal code" error={errors.postalCode?.message} {...register('postalCode')} />
-              <FormInput label="Country" readOnly error={errors.country?.message} {...register('country')} />
-              <label className="flex min-h-11 items-center gap-3 text-sm text-muted sm:col-span-2"><input type="checkbox" className="h-4 w-4 accent-rosewood" {...register('isDefault')} /> Make this my default address</label>
+              <label><span className="form-label">Province</span><select className="input-field" autoComplete="address-level1" {...register('province')}><option value="">Select a province</option>{SRI_LANKA_PROVINCE_NAMES.map((name) => <option key={name} value={name}>{name} Province</option>)}</select>{errors.province && <p className="mt-1 text-xs text-red-600">{errors.province.message}</p>}</label>
+              <label><span className="form-label">District</span><select className="input-field disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-muted" autoComplete="address-level2" disabled={!province} {...register('district')}><option value="">{province ? 'Select a district' : 'Select a province first'}</option>{districts.map((name) => <option key={name} value={name}>{name}</option>)}</select>{errors.district && <p className="mt-1 text-xs text-red-600">{errors.district.message}</p>}</label>
               <div className="mt-2 flex flex-col-reverse gap-3 sm:col-span-2 sm:flex-row sm:justify-end">
                 <button type="button" className="secondary-button w-full sm:w-auto" onClick={onClose} disabled={loading}>Cancel</button>
                 <LoadingButton type="submit" loading={loading} className="primary-button w-full sm:w-auto">Save Address</LoadingButton>

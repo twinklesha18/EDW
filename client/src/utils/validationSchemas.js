@@ -1,4 +1,5 @@
 import * as yup from 'yup'
+import { SRI_LANKA_PROVINCE_NAMES, isSriLankanProvinceDistrict } from '../data/sriLankaLocations.js'
 import { EMAIL_ERROR, PHONE_ERROR, isValidEmailAddress, normalizeEmailInput, normalizePhoneInput } from './inputValidation.js'
 
 const password = yup.string().required('Password is required.').min(8, 'Use at least 8 characters.').max(72, 'Password is too long.').matches(/[a-z]/, 'Add a lowercase letter.').matches(/[A-Z]/, 'Add an uppercase letter.').matches(/\d/, 'Add a number.')
@@ -40,17 +41,12 @@ export const changePasswordSchema = yup.object({
 })
 
 export const addressSchema = yup.object({
-  label: yup.string().trim().min(2).max(40).required('Label is required.'),
   fullName: yup.string().trim().min(2).max(120).required('Full name is required.'),
   phone,
-  addressLine1: yup.string().trim().min(3).max(150).required('Address line 1 is required.'),
-  addressLine2: yup.string().trim().max(150),
+  addressLine1: yup.string().trim().min(3).max(150).required('Address line is required.'),
   city: yup.string().trim().min(2).max(80).required('City is required.'),
-  district: yup.string().trim().min(2).max(80).required('District is required.'),
-  province: yup.string().trim().min(2).max(80).required('Province is required.'),
-  postalCode: yup.string().trim().max(20),
-  country: yup.string().trim().max(80).required('Country is required.'),
-  isDefault: yup.boolean(),
+  province: yup.string().oneOf(SRI_LANKA_PROVINCE_NAMES, 'Select a valid province.').required('Province is required.'),
+  district: yup.string().required('District is required.').test('province-district', 'Select a district belonging to the selected province.', function validDistrict(value) { return !value || isSriLankanProvinceDistrict(this.parent.province, value) }),
 })
 
 const adminUserBase = {
