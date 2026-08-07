@@ -12,13 +12,13 @@ function CategoryCard({ category }) {
       <Link to={`/category/${category.slug}`} className="block min-w-0" aria-label={`Explore ${category.name}`}>
         <div className="relative aspect-square overflow-hidden rounded-[1.55rem] bg-gradient-to-br from-pink-light to-blue-light">
           <img
-            {...responsiveImageProps(category.image, [360, 540, 720, 1080, 1440])}
+            {...responsiveImageProps(category.image, [360, 540, 720, 900, 1080, 1440])}
             alt={category.name}
             width="800"
             height="800"
             loading="lazy"
             decoding="async"
-            sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"
+            sizes="(min-width: 1400px) 400px, (min-width: 900px) 31vw, 82vw"
             className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.035]"
           />
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/10 via-transparent to-white/5" />

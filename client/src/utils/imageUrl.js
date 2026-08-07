@@ -1,6 +1,6 @@
 const cloudinaryMarkers = ['/image/upload/', '/image/fetch/']
 
-export function optimizedImageUrl(url, width, { crop = 'limit', quality = '100' } = {}) {
+export function optimizedImageUrl(url, width, { crop = 'limit', quality = '90' } = {}) {
   const marker = cloudinaryMarkers.find((candidate) => String(url || '').includes(candidate))
   if (!url || !Number.isFinite(width) || !String(url).includes('res.cloudinary.com') || !marker) return url
   const transformation = `c_${crop},w_${Math.round(width)},a_auto,f_auto,q_${quality}`

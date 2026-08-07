@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { FiEye, FiHeart, FiShoppingBag } from 'react-icons/fi'
 import toast from 'react-hot-toast'
@@ -11,6 +11,7 @@ import { productToWishlistPayload } from '../../utils/productAdapters.js'
 import { optimizedImageUrl, responsiveImageProps } from '../../utils/imageUrl.js'
 
 function ProductCard({ product, view = 'grid', autoRotateImages = false }) {
+  const cardRef = useRef(null)
   const dispatch = useDispatch()
   const isWishlisted = useSelector((state) => state.wishlist.items.some((item) => item.productId === product.id))
   const wishlistPending = useSelector((state) => state.wishlist.pendingProductIds.includes(product.id))
@@ -22,24 +23,43 @@ function ProductCard({ product, view = 'grid', autoRotateImages = false }) {
   }, [product.image, product.images])
   const [activeImage, setActiveImage] = useState(0)
   const [failedImages, setFailedImages] = useState([])
+  const [isCardVisible, setIsCardVisible] = useState(false)
+  const [isPageVisible, setIsPageVisible] = useState(() => document.visibilityState === 'visible')
   const imageSignature = images.join('|')
 
   useEffect(() => { setActiveImage(0); setFailedImages([]) }, [imageSignature, product.id])
   useEffect(() => {
+    if (!autoRotateImages) return undefined
+    const card = cardRef.current
+    if (!card || !('IntersectionObserver' in window)) {
+      setIsCardVisible(true)
+      return undefined
+    }
+    const observer = new IntersectionObserver(([entry]) => setIsCardVisible(entry.isIntersecting), { rootMargin: '120px 0px', threshold: 0.01 })
+    observer.observe(card)
+    return () => observer.disconnect()
+  }, [autoRotateImages])
+  useEffect(() => {
+    if (!autoRotateImages) return undefined
+    const handleVisibilityChange = () => setIsPageVisible(document.visibilityState === 'visible')
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [autoRotateImages])
+  useEffect(() => {
     const availableIndexes = images.map((_, index) => index).filter((index) => !failedImages.includes(images[index]))
-    if (!autoRotateImages || availableIndexes.length < 2 || prefersReducedMotion) return undefined
+    if (!autoRotateImages || !isCardVisible || !isPageVisible || availableIndexes.length < 2 || prefersReducedMotion) return undefined
     const timer = window.setInterval(() => setActiveImage((current) => {
       const position = availableIndexes.indexOf(current)
       return availableIndexes[(position + 1) % availableIndexes.length]
     }), 3000)
     return () => window.clearInterval(timer)
-  }, [autoRotateImages, failedImages, images, prefersReducedMotion])
+  }, [autoRotateImages, failedImages, images, isCardVisible, isPageVisible, prefersReducedMotion])
   useEffect(() => {
-    if (!autoRotateImages || images.length < 2) return
+    if (!autoRotateImages || !isCardVisible || !isPageVisible || images.length < 2) return
     const nextIndex = (activeImage + 1) % images.length
     const preloader = new window.Image()
     preloader.src = optimizedImageUrl(images[nextIndex], 720)
-  }, [activeImage, autoRotateImages, images])
+  }, [activeImage, autoRotateImages, images, isCardVisible, isPageVisible])
 
   const handleImageError = (event) => {
     const failedUrl = images[activeImage]
@@ -54,6 +74,7 @@ function ProductCard({ product, view = 'grid', autoRotateImages = false }) {
 
   return (
     <article
+      ref={cardRef}
       className={`group overflow-hidden rounded-[1.75rem] border border-gold/15 bg-white shadow-[0_14px_45px_-30px_rgba(59,47,54,0.45)] transition-all duration-300 hover:-translate-y-1 hover:shadow-luxury ${isList ? 'sm:grid sm:grid-cols-[240px_1fr]' : 'flex h-full flex-col'}`}
     >
       <div className={`relative overflow-hidden bg-pink-light ${isList ? 'min-h-64' : 'aspect-square'}`}>
@@ -61,8 +82,8 @@ function ProductCard({ product, view = 'grid', autoRotateImages = false }) {
           <AnimatePresence initial={false} mode="popLayout">
             <motion.img
               key={`${product.id}-${activeImage}-${images[activeImage]}`}
-              {...responsiveImageProps(images[activeImage] || product.image, [360, 540, 720, 1080, 1440])}
-              sizes={isList ? '(min-width: 640px) 240px, 100vw' : '(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw'}
+              {...responsiveImageProps(images[activeImage] || product.image, [360, 540, 720, 900, 1080, 1440])}
+              sizes={isList ? '(min-width: 640px) 240px, 100vw' : '(min-width: 1400px) 400px, (min-width: 900px) 31vw, 82vw'}
               alt={images.length > 1 ? `${product.name} – image ${activeImage + 1} of ${images.length}` : product.name}
               width="1440"
               height="1440"
